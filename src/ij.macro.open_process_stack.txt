@@ -1,0 +1,38 @@
+//
+// BlueBidule
+//
+// 	ImageJ macro which opens the PGM images, process them and save them as a stack
+//
+//
+//	(c) Jean-Olivier Irisson 2005-2007
+//	Released under GNU General Public Licence
+//	Read the file 'src/GNU_GPL.txt' for more information
+//
+//--------------------------------------------------------------------------
+
+// The argument of this macro is the directory where the PGM images are
+dir = getArgument();
+  if (dir=="")
+    exit("No argument!"); 
+// If there is no slash at the end of the path to directory, adds one    
+if (!(endsWith(dir, "/")))
+  dir = dir + "/";
+
+// Calculate the number of pgm images
+list = getFileList(dir);
+nb_files = list.length; 
+
+// Open the files as a sequence of images
+print("Opening image sequence...");
+run("Image Sequence...", "open='"+dir+"00000001.pgm"+"' number='"+nb_files+"' starting=1 increment=1 scale=100 file= sort");
+
+// Process it with the normalizing filter
+print("Normalizing images...");
+// Normalize the stack using maximum and minimum of the _whole_ stack
+//run("Stack Normalizer", "minimum=0 maximum=255");
+// Normalize each image of the stack using its maximum and minimum values
+run("Enhance Contrast", "saturated=0.1 normalize normalize_all");
+
+// Save it as a stack in the folder of the pgm images
+print("Saving images sequence as a stack...");
+run("Save", "save='"+dir+"stack.tif"+"'");
