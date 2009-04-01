@@ -38,22 +38,48 @@ find.image.by.time <- function(target, n=1, imageSource)
 {
 	# compute interval (in seconds) between successive images
 	# NB: comput that approximately and on 20 images because the interval is not constant
-	interval = as.integer( round( difftime( image.time(n+20, imageSource),
-                                           image.time(n   , imageSource),
-                                           units="secs")
-                                 / 20 ) )
+	imgStart = img(n, imageSource)
+	imgEnd = img(n+20, imageSource)
+	if ( all( file.exists(imgStart, imgEnd) ) ) {
+		interval = as.integer( round( difftime( image.time(imgEnd),
+	                                           image.time(imgStart),
+	                                           units="secs")
+	                                 / 20 ) )
+	} else {
+		stop("Missing image, unable to compute time lapse interval")
+	}
 
 	# compute the time difference between the time of the inital guess image and the target time, in seconds. Divided by the interval between images it gives  the number of images that we should shift by to find the image corresponding to the target time
-	shift = as.integer( difftime(target, image.time(n, imageSource), units="secs") / interval )
+	shift = as.integer( difftime(target, image.time(imgStart), units="secs") / interval )
 
 	# recursively shift until the we find the image corresponding to the target time
+	count = 0
 	while ( ! shift %in% c(-1,0,1) ) {
+		# count the number of iterations in the loop
+		count = count + 1
+
+		# shift image number
 		n = n + shift
-		shift = as.integer( difftime(target, image.time(n, imageSource), units="secs") / interval )
+
+		newImg = img(n, imageSource)
+
+		# if the file exists, then check its time difference with the target
+		# otherwise, it means we ran out of files in the current directory and we need to fall back on the last file available
+		if (file.exists(newImg)) {
+			shift = as.integer( difftime(target, image.time(newImg), units="secs") / interval )
+			fallback = FALSE
+		} else {
+			while(!file.exists(newImg)){
+				n = n - 1
+				newImg = img(n, imageSource)
+			}
+			fallback = TRUE
+			break
+		}
 	}
 
 	# return the number of the target image
-	return(n)
+	return(list(n=n, fallback=fallback, interval=interval, count=count))
 }
 
 
@@ -157,10 +183,35 @@ for (i in 1:nrow(log)) {
 
 
 	## IMAGES
-	# find start and end image for this deployment
-	startImage = find.image.by.time(startTime, endImage+1, imageSource)
-	endImage = find.image.by.time(endTime, startImage, imageSource)
-	# TODO implement a check on the number of images = detect the lag between pictures and check that the total number of images is compatible with the total duration
+	# find start image for this deployment
+	startList = find.image.by.time(startTime, endImage+1, imageSource)
+	startImage = startList$n
+	cat("    imgs ", sprintf("%5i",startImage), " (", startList$count,")", sep="")
+	# if the image is a fallback image (the last of the current directory) then cycle to the next deployment because we don't have anything to extract for this one
+	if (startList$fallback) {
+		cat("*\n")
+		next
+	}
+
+	# do the same for the end image
+	endList = find.image.by.time(endTime, startImage, imageSource)
+	endImage = endList$n
+	cat(" -> ", sprintf("%5i", endImage), " (", endList$count,")", sep="")
+	if (endList$fallback) {
+		cat("*")
+	}
+
+	# check the validity of this image range
+	# compute the total time span that images currently selected represent, in seconds
+	timeSpan = (endImage - startImage) * startList$interval
+	cat(" =",format(timeSpan/60, digits=3),"min")
+
+	# check that the time span is compatible with deployment duration
+	theorSpan = (duration - initialLag) * 60
+	if (abs(theorSpan - timeSpan) > 3 * 60) {
+		cat(" ** Not enough images **\n")
+		next
+	}
 
 	# compute the array of images of interest
 	cImages = paste(imageSource, seq(startImage, endImage), ".jpg", sep="", collapse=" ")
