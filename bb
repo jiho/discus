@@ -168,12 +168,6 @@ if [[ ! -e $TEMP ]]; then
 	mkdir $TEMP
 fi
 
-# Logs
-LOGS=$WORK/Logs/
-if [[ ! -e $LOGS ]]; then
-	mkdir $LOGS
-fi
-
 
 # We export everything making it available to the rest of the process
 export WORK DATA DATAREAL LOGS TEMP VIDEOID RES IJ_PATH JAVA_CMD
