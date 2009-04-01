@@ -88,7 +88,7 @@ find.image.by.time <- function(target, n=1, imageSource)
 
 prefix = "../Lizard_Island/data/"
 
-cat("Reading logs...\n")
+cat("  read logs\n")
 # read deployment log
 log = read.table(paste(prefix,"data_log.csv",sep=""), header=TRUE, sep=",", as.is=TRUE)
 log$dateTime = paste(log$date, log$timeIn)
@@ -107,19 +107,17 @@ fuzzy = 10        # the time range is extended by this amount to select the data
 
 log = log[log$date=="2008-11-28",]
 
-cat("Extracting data...\n")
-
 # for each deployment (row extract the corresponding data)
 for (i in 1:nrow(log)) {
 
 	# select current deployment
 	cLog = log[i,]
 
-	cat(sprintf("%3i",cLog$deployId))
-
 	# most data is initially organized by day, so all the initial reading of data is to be done by day.
 	# so we start by detecting whether the current deployment is on a new day or not, and perform appropriate actions if it is.
 	if (any(i == 1, log[i,"date"] != log[i-1,"date"]) ) {
+		cat("  -- new day:")
+
 		# initialize variables
 		ctdOK = FALSE
 		gpsOK = FALSE
@@ -128,10 +126,26 @@ for (i in 1:nrow(log)) {
 		# identify the directory containing data for this day
 		dataSource = paste(prefix, "/DISC/", cLog$date, sep="")
 
-		# to determine the IMAGES associated with current deployment, we start with a guess of where the first image is. set it to 1 for this new day
+		cat(" collect all images")
+		# collect all images into one directory
 		imageSource = paste(dataSource, "/DCIM-all/", sep="")
+		system(paste("mkdir -p ", imageSource))
+		system(paste("
+			count=1;
+			# for each picture
+			find ", dataSource,"/DCIM/ -name 'DSC*.JPG' | while read file;
+			do
+				# create a hard link in the destination directory
+				ln $file ", imageSource,"/$count.jpg;
+
+				let 'count += 1';
+			done;",
+			sep=""))
+
+		# later in the loop, when we determine the IMAGES associated with the current deployment, we start with a guess of where the first image is. Here we set it to 1 as this is new day
 		startImage = endImage = 1
 
+		cat(" read data")
 		# get CTD data
 		ctdLog = paste(dataSource,"/ctd_log.dat",sep="")
 		if (file.exists(ctdLog)) {
@@ -172,9 +186,12 @@ for (i in 1:nrow(log)) {
 			startOfDay = startLog[startLog$date == cLog$date, "dateTime"]
 			compass$date = startOfDay + compass$Timestamp
 		}
+		cat("\n")
 
 	}
 
+	# display current deloyment number
+	cat(sprintf("%5i",cLog$deployId))
 
 	# determine start and end time for this deployment
 	startTime = cLog$dateTime + initialLag*60 - fuzzy
