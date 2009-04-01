@@ -6,19 +6,27 @@
 #-----------------------------------------------------------------------------
 
 
-image.time <- function(n, imageSource)
+image.time <- function(img)
 #
 #	Extract the time from the exif data of an image
-#	n					image number (name)
+#	img				file name of the image
 #	imageSource		directory where to find the images
 #
 {
-	img = paste(imageSource,"/",n,".jpg",sep="")
 	dateTime = system(paste("exiftool -T -CreateDate", img), intern=TRUE)
 	dateTime = as.POSIXct(strptime(dateTime, format="%Y:%m:%d %H:%M:%S"))
 	return(dateTime)
 }
 
+img <- function(n, imageSource)
+#
+# Compute the filename of an image given its number
+#	n					image number
+#	imageSource		directory where to find the image
+#
+{
+	paste(imageSource,"/",n,".jpg",sep="")
+}
 
 find.image.by.time <- function(target, n=1, imageSource)
 #
