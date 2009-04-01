@@ -17,22 +17,19 @@ for folder in $(echo ${prefix}/200*); do
 
 	dataSource=${folder}"/DCIM"
 	dataDestination=${folder}"/DCIM-all"
-	
+
 	# create destination directory if it does not exists
 	mkdir -p $dataDestination
-	
+
+	count=1
+
 	# for each picture
 	find $dataSource -name "DSC*.JPG" | while read file
 	do
-		# get date and time of shoot, to the centi-second, using exif tool
-		dateTime=$(exiftool -p '${CreateDate}.${SubSecTime}' $file)
-		# replace spaces to make it easier to deal with the filename
-		newName=$(echo ${dateTime} | tr " " "_" | tr ":" "-")".jpg"
-		# echo $(echo $file | awk -F "/" {'print $NF'}) "->" $newName
-	
 		# create a hard link in the destination directory
-		ln $file $dataDestination/$newName
-		# when two files have exactly the same time stamp, only, they would end up with the same name but the first one is in fact not overwritten.
+		ln $file $dataDestination/$count.jpg
+
+		let "count += 1"
 	done
 
 done
