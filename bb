@@ -149,14 +149,14 @@ WORK=$WORK/$VIDEOID/
 
 # Data directory
 DATAREAL=$WORK
-# if we only perform tests, Test data is saved in a subdirectory
+# When we only perform tests, test data is saved in a subdirectory
 DATATEST=$DATAREAL/Test/
 
-if [[ ! -e $DATATEST ]]; then
-	mkdir $DATATEST
-fi
 # select where to output data depending on the test switch
 if [[ $TEST == "true" ]]; then
+	if [[ ! -e $DATATEST ]]; then
+		mkdir $DATATEST
+	fi
 	DATA=$DATATEST
 else
 	DATA=$DATAREAL
