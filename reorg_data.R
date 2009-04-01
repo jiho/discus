@@ -88,6 +88,7 @@ find.image.by.time <- function(target, n=1, imageSource)
 
 prefix = "../Lizard_Island/data/"
 
+cat("Reading logs...\n")
 # read deployment log
 log = read.table(paste(prefix,"data_log.csv",sep=""), header=TRUE, sep=",", as.is=TRUE)
 log$dateTime = paste(log$date, log$timeIn)
@@ -106,13 +107,15 @@ fuzzy = 10        # the time range is extended by this amount to select the data
 
 log = log[log$date=="2008-11-28",]
 
+cat("Extracting data...\n")
+
 # for each deployment (row extract the corresponding data)
 for (i in 1:nrow(log)) {
 
-	cat(i,"\n")
-
 	# select current deployment
 	cLog = log[i,]
+
+	cat(sprintf("%3i",cLog$deployId))
 
 	# most data is initially organized by day, so all the initial reading of data is to be done by day.
 	# so we start by detecting whether the current deployment is on a new day or not, and perform appropriate actions if it is.
@@ -228,6 +231,7 @@ for (i in 1:nrow(log)) {
 		# write the CTD record with the rest of the data
 		if (nrow(cCtd) > 0) {
 			write.table(cCtd, paste(dataDestination, "/ctd_log.csv", sep=""), row.names=FALSE, sep=",")
+			cat("  +ctd")
 		}
 	}
 
@@ -241,6 +245,7 @@ for (i in 1:nrow(log)) {
 		# write the CTD record with the rest of the data
 		if (nrow(cGps) > 0) {
 			write.table(cGps, paste(dataDestination, "/gps_log.csv", sep=""), row.names=FALSE, sep=",")
+			cat("  +gps")
 		}
 	}
 
@@ -255,6 +260,7 @@ for (i in 1:nrow(log)) {
 			# wite the compass information
 			names(cCompass) = tolower(names(cCompass))
 			write.table(cCompass, paste(dataDestination, "/compass_log.csv", sep=""), row.names=FALSE, sep=",")
+			cat("  +compass\n")
 		}
 	}
 
