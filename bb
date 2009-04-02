@@ -226,7 +226,7 @@ then
 		\nPress OK when you are done');                 \
 	run('Set Measurements...', ' centroid perimeter redirect=None decimal=3'); \
 	run('Measure');                                     \
-	saveAs('Measurements', '${TEMP}/aquarium.txt');     \
+	saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
 	run('Quit');"
 
 	echo "Save aquarium coordinates"
