@@ -242,15 +242,36 @@ if [[ $TRACK_LARV == "true" || $TRACK_COMP == "true" ]]; then
 		resultFileName="larvae_track"
 	elif [[ $TRACK_COMP == "true" ]]; then
 		resultFileName="compass_track"
+
+		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
+		echo "Open first image for calibration"
+		# Use an ImageJ macro to run everything. The macro proceeds this way
+		# - use Image Sequence to open only the first image
+		# - select the point selection tool
+		# - use waitForUser to let the time for the user to click the compass
+		# - measure centroid coordinates in pixels
+		# - save that to an appropriate file
+		# - quit
+		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
+		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+		setTool(7);                                         \
+		waitForUser('Compass calibration',                  \
+			'Please click the center of one compass.\n      \
+			\nPress OK when you are done');                 \
+		run('Set Measurements...', ' centroid redirect=None decimal=3'); \
+		run('Measure');                                     \
+		saveAs('Measurements', '${TEMP}/coord_compass.txt');\
+		run('Quit');"
+
+		echo "Save compass coordinates"
 	fi
 
 	echo "Open stack"
 	# Use an ImageJ macro to run everything. The macro proceeds this way
-	# - Use Image Sequence to open only the first image
-	# - Create a default oval
-	# - use waitForUser to let the time for the user to tweak the selection
-	# - measure centroid and perimeter in pixels
-	# - save that to an appropriate file
+	# - use Image Sequence to open the stack
+	# - call the Manual Tracking plugin
+	# - use waitForUser to let the time for the user to track larvae
+	# - save the tracks to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
