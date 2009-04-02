@@ -78,6 +78,8 @@ if [[ ! -e $IJ_PATH/ij.jar ]]; then
 	error "ImageJ not found. ij.jar should be in $IJ_PATH"
 	exit 1
 fi
+# ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
+IJ_MEM=1000
 
 # Working directory root = where the folders for each deployment are
 WORK="/Users/jiho/Work/projects/ownfor/Lizard_Island/data/DISC-sorted"
@@ -236,7 +238,28 @@ fi
 if [[ $TRACK_LARV == "true" ]]
 then
 	echoBlue "\nTRACKING LARVAE"
-	# $RES/tracking.sh
+
+	echo "Open stack"
+	# Use an ImageJ macro to run everything. The macro proceeds this way
+	# - Use Image Sequence to open only the first image
+	# - Create a default oval
+	# - use waitForUser to let the time for the user to tweak the selection
+	# - measure centroid and perimeter in pixels
+	# - save that to an appropriate file
+	# - quit
+	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
+	-ijpath ${IJ_PATH}/plugins/ -eval "               \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=0 starting=1 increment=1 scale=100 file=[] or=[] sort use'); \
+	run('Manual Tracking');                           \
+	waitForUser('Track finised?',                     \
+		'Press OK when done tracking');               \
+	selectWindow('Tracks');                           \
+	saveAs('Text', '${TEMP}/tracks.txt');             \
+	run('Quit');"
+
+	echo "Save track"
+
+	commit_changes
 fi
 
 # Tracking compass
