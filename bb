@@ -49,10 +49,23 @@ echo "
 #-----------------------------------------------------------------------
 # Source code resources path = where the source code is
 HERE=`pwd`
-RES="$HERE/src/"
+RES="$HERE/src"
 
 # Get library functions
 source $RES/lib_shell.sh
+typeset -fx echoBold
+typeset -fx echoB
+typeset -fx echoRed
+typeset -fx echoGreen
+typeset -fx echoBlue
+typeset -fx warning
+typeset -fx error
+
+source $RES/lib_discus.sh
+typeset -fx open_stack
+typeset -fx commit_changes
+
+# source $RES/lib_tracking.sh
 
 # ImageJ and Java paths
 JAVA_CMD=`which java`
