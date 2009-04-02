@@ -144,13 +144,17 @@ done
 #-----------------------------------------------------------------------
 
 # Work directory
-WORK=$WORK/$VIDEOID/
+WORK="$WORK/$VIDEOID"
+if [[ ! -d $WORK ]]; then
+	error "Working directory does not exist: $WORK"
+	exit 1
+fi
 
 
 # Data directory
-DATAREAL=$WORK
+DATAREAL="$WORK"
 # When we only perform tests, test data is saved in a subdirectory
-DATATEST=$DATAREAL/Test/
+DATATEST="$DATAREAL/test"
 
 # select where to output data depending on the test switch
 if [[ $TEST == "true" ]]; then
