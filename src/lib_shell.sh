@@ -29,7 +29,7 @@ echoBold () {
 }
 
 echoB () {
-	echoBold $1
+	echoBold "$*"
 }
 
 # echo in green
