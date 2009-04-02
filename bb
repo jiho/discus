@@ -235,9 +235,14 @@ then
 fi
 
 # Tracking
-if [[ $TRACK_LARV == "true" ]]
-then
+if [[ $TRACK_LARV == "true" || $TRACK_COMP == "true" ]]; then
 	echoBlue "\nTRACKING LARVAE"
+
+	if [[ $TRACK_LARV == "true" ]]; then
+		resultFileName="larvae_track"
+	elif [[ $TRACK_COMP == "true" ]]; then
+		resultFileName="compass_track"
+	fi
 
 	echo "Open stack"
 	# Use an ImageJ macro to run everything. The macro proceeds this way
@@ -254,19 +259,12 @@ then
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
 	selectWindow('Tracks');                           \
-	saveAs('Text', '${TEMP}/tracks.txt');             \
+	saveAs('Text', '${TEMP}/${resultFileName}.txt');  \
 	run('Quit');"
 
 	echo "Save track"
 
 	commit_changes
-fi
-
-# Tracking compass
-if [[ $TRACK_COMP == "true" ]]
-then
-	echoBlue "\nCOMPASS TRACK RECOVERY"
-	# $RES/compass.sh
 fi
 
 # Correction
