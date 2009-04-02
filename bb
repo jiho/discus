@@ -207,7 +207,29 @@ fi
 if [[ $TRACK_CALIB == "true" ]]
 then
 	echoBlue "\nCALIBRATION"
-	# $RES/calib.sh
+
+	echo "Open first image for calibration"
+	# Use an ImageJ macro to run everything. The macro proceeds this way
+	# - Use Image Sequence to open only the first image
+	# - Create a default oval
+	# - use waitForUser to let the time for the user to tweak the selection
+	# - measure centroid and perimeter in pixels
+	# - save that to an appropriate file
+	# - quit
+	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
+	run('Image Sequence...', 'open=${WORK}/*.JPG number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+	makeOval(402, 99, 1137, 1137);                      \
+	waitForUser('Aquarium selection',                   \
+		'If necessary, alter the selection to fit the aquarium better.\n \
+		\nPress OK when you are done');                 \
+	run('Set Measurements...', ' centroid perimeter redirect=None decimal=3'); \
+	run('Measure');                                     \
+	saveAs('Measurements', '${TEMP}/aquarium.txt');     \
+	run('Quit');"
+
+	echo "Save aquarium coordinates"
+
+	commit_changes
 fi
 
 # Tracking
