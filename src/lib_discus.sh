@@ -26,7 +26,7 @@ commit_changes()
 #	Ask to commit changes and copy all .txt files from TEMP to DATA
 #
 {
-	echoB "Commiting changes"
+	echoB "Committing changes"
 	echo=`which echo`
 	$echo -n "Do you want to commit changes? (y/n [y]) : "
 	read -e COMMIT
