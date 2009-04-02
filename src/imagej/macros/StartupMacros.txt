@@ -1,6 +1,0 @@
-// ImageJ macro that sets the mesurements and mesure something
-
-macro "Measure..." {
-  run("Set Measurements...", "  centroid perimeter redirect=None decimal=3");
-  run("Measure");
-}
