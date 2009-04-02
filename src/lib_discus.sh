@@ -27,7 +27,8 @@ commit_changes()
 #
 {
 	echoB "Commiting changes"
-	echo "Do you want to commit changes? (y/n [y]) : "
+	echo=`which echo`
+	$echo -n "Do you want to commit changes? (y/n [y]) : "
 	read -e COMMIT
 	if [[ "$COMMIT" == "" || "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" ]]
 	then
