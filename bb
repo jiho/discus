@@ -217,7 +217,7 @@ then
 	# - save that to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-	run('Image Sequence...', 'open=${WORK}/*.JPG number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 	makeOval(402, 99, 1137, 1137);                      \
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
