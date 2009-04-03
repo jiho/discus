@@ -82,7 +82,7 @@ fi
 IJ_MEM=1000
 
 # Working directory root = where the folders for each deployment are
-WORK="/Users/jiho/Work/projects/ownfor/Lizard_Island/data/DISC-sorted"
+WORK=$HERE
 
 # Defaults for this script options
 TEST="false"
