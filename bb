@@ -171,18 +171,8 @@ DATAREAL="$WORK"
 # When we only perform tests, test data is saved in a subdirectory
 DATATEST="$DATAREAL/test"
 
-# select where to output data depending on the test switch
-if [[ $TEST == "true" ]]; then
-	if [[ ! -e $DATATEST ]]; then
-		mkdir $DATATEST
-	fi
-	DATA=$DATATEST
-else
-	DATA=$DATAREAL
-fi
-
 # Temporary directory, where all operations are done
-TEMP=$WORK/Temp/
+TEMP="$WORK/tmp"
 if [[ ! -e $TEMP ]]; then
 	mkdir $TEMP
 fi
@@ -198,10 +188,21 @@ export NB_PIE
 
 # LAUNCH COMPONENTS
 #-----------------------------------------------------------------------
-# Test mode message
-if [[ $TEST == "true" ]]
-then
-  warning "Test mode"
+# Test mode switches
+if [[ $TEST == "true" ]]; then
+	warning "Test mode"
+	# nb of images to read as a stack
+	nbImages=10
+	# use special test directory to store test results
+	if [[ ! -e $DATATEST ]]; then
+		mkdir $DATATEST
+	fi
+	DATA=$DATATEST
+else
+	nbImages=0
+	# NB: zero means all
+	# use the regular data directory
+	DATA=$DATAREAL
 fi
 
 
@@ -275,7 +276,7 @@ if [[ $TRACK_LARV == "true" || $TRACK_COMP == "true" ]]; then
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${WORK}/*.jpg number=0 starting=1 increment=1 scale=100 file=[] or=[] sort use'); \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=1 scale=100 file=[] or=[] sort use'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
