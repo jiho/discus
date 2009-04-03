@@ -78,25 +78,38 @@ if [[ ! -e $IJ_PATH/ij.jar ]]; then
 	error "ImageJ not found. ij.jar should be in $IJ_PATH"
 	exit 1
 fi
+
+# Defaults
+
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
 IJ_MEM=1000
 
-# Working directory root = where the folders for each deployment are
+# root folder where the folders for each deployment are
 WORK=$HERE
+# deployment number
+VIDEOID="0"
 
-# Defaults for this script options
-TEST="false"
+# test switch, uses a subset of data for a smaller footprint
+TEST=FALSE
 
-TRACK="false"
-TRACK_CALIB="false"
-TRACK_COMP="false"
-TRACK_LARV="false"
-TRACK_CORR="false"
+# perform calibration?
+TRACK_CALIB=FALSE
+# track compass?
+TRACK_COMP=FALSE
+# track larva(e)?
+TRACK_LARV=FALSE
+# correct tracks?
+TRACK_CORR=FALSE
+# perform statistical analysis of current track?
+STATS=FALSE
+# clean data directory?
+CLEAN=FALSE
 
-STATS="false"
+# diameter of the aquarium, in cm
+aquariumDiam=40
+# number of pie parts in the pie graph
 NB_PIE=20
 
-CLEAN="false"
 
 # Getting options from the config file (overriding defaults)
 for CONFIG_FILE in "bb.conf" "BlueBidule.conf"; do
@@ -110,38 +123,38 @@ done
 until [[ -z "$1" ]]; do
 	case "$1" in
 		-t|-test)
-			TEST="true"
+			TEST=TRUE
 			shift 1 ;;
 		-h|-help) 
 			help
 			exit 1 ;; 
 		-cal|-calib) 
-			TRACK_CALIB="true"
+			TRACK_CALIB=TRUE
 			shift 1 ;;  
 		-com|-compass) 
-			TRACK_COMP="true"
+			TRACK_COMP=TRUE
 			shift 1 ;;
 		-l|-larva) 
-			TRACK_LARV="true"
+			TRACK_LARV=TRUE
 			shift 1 ;;
 		-c|-correct) 
-			TRACK_CORR="true"
+			TRACK_CORR=TRUE
 			shift 1 ;;
 		-s|-stats) 
-			STATS="true"
+			STATS=TRUE
 			shift 1 ;;
 		-nb|-nb-pie)
 			NB_PIE="$2"
 			shift 2 ;;
 		-a|-all) 
-			TRACK_CALIB="true"
-			TRACK_COMP="true"
-			TRACK_LARV="true"
-			TRACK_CORR="true"
-			STATS="true"
+			TRACK_CALIB=TRUE
+			TRACK_COMP=TRUE
+			TRACK_LARV=TRUE
+			TRACK_CORR=TRUE
+			STATS=TRUE
 			shift 1 ;;
 		-clean) 
-			CLEAN="true"
+			CLEAN=TRUE
 			shift 1 ;;      
 		-*)
 			error "Unknown option \"$1\" "
@@ -164,7 +177,6 @@ if [[ ! -d $WORK ]]; then
 	error "Working directory does not exist: $WORK"
 	exit 1
 fi
-
 
 # Data directory
 DATAREAL="$WORK"
@@ -189,7 +201,7 @@ export NB_PIE
 # LAUNCH COMPONENTS
 #-----------------------------------------------------------------------
 # Test mode switches
-if [[ $TEST == "true" ]]; then
+if [[ $TEST == "TRUE" ]]; then
 	warning "Test mode"
 	# nb of images to read as a stack
 	nbImages=10
@@ -207,7 +219,7 @@ fi
 
 
 # Calibration
-if [[ $TRACK_CALIB == "true" ]]
+if [[ $TRACK_CALIB == "TRUE" ]]
 then
 	echoBlue "\nCALIBRATION"
 
@@ -236,12 +248,12 @@ then
 fi
 
 # Tracking
-if [[ $TRACK_LARV == "true" || $TRACK_COMP == "true" ]]; then
+if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 	echoBlue "\nTRACKING LARVAE"
 
-	if [[ $TRACK_LARV == "true" ]]; then
+	if [[ $TRACK_LARV == "TRUE" ]]; then
 		resultFileName="larvae_track"
-	elif [[ $TRACK_COMP == "true" ]]; then
+	elif [[ $TRACK_COMP == "TRUE" ]]; then
 		resultFileName="compass_track"
 
 		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
@@ -290,21 +302,21 @@ if [[ $TRACK_LARV == "true" || $TRACK_COMP == "true" ]]; then
 fi
 
 # Correction
-if [[ $TRACK_CORR == "true" ]]
+if [[ $TRACK_CORR == "TRUE" ]]
 then
 	echoBlue "\nCORRECTION OF TRACKS"
 	# $RES/tracking.sh
 fi
 
 # Tracks analysis
-if [[ $STATS == "true" ]]
+if [[ $STATS == "TRUE" ]]
 then
 	echoBlue "\nSTATISTICAL ANALYSIS"
 	# $RES/stats.sh
 fi
 
 # Cleaning
-if [[ "$CLEAN" == "true" ]]
+if [[ "$CLEAN" == "TRUE" ]]
 then
 	echoBlue "\nCLEANING DATA"
 	echo "Removing test directory ..."
