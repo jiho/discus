@@ -86,7 +86,7 @@ find.image.by.time <- function(target, n=1, imageSource)
 #------------------------------------------------------------------------------
 
 
-prefix = "../Lizard_Island/data/"
+prefix = "~/current_data/"
 
 cat("  read logs\n")
 # read deployment log
@@ -124,7 +124,7 @@ for (i in 1:nrow(log)) {
 		compassOK = FALSE
 
 		# identify the directory containing data for this day
-		dataSource = paste(prefix, "/DISC/", cLog$date, sep="")
+		dataSource = paste(prefix, cLog$date, sep="")
 
 		cat(" collect all images")
 		# collect all images into one directory
@@ -133,12 +133,12 @@ for (i in 1:nrow(log)) {
 		system(paste("
 			count=1;
 			# for each picture
-			find ", dataSource,"/DCIM/ -name 'DSC*.JPG' | while read file;
+			find ", dataSource,"/DCIM/ -name 'DSC*.JPG' | sort | while read file;
 			do
 				# create a hard link in the destination directory
 				ln $file ", imageSource,"/$count.jpg;
 
-				let 'count += 1';
+				count=$(echo $count+1 | bc);
 			done;",
 			sep=""))
 
@@ -171,7 +171,6 @@ for (i in 1:nrow(log)) {
 
 			# re-organize data.frame
 			gps = data.frame(date=gps$Date, lat=gps$Latitude, lon=gps$Longitude, signal=gps$Signal)
-
 		}
 
 		# get COMPASS data
@@ -198,7 +197,7 @@ for (i in 1:nrow(log)) {
 	endTime = cLog$dateTime + duration*60 + fuzzy
 
 	# create output directory
-	dataDestination = paste(prefix, "/DISC-sorted/", cLog$deployId, sep="")
+	dataDestination = paste(prefix, "/deployments/", cLog$deployId, sep="")
 	system(paste("mkdir -p", dataDestination))
 
 
