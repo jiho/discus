@@ -14,7 +14,7 @@ image.time <- function(img)
 #
 {
 	dateTime = system(paste("exiftool -T -CreateDate", img), intern=TRUE)
-	dateTime = as.POSIXct(strptime(dateTime, format="%Y:%m:%d %H:%M:%S"))
+	dateTime = as.POSIXct(strptime(dateTime, format="%Y:%m:%d %H:%M:%S", tz="GMT"))
 	return(dateTime)
 }
 
@@ -92,13 +92,14 @@ cat("  read logs\n")
 # read deployment log
 log = read.table(paste(prefix,"/log-disc_deployment.csv",sep=""), header=TRUE, sep=",", as.is=TRUE)
 log$dateTime = paste(log$date, log$timeIn)
-log$dateTime = as.POSIXct(strptime(log$dateTime, format="%Y-%m-%d %H:%M"))
+log$dateTime = as.POSIXct(strptime(log$dateTime, format="%Y-%m-%d %H:%M", tz="GMT"))
+# NB: the timezone is not GMT but we use that as a cross platform reference for a common time specification.
 # head(log)
 
 # read start time of the day log
 startLog = read.table(paste(prefix,"/log-camera_start_time.csv", sep=""), header=TRUE, sep=",", as.is=TRUE)
 startLog$dateTime = paste(startLog$date, startLog$startTime)
-startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%M:%S"))
+startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
 # time constants
 initialLag = 5    # time to wait after the start of deployment [minute]
@@ -161,7 +162,7 @@ for (i in 1:nrow(log)) {
 			ctd = read.table(ctdLog, header=F, sep="\t", as.is=TRUE, skip=19, col.names=c("record","date","temperature","depth","salinity"))
 
 			# convert time to POSIX class
-			ctd$date = as.POSIXct(strptime(ctd$date, format="%d-%m-%y %H:%M:%S"))
+			ctd$date = as.POSIXct(strptime(ctd$date, format="%d-%m-%y %H:%M:%S", tz="GMT"))
 		}
 
 		# get GPS data
@@ -174,7 +175,7 @@ for (i in 1:nrow(log)) {
 			gps = read.table(gpsLog, sep=",", header = TRUE, as.is=T)
 
 			# convert time to POSIX class
-			gps$Date = as.POSIXct(strptime(gps$Date, format="%d/%m/%Y %H:%M"))
+			gps$Date = as.POSIXct(strptime(gps$Date, format="%m/%d/%Y %H:%M", tz="GMT"))
 
 			# re-organize data.frame
 			gps = data.frame(date=gps$Date, lat=gps$Latitude, lon=gps$Longitude, signal=gps$Signal)
