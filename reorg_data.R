@@ -114,7 +114,7 @@ for (i in 1:nrow(log)) {
 	# most data is initially organized by day, so all the initial reading of data is to be done by day.
 	# so we start by detecting whether the current deployment is on a new day or not, and perform appropriate actions if it is.
 	if (any(i == 1, log[i,"date"] != log[i-1,"date"]) ) {
-		cat("  -- new day:")
+		cat("  -- new day", log[i,"date"], ":")
 
 		# initialize variables
 		ctdOK = FALSE
@@ -147,13 +147,14 @@ for (i in 1:nrow(log)) {
 			done;",
 			sep=""))
 
-		# later in the loop, when we determine the IMAGES associated with the current deployment, we start with a guess of where the first image is. Here we set it to 1 as this is new day
+		# later in the loop, when we determine the images associated with the current deployment, we start with a guess of where the first image is. Here we set it to 1 as this is new day
 		startImage = endImage = 1
 
-		cat(" read data")
+		cat(", read data:")
 		# get CTD data
 		ctdLog = paste(dataSource,"/ctd_log.dat",sep="")
 		if (file.exists(ctdLog)) {
+			cat(" ctd")
 			ctdOK = TRUE
 
 			# read ctd log
@@ -181,6 +182,7 @@ for (i in 1:nrow(log)) {
 		# get COMPASS data
 		compassLog = paste(dataSource,"/compass_log.csv",sep="")
 		if (file.exists(compassLog)) {
+			cat(" compass")
 			compassOK=TRUE
 
 			# read compass data
@@ -190,6 +192,7 @@ for (i in 1:nrow(log)) {
 			startOfDay = startLog[startLog$date == cLog$date, "dateTime"]
 			compass$date = startOfDay + compass$Timestamp
 		}
+
 		cat("\n")
 
 	}
@@ -281,8 +284,9 @@ for (i in 1:nrow(log)) {
 			# wite the compass information
 			names(cCompass) = tolower(names(cCompass))
 			write.table(cCompass, paste(dataDestination, "/compass_log.csv", sep=""), row.names=FALSE, sep=",")
-			cat("  +compass\n")
+			cat("  +compass")
 		}
 	}
 
+	cat("\n")
 }
