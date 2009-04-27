@@ -86,17 +86,17 @@ find.image.by.time <- function(target, n=1, imageSource)
 #------------------------------------------------------------------------------
 
 
-prefix = "~/current_data/"
+prefix = "/media/data/DISC-One_Tree_Island/DISC"
 
 cat("  read logs\n")
 # read deployment log
-log = read.table(paste(prefix,"data_log.csv",sep=""), header=TRUE, sep=",", as.is=TRUE)
+log = read.table(paste(prefix,"/log-disc_deployment.csv",sep=""), header=TRUE, sep=",", as.is=TRUE)
 log$dateTime = paste(log$date, log$timeIn)
 log$dateTime = as.POSIXct(strptime(log$dateTime, format="%Y-%m-%d %H:%M"))
 # head(log)
 
 # read start time of the day log
-startLog = read.table(paste(prefix,"start_time_log.csv", sep=""), header=TRUE, sep=",", as.is=TRUE)
+startLog = read.table(paste(prefix,"/log-camera_start_time.csv", sep=""), header=TRUE, sep=",", as.is=TRUE)
 startLog$dateTime = paste(startLog$date, startLog$startTime)
 startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%M:%S"))
 
@@ -104,8 +104,6 @@ startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%
 initialLag = 5    # time to wait after the start of deployment [minute]
 duration = 20     # duration of the deployment (including initialLag) [minute]
 fuzzy = 10        # the time range is extended by this amount to select the data with a bit more fuzziness [sec]
-
-log = log[log$date=="2008-11-28",]
 
 # for each deployment (row extract the corresponding data)
 for (i in 1:nrow(log)) {
@@ -190,14 +188,14 @@ for (i in 1:nrow(log)) {
 	}
 
 	# display current deloyment number
-	cat(sprintf("%5i",cLog$deployId))
+	cat(sprintf("%5i",cLog$deployNb))
 
 	# determine start and end time for this deployment
 	startTime = cLog$dateTime + initialLag*60 - fuzzy
 	endTime = cLog$dateTime + duration*60 + fuzzy
 
 	# create output directory
-	dataDestination = paste(prefix, "/deployments/", cLog$deployId, sep="")
+	dataDestination = paste(prefix, "/deployments/", cLog$deployNb, sep="")
 	system(paste("mkdir -p", dataDestination))
 
 
@@ -233,7 +231,7 @@ for (i in 1:nrow(log)) {
 	}
 
 	# compute the array of images of interest
-	cImages = paste(imageSource, seq(startImage, endImage), ".jpg", sep="", collapse=" ")
+	cImages = paste(imageSource, "/", seq(startImage, endImage), ".jpg", sep="", collapse=" ")
 
 	# move images to destination
 	system(paste("mv", cImages, dataDestination))
