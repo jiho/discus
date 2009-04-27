@@ -69,7 +69,7 @@ find.image.by.time <- function(target, n=1, imageSource)
 			shift = as.integer( difftime(target, image.time(newImg), units="secs") / interval )
 			fallback = FALSE
 		} else {
-			while(!file.exists(newImg)){
+			while(!file.exists(newImg)) {
 				n = n - 1
 				newImg = img(n, imageSource)
 			}
