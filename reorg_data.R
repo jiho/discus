@@ -165,8 +165,9 @@ for (i in 1:nrow(log)) {
 		}
 
 		# get GPS data
-		gpsLog = paste(dataSource,"/ctd_log.csv", sep="")
+		gpsLog = paste(dataSource,"/gps_log.csv", sep="")
 		if (file.exists(gpsLog)) {
+			cat(" gps")
 			gpsOK = TRUE
 
 			# read gps log
