@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 # 	Usefull shell functions
 # 
@@ -25,7 +25,7 @@
 
 # echo in bold characters
 echoBold () {
-	echo "\e[1m$1\e[0m"
+	echo -e "\e[1m$1\e[0m"
 }
 
 echoB () {
@@ -34,25 +34,25 @@ echoB () {
 
 # echo in green
 echoRed() {
-	echo "\e[0;31m$1\e[0m"
+	echo -e "\e[0;31m$1\e[0m"
 }
 
 # echo in green
 echoGreen() {
-	echo "\e[0;32m$1\e[0m"
+	echo -e "\e[0;32m$1\e[0m"
 }
 
 # echo in blue
 echoBlue() {
-	echo "\e[0;34m$1\e[0m"
+	echo -e "\e[0;34m$1\e[0m"
 }
 
 # writes a warning on stantard out
 warning() {
-	echo "\e[0;31m\e[1mWARNING:\e[0m $1\e[0m"
+	echo -e "\e[0;31m\e[1mWARNING:\e[0m $1\e[0m"
 }
 
 error() {
-	echo "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
+	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
 }
 

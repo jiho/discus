@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #	Functions useful at several stages of the analysis with DISCUS
 #	- open images as a stack

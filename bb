@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # 	BlueBidule
 #
@@ -20,7 +20,7 @@
 # HELP
 #-----------------------------------------------------------------------
 help() {
-echo "
+echo -e "
 \033[1mUSAGE\033[0m
   \033[1m$0 [options]\033[0m deploymentID
   Data extractaction and analysis script for the DISC.
@@ -328,6 +328,6 @@ then
 fi
 
 
-echo "\nDone. Bye"
+echo -e "\nDone. Bye"
 
 exit 0

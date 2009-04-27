@@ -1,6 +1,6 @@
 # Dependencies
 
-- a shell environment. The code has been thoroughly tested with Bash
+- the BASH shell environment (not just any shell, many constructs are BASH specific)
 
 - [ImageJ](http://rsbweb.nih.gov/ij/ "ImageJ"), jar archive version
 
