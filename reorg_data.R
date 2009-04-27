@@ -122,12 +122,19 @@ for (i in 1:nrow(log)) {
 		compassOK = FALSE
 
 		# identify the directory containing data for this day
-		dataSource = paste(prefix, cLog$date, sep="")
+		dataSource = paste(prefix, "/", cLog$date, sep="")
 
 		cat(" collect all images")
-		# collect all images into one directory
-		imageSource = paste(dataSource, "/DCIM-all/", sep="")
-		system(paste("mkdir -p ", imageSource))
+		# collect all images into one temporary directory
+		# start by erasing previous directory
+		if ( exists("imageSource") ) {
+			if( file.exists(imageSource) ) {
+				system("rm -Rf imageSource")
+			}
+		}
+		# create the new temp directory
+		imageSource = system(paste("mktemp -d -p", prefix), intern=TRUE)
+		# collect all images for today in it
 		system(paste("
 			count=1;
 			# for each picture
