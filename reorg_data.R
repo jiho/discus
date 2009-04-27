@@ -115,7 +115,7 @@ for (i in 1:nrow(log)) {
 	# most data is initially organized by day, so all the initial reading of data is to be done by day.
 	# so we start by detecting whether the current deployment is on a new day or not, and perform appropriate actions if it is.
 	if (any(i == 1, log[i,"date"] != log[i-1,"date"]) ) {
-		cat("  -- new day", log[i,"date"], ":")
+		cat("  --", log[i,"date"], ":")
 
 		# initialize variables
 		ctdOK = FALSE
