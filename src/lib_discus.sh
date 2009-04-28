@@ -28,9 +28,9 @@ commit_changes()
 {
 	echoB "Committing changes"
 	echo=`which echo`
-	$echo -n "Do you want to commit changes? (y/n [y]) : "
+	$echo -n "Do you want to commit changes? (y/n [n]) : "
 	read -e COMMIT
-	if [[ "$COMMIT" == "" || "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" ]]
+	if [[ "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" ]]
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
