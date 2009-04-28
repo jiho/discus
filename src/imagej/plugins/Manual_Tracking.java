@@ -91,7 +91,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     //Results tables------------------------------------------------------------
     ResultsTable rt; //2D results table
     ResultsTable rtmp; // Temporary results table
-    String[] head={"trackNb","sliceNb","x","y"}; //2D results table's headings
+    String[] head={"trackNb","sliceNb","imgNb","x","y"}; //2D results table's headings
 
 
     public Manual_Tracking() {
@@ -158,6 +158,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 return;
             }
             img=WindowManager.getCurrentImage();
+            stack = img.getStack();
             imgtitle = img.getTitle();
             if (imgtitle.indexOf(".")!=-1) imgtitle=imgtitle.substring(0,imgtitle.indexOf("."));
             IJ.setTool(7);
@@ -192,8 +193,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             rtmp=new ResultsTable();
             for (i=0; i<(rt.getCounter()); i++) {
                 rtmp.incrementCounter();
-//                for (j=0; j<7; j++) rtmp.addValue(j, rt.getValue(j,i));
-                for (j=0; j<4; j++) rtmp.addValue(j, rt.getValue(j,i));
+                for (j=0; j<head.length; j++) rtmp.addValue(j, rt.getValue(j,i));
             }
 
             rt.reset();
@@ -204,8 +204,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
             for (i=0; i<((rtmp.getCounter())-1); i++) {
                 rt.incrementCounter();
-//                for (j=0; j<7; j++) rt.addValue(j, rtmp.getValue(j,i));
-                for (j=0; j<4; j++) rt.addValue(j, rtmp.getValue(j,i));
+                for (j=0; j<head.length; j++) rt.addValue(j, rtmp.getValue(j,i));
             }
             rt.show("Tracks");
 
@@ -256,8 +255,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 int nbtrack=(int) rt.getValue(0,i);
                 if(nbtrack!=tracktodelete){
                     rtmp.incrementCounter();
-//                  for (j=0; j<7; j++) rtmp.addValue(j, rt.getValue(j,i));
-                    for (j=0; j<4; j++) rtmp.addValue(j, rt.getValue(j,i));
+                    for (j=0; j<head.length; j++) rtmp.addValue(j, rt.getValue(j,i));
                 }
             }
 
@@ -269,8 +267,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
             for (i=0; i<(rtmp.getCounter()); i++) {
                 rt.incrementCounter();
-//                for (j=0; j<7; j++){
-              for (j=0; j<4; j++){
+              for (j=0; j<head.length; j++){
                     if (j==0 & rtmp.getValue(0,i)>tracktodelete){
                         rt.addValue(j, rtmp.getValue(j,i)-1);
                     } else {
@@ -334,7 +331,17 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         yRoi[NbPoint-1]=oy;
 
         rt.incrementCounter();
-        double[] doub={Nbtrack,(img.getCurrentSlice()),ox,oy};
+        
+        // Detect the filename of the image (which is a number) and add that to the output table
+        int sliceNb=img.getCurrentSlice();
+        String label=stack.getSliceLabel(sliceNb);
+        // System.out.println(label);
+        // System.out.println(label.indexOf("."));
+        // System.out.println(label.substring(0,label.indexOf(".")));
+        double imgNb=Double.parseDouble(label.substring(0,label.indexOf(".")));
+        // System.out.println(imgNb);
+        
+        double[] doub={Nbtrack,(img.getCurrentSlice()),imgNb,ox,oy};
         for (i=0; i<doub.length; i++) rt.addValue(i,doub[i]);
         rt.show("Tracks");
 
