@@ -249,11 +249,12 @@ fi
 
 # Tracking
 if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
-	echoBlue "\nTRACKING LARVAE"
 
 	if [[ $TRACK_LARV == "TRUE" ]]; then
+		echoBlue "\nTRACKING LARVAE"
 		resultFileName="larvae_track"
 	elif [[ $TRACK_COMP == "TRUE" ]]; then
+		echoBlue "\nTRACKING COMPASS"
 		resultFileName="compass_track"
 
 		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
