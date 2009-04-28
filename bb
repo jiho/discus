@@ -28,19 +28,20 @@ echo -e "
   the configuration file and the command line.
 
 \033[1mOPTIONS\033[0m
-  \033[1m-a|-all\033[0m        do everything [default: do nothing]
-  \033[1m-t|-test\033[0m       simply perform a test (valid for all entries)
-  \033[1m-h|-help\033[0m       display this help message
-                               
-  \033[1m-cal|-calib\033[0m    measure calibration data for the tracking
-  \033[1m-com|-compass\033[0m  track the compass
-  \033[1m-l|-larva\033[0m      track the larva(e)
-  \033[1m-c|-correct\033[0m    correct the tracks
-                               
-  \033[1m-s|-stats\033[0m      compute statistics and plots
-    \033[1m-nb|-nb-pie\033[0m  number of pie parts in the pie graph
-
-  \033[1m-clean\033[0m         cleans work directory
+  \033[1m-a|-all\033[0m           do everything [default: do nothing]
+  \033[1m-t|-test\033[0m          simply perform a test (valid for all entries)
+  \033[1m-h|-help\033[0m          display this help message
+                                  
+  \033[1m-cal|-calib\033[0m       measure calibration data for the tracking
+  \033[1m-com|-compass\033[0m     track the compass
+  \033[1m-l|-larva\033[0m         track the larva(e)
+    \033[1m-sub\033[0m        1   subsample each 'sub' image
+  \033[1m-c|-correct\033[0m       correct the tracks
+                                  
+  \033[1m-s|-stats\033[0m         compute statistics and plots
+    \033[1m-nb|-nb-pie\033[0m 20  number of pie parts in the pie graph
+                                  
+  \033[1m-clean\033[0m            clean work directory
    "
 }
 
@@ -109,6 +110,8 @@ CLEAN=FALSE
 aquariumDiam=40
 # number of pie parts in the pie graph
 NB_PIE=20
+# subsample each 'sub' frame to speed up the analysis
+sub=1
 
 
 # Getting options from the config file (overriding defaults)
@@ -145,6 +148,9 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		-nb|-nb-pie)
 			NB_PIE="$2"
+			shift 2 ;;
+		-sub)
+			sub="$2"
 			shift 2 ;;
 		-a|-all) 
 			TRACK_CALIB=TRUE
@@ -266,7 +272,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=${sub} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of one compass.\n      \
@@ -288,7 +294,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=1 scale=100 file=[] or=[] sort use'); \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=${sub} scale=100 file=[] or=[] sort use'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
