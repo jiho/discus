@@ -13,9 +13,48 @@
 # Trigonometric functions
 #-----------------------------------------------------------------------
 
-car2pol <- function (incar,orig) 
+trig2geo <- function(x)
 #
-# Translates a matrix [x,y] to a matrix [theta,rho] using the provided coordinates of the origin
+#	Convert object x of class circular (or in trigonometric reference) to bearings
+#
+#	Bearings are measured clockwise from the vertical in degrees
+#	Trigonometric angles are measured counterclockwise from the horizontal in radians
+#
+{
+	require("circular")
+	# Cast to circular type
+	if (!is.circular(x)) {
+		x = circular(x)
+	}
+	# Proceed to the conversion
+	x = conversion.circular(x, units="degrees", template="geographics", modulo="2pi")
+	return(x)
+}
+
+geo2trig <- function(x)
+#
+#	Convert object x of class circular (or containing bearings) to trigonometric angles
+#
+#	Bearings are measured clockwise from the vertical in degrees
+#	Trigonometric angles are measured counterclockwise from the horizontal in radians
+#
+{
+	require("circular")
+	# Cast to circular type
+	if (!is.circular(x)) {
+		x = circular(x, units="degrees", template="geographics", modulo="2pi")
+	}
+	# Proceed to the conversion
+	x = conversion.circular(x, units="radians", template="none", modulo="asis", zero=0, rotation="counter")
+	return(x)
+}
+
+car2pol <- function (incar, orig=c(0,0))
+#
+# Translates from cardinal to polar coordinates
+#	incar		matrix or data frame with columns [x,y]
+#	orig		vector with the x,y coordinates of the origin
+# Result: a matrix or data.frame with columns [theta,rho], with theta in radians
 #
 {
 	# Makes the coordinates relative to the origin
@@ -23,11 +62,11 @@ car2pol <- function (incar,orig)
 	origMat[,1]=orig[1]
 	origMat[,2]=orig[2]
 	incar=incar-origMat
-	
+
 	# Initiate inpol
 	inpol=incar
 	inpol[,]=NA
-	
+
 	# Calculate the angles
 	inpol[,1]=atan2(incar[,2],incar[,1])
 	inpol[,1]=(inpol[,1]+2*pi)%%(2*pi)
@@ -37,33 +76,45 @@ car2pol <- function (incar,orig)
 	# Change column names
 	names(inpol)=c("theta","rho")
 
+	# Convert to class circular
+	require("circular")
+	inpol$theta = circular(inpol$theta)
+
 	return(inpol)
 }
 
 
-pol2car <- function (inpol,orig=c(0,0)) 
+pol2car <- function (inpol, orig=c(0,0))
 #
-# Translates a matrix [theta,rho] to a matrix [x,y] 
-# If coordinates are provided for the origin theay are added to the results
+# Translates from polar to cardinal coordinates
+#	inpol		a matrix or data.frame with columns [theta,rho], with theta of class circular or in trigonometric reference
+#	orig		vector with the x,y coordinates of the origin
+# Result: a matrix or data.frame with columns [x,y]
 #
 {
 	# Initiate incar
 	incar=inpol
 	incar[,]=NA
 
+	# Make sure angles are in the right reference
+	if (!is.circular(inpol[,1])) {
+		inpol[,1] = circular(inpol[,1])
+	}
+	inpol[,1] = geo2trig(inpol[,1])
+
 	# Compute cartesian coordinates
 	incar[,1]=inpol[,2]*cos(inpol[,1])
-	incar[,2]=inpol[,2]*sin(inpol[,1])	
+	incar[,2]=inpol[,2]*sin(inpol[,1])
 
 	# Make the coordinates relative to the origin
 	origMat=incar
 	origMat[,1]=orig[1]
 	origMat[,2]=orig[2]
 	incar=incar+origMat
-	
+
 	# Change column names
-	names(inpol)=c("x","y")	
-	
+	names(incar)=c("x","y")
+
 	return(incar)
 }
 
@@ -85,7 +136,7 @@ bootstrap.circ.stats <- function(angles,percentage,n_repet,name){
 #         repeated n_repet times
 # Details:
 #   resamples randomly "percentage" percents of the data and call circ_stats on these resampled sets. It can also check for independence by plotting autocorellograms and mean autocorrelograms
- 
+
   # Prepare storage for the ciruclar stats
   fulldata_rot=data.frame();
   fulldata_norot=data.frame();
@@ -99,9 +150,9 @@ bootstrap.circ.stats <- function(angles,percentage,n_repet,name){
   nb_rows=min(c(nb_sampled,max_lag));                       # Number of rows
   all_acf_rot=matrix(,nb_rows,n_repet);
   all_acf_norot=matrix(,nb_rows,n_repet);
-  
+
   # We repeat the same sequence of operations n_repet times
-  for (i in 1:n_repet) {    
+  for (i in 1:n_repet) {
     # take a sample of indexes of angles without replacement
     indexes=sample(c(1:nb_obs),nb_sampled,replace=F);
     indexes=sort(indexes)
@@ -111,7 +162,7 @@ bootstrap.circ.stats <- function(angles,percentage,n_repet,name){
     #dummy=check_indep(angles_extr[,1],paste("resampled positions. repetition",i))
     A_rot=acf(angles_extr[,1],max_lag,plot=F);              # ACF without plot
     all_acf_rot[,i]=A_rot$acf;                              # we store it in the matrix
-    A_norot=acf(angles_extr[,2],max_lag,plot=F); 
+    A_norot=acf(angles_extr[,2],max_lag,plot=F);
     all_acf_norot[,i]=A_norot$acf;
     # perform circular statistics on each collumn
     data_rot=circ_stats(angles_extr[,1],paste(name,"_rot",sep=""));
@@ -163,7 +214,7 @@ check.indep <- function(angles,lag=60,name,...)
 	result=acf(na.exclude(angles),lag.max=lag,main=paste(c("Autocorrelogram for "),name),...);
 	# get only the autocorrellation value
 	result=t(as.matrix(result$acf))
-	
+
 	# Computing a variogram of the data for a maximum lag of 60 frames
 	#vario(angles,60);
 	#mtext(paste(c("Variogram for "),name));
@@ -221,7 +272,7 @@ circ.stats <- function(angles,id,trackNb,type,correction)
 	}
 
 	# Summarizing in a data frame
-	#--------------------------------------------------------------------	
+	#--------------------------------------------------------------------
 	data=data.frame(id, trackNb, type, correction, sampleSize, meanBearing, circularDispersion, angularDeviation, rayleighR, pValue)
 
 	return(data)
@@ -238,14 +289,14 @@ plot.aquarium <- function(radius, type)
 {
 	# plot a symbol (circle) of given radius
 	symbols(0, 0, radius, inches=F, xlim=c(-radius,radius), ylim=c(-radius,radius) ,xlab="", ylab="", asp=1, xaxt="n", yaxt="n", bty="n")
-	
+
 	if (type == "corrected") {
 		# write a north arrow
 		x=3*radius/4
 		# plot a arrow pointing north
 		arrows(x,x,x,x+radius/4,length=0.1)
 		# Write N at the top of the arrow
-		text(x,x+radius/9, labels="N", pos=4)		
+		text(x,x+radius/9, labels="N", pos=4)
 	}
 }
 
@@ -264,7 +315,7 @@ plot.traject <- function(track, aquariumRadius, main="Trajectory", sub, ...)
 		x=track[[l]]$x
 		y=track[[l]]$y
 		nbObs=length(x)
-		
+
 		# plot the aquarium
 		plot.aquarium(aquariumRadius,l)
 
@@ -272,7 +323,7 @@ plot.traject <- function(track, aquariumRadius, main="Trajectory", sub, ...)
 		arrows(x[1:(nbObs-1)], y[1:(nbObs-1)], x[2:nbObs], y[2:nbObs], length=0.03, ...)
 
 		# title for the plot
-		title(main=main,sub=paste(sub,",",l))		
+		title(main=main,sub=paste(sub,",",l))
 	}
 }
 
@@ -319,19 +370,19 @@ plot.rose <- function(track, angleType, main="Rose diagram", sub,...)
 	for (l in c("corrected","uncorrected")) {
 		# extract correct angles, based on angleType argument
 		angle = track[[l]]$angles
-		
+
 		# convert to geographics template for plotting
 		angle = conversion.circular(angle,template="geographics")
 
 		# plot the rose diagram
 		rose.diag(angle,...)
-		
+
 		# put a title on the plot
 		title(main=main,sub=paste(sub,",",l))
 	}
 }
 
-plot.hist <- function(track, threshold, main="Histogram of swimming speeds", sub, ...) 
+plot.hist <- function(track, threshold, main="Histogram of swimming speeds", sub, ...)
 #
 #	Plots a speed histogram
 #		track: a larva track = list with two elements "corrected" and "uncorrected"
