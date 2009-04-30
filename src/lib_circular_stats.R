@@ -119,6 +119,38 @@ pol2car <- function (inpol, orig=c(0,0))
 }
 
 
+approx.circular <- function(x, angles, xout, ...)
+#
+# "Linearly" interpolates angles along a circle
+#	x			coordinates/reference of the angles to be interpolated
+#	angles	angles to be interpolated, of class circular or in trigonometric reference
+#	xout		coordinates/reference where the interpolation should take place
+#	...		passed to approx
+#
+{
+	# Get circular characteristics of the angles object if it is of class circular
+	if (is.circular(angles)) {
+		a = attributes(angles)$circularp
+	}
+
+	# Convert angles to cardinal coordinates
+	incar = pol2car(data.frame(angles,1))
+
+	# Interpolate each cardinal component independently
+	xInterp = approx(x, incar[,1], xout, ...)
+	yInterp = approx(x, incar[,2], xout, ...)
+
+	# Convert back in polar coordinates
+	inpol = car2pol(data.frame(xInterp$y, yInterp$y))
+
+	# Convert the angles to the same circular attributes
+	if (is.circular(angles)) {
+		inpol$theta = conversion.circular(inpol$theta, type=a$type, units=a$units, template=a$template, modulo=a$modulo, zero=a$zero, rotation=a$rotation)
+	}
+
+	return(list(x=xInterp$x, y=inpol$theta))
+}
+
 #	Toolbox functions
 #-----------------------------------------------------------------------
 bootstrap.circ.stats <- function(angles,percentage,n_repet,name){
