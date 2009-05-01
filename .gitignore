@@ -1,2 +1,7 @@
+# Special files
+._*
+*~
 # Java classes
 *.class
+# Documentation, for now
+doc/
