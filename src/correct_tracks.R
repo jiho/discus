@@ -23,6 +23,11 @@ prefix = args[1]
 aquariumDiam = as.numeric(args[2])
 cameraCompassDeviation = as.numeric(args[3])
 
+prefix="/home/jiho/current_data/62/tmp/"
+aquariumDiam = 40
+cameraCompassDeviation = 82
+
+
 # Set working directory
 setwd(prefix)
 
@@ -124,8 +129,11 @@ for (l in 1:nbTracks) {
 	# we start by converting it to a compass heading
 	t$theta = trig2geo(t$theta)
 
+	# initialize the data.frame for corrected tracks
+	tCor = t
+
 	# we then correct for the rotation by subtracting the compass heading of the top of the picture
-	t$thetaCor = t$theta - t$compass
+	tCor$theta = t$theta - t$compass
 
 	# for un corrected track to be comparable to the corrected one, they need to start in the same reference as the corrected track. So we subtract the first angle to every frame
 	t$theta = t$theta - t$compass[1]
@@ -135,27 +143,34 @@ for (l in 1:nbTracks) {
 	a = circularp(t$theta)
 	a$rotation="counter"
 	circularp(t$theta) = a
-	circularp(t$thetaCor) = a
+	circularp(tCor$theta) = a
 	# _convert_ back to clockwise (this actually changes the numbers)
 	t$theta = conversion.circular(t$theta, units="degrees", rotation="clock")
-	t$thetaCor = conversion.circular(t$thetaCor, units="degrees", rotation="clock")
+	tCor$theta = conversion.circular(tCor$theta, units="degrees", rotation="clock")
 
 	# recompute cartesian positions from the polar definition
 	t[,c("x","y")] = pol2car(t[,c("theta","rho")])
-	t[,c("xCor","yCor")] = pol2car(t[,c("thetaCor","rho")])
+	tCor[,c("x","y")] = pol2car(tCor[,c("theta","rho")])
 
 	# convert x, y, and rho to human significant measures (mm)
 	px2cm = aquariumDiam/(coordAquarium$Perim/pi)
 	px2mm = px2cm*10
-	t[,c("x","y","xCor","yCor","rho")] = t[,c("x","y","xCor","yCor","rho")] * px2mm
-	t$rhoCor = t$rho
+	t[,c("x","y","rho")] = t[,c("x","y","rho")] * px2mm
+	tCor[,c("x","y","rho")] = tCor[,c("x","y","rho")] * px2mm
 
 	# make position angles real bearings: they are already measured clockwise from the north, now we also make sure they only contain positive value
 	t$theta = (t$theta + 360) %% 360
-	t$thetaCor = (t$thetaCor + 360) %% 360
+	tCor$theta = (tCor$theta + 360) %% 360
 
 	# reorganize the columns of the dataframe
-	tracks[[l]] = t[,c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho", "xCor", "yCor", "thetaCor", "rhoCor")]
+	colNames = c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho")
+	t = t[,colNames]
+	tCor = tCor[,colNames]
+	t$correction=FALSE
+	tCor$correction=TRUE
+
+	# store it in the initial list
+	tracks[[l]] = list(original=t, corrected=tCor)
 
 }
 
@@ -164,19 +179,22 @@ for (l in 1:nbTracks) {
 #-----------------------------------------------------------------------
 
 # Take omitted frames into account in larvae tracks
-tracks = llply(tracks, function(x, imgNames) {
-	t = as.data.frame(matrix(nrow=length(imgNames),ncol=length(names(x))))
-	names(t) = names(x)
-	t$trackNb = x$trackNb[1]
-	t$imgNb = imgNames
-	class(t$date) = class(x$date)
-	class(t$exactDate) = class(x$exactDate)
-	t[ t$imgNb %in% x$imgNb,] = x;
-	return(t);
-}, images)
+# there are two levels of nesting of lists, hence the double llply construct
+tracks = llply(tracks, .fun=function(tr){
+	llply(tr, .fun=function(x, imgNames) {
+		t = as.data.frame(matrix(nrow=length(imgNames),ncol=length(names(x))))
+		names(t) = names(x)
+		t$trackNb = x$trackNb[1]
+		t$imgNb = imgNames
+		class(t$date) = class(x$date)
+		class(t$exactDate) = class(x$exactDate)
+		t[ t$imgNb %in% x$imgNb,] = x;
+		return(t);}
+	, images)}
+)
 
 # Concatenate all tracks into one data.frame
-tracks = do.call("rbind", tracks)
+tracks = do.call("rbind", do.call("rbind", tracks))
 
 # Write it to a csv file
 write.table(tracks, file="tracks.csv", sep=",", row.names=F)
