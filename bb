@@ -312,7 +312,71 @@ fi
 if [[ $TRACK_CORR == "TRUE" ]]
 then
 	echoBlue "\nCORRECTION OF TRACKS"
-	# $RES/tracking.sh
+
+	# We start by checking that everything is available and copy stuff to the temporary directory
+
+	OK=0
+
+	if [[ ! -e $DATA/coord_aquarium.txt ]]
+	then
+		error "Aquarium coordinates missing. Use:\n\t$0 -calib"
+		OK=1
+	else
+		echo "Aquarium coordinates ....OK"
+		cp $DATA/coord_aquarium.txt $TEMP
+	fi
+
+	if [[ ! -e $DATA/compass_log.csv ]]; then
+
+		warning "Numeric compass track missing.\n  Falling back on manual compass track."
+
+		if [[ ! -e $DATA/compass_track.txt ]]; then
+			error "Manual compass track missing. Use:\n\t $0 -compass"
+			OK=1
+		else
+			echo "Compass track ..........OK"
+			cp $DATA/compass_tracks.txt $TEMP
+		fi
+
+		if [[ ! -e $DATA/coord_compass.txt ]]
+		then
+			error "Compass coordinates missing. Use:\n\t $0 -compass"
+			OK=1
+		else
+			echo "Compass coordinates .....OK"
+			cp $DATA/coord_compass.txt $TEMP
+		fi
+
+	else
+		echo "Compass track ...........OK"
+		cp $DATA/compass_log.csv $TEMP
+	fi
+
+	if [[ ! -e $DATA/larvae_track.txt ]]
+	then
+		error "Larva(e) track(s) missing. Use:\n\t $0 -larva"
+		OK=1
+	else
+		echo "Larva(e) track(s) .......OK"
+		cp $DATA/larvae_track.txt $TEMP
+	fi
+
+
+	if [[ "$OK" == "1" ]]
+	then
+		echo "Exiting..."
+		rm -f $TEMP/*
+		exit 1
+	fi
+
+	# correct larvae tracks and write output in tracks.csv
+	echo "Correcting..."
+	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < tracking.R > /dev/null)
+
+	echo "Save track"
+
+	commit_changes
+
 fi
 
 # Tracks analysis

@@ -10,15 +10,18 @@
 #-----------------------------------------------------------------------
 
 # Functions to deal with circular data
-library("circular")
-library("plyr")
+library("circular", warn.conflicts=FALSE)
+library("plyr", warn.conflicts=FALSE)
 source("lib_circular_stats.R")
 
-# These arguments will be taken from the command line
-aquariumDiam = 40.64
-prefix = "/home/jiho/current_data/62/tmp/"
-sources = "/home/jiho/discus/src/"
-cameraCompassDeviation = 82.88
+# Parse command line arguments
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) != 3) {
+	stop("Not enough arguments")
+}
+prefix = args[1]
+aquariumDiam = as.numeric(args[2])
+cameraCompassDeviation = as.numeric(args[3])
 
 # Set working directory
 setwd(prefix)
