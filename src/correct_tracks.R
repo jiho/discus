@@ -181,12 +181,17 @@ for (l in 1:nbTracks) {
 # there are two levels of nesting of lists, hence the double llply construct
 tracks = llply(tracks, .fun=function(tr){
 	llply(tr, .fun=function(x, imgNames) {
+		# prepare full empty data.frame
 		t = as.data.frame(matrix(nrow=length(imgNames),ncol=length(names(x))))
 		names(t) = names(x)
+		# specify content of columns that must not be empty
 		t$trackNb = x$trackNb[1]
+		t$correction = x$correction[1]
 		t$imgNb = imgNames
+		# set classes similarly to the original data.frame
 		class(t$date) = class(x$date)
 		class(t$exactDate) = class(x$exactDate)
+		# fill with values of x when possible
 		t[ t$imgNb %in% x$imgNb,] = x;
 		return(t);}
 	, images)}
