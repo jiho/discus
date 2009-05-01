@@ -23,10 +23,10 @@ prefix = args[1]
 aquariumDiam = as.numeric(args[2])
 cameraCompassDeviation = as.numeric(args[3])
 
-prefix="/home/jiho/current_data/62/tmp/"
-aquariumDiam = 40
-cameraCompassDeviation = 82
-
+# In case we need to call it without the shell script
+# prefix="/home/jiho/current_data/62/tmp/"
+# aquariumDiam = 40
+# cameraCompassDeviation = 82
 
 # Set working directory
 setwd(prefix)
