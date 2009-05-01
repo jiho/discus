@@ -1,205 +1,200 @@
 #
 # 	BlueBidule
 #
-#		Correct tracks according to the movement of a fixed point in the aquarium and of the north of the compass.
-#		Resulting tracks are oriented with respect to cardinal coordinates
+#		Correct tracks to cardinal coordinates
 #
-#	(c) Jean-Olivier Irisson 2005-2007
+#	(c) Jean-Olivier Irisson 2005-2009
 #	Released under GNU General Public Licence
 #	Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 
-# Constant
-# FIXME find a way to make px to cm conversion more robust than to use hand made measures - at least make the diameter of the aquarium a preference of the bash program extracted by R
-realAquariumDiameter=38.1		# aquarium diameter in cm
+# Functions to deal with circular data
 library("circular")
+library("plyr")
+source("lib_circular_stats.R")
 
-# Read data
+# These arguments will be taken from the command line
+aquariumDiam = 40.64
+prefix = "/home/jiho/current_data/62/tmp/"
+sources = "/home/jiho/discus/src/"
+cameraCompassDeviation = 82.88
+
+# Set working directory
+setwd(prefix)
+
+
+## Read data
 #-----------------------------------------------------------------------
-# Larvae tracks are recorded from ImageJ "Manual tracking"
-trackLarva=read.table("track_larva.txt",skip=1,sep="\t")
-names(trackLarva)=c("i","trackNb","frameNb","x","y")
-trackLarva=trackLarva[,2:5]
-# In trackLarva are: trackNb frameNb(=Time) x y
+
+# larvae tracks are recorded from ImageJ "Manual tracking"
+trackLarva = read.table("larvae_track.txt", header=T, sep="\t")
+trackLarva = trackLarva[,-1]
 # WARNING: The origin of the position is the upper-left corner
 
-# Reference tracks are recorded from ImageJ "Manual tracking" or "Automatic tracking"
-#	automatic tracking: trackNb frameNb(=Time) x y
-#	manual tracking: lineNb trackNb frameNb(=Time) x y
-trackCompas=read.table("track_compas.txt",skip=1,sep="\t");
-if (ncol(trackCompas)>4) {
-	trackCompas=trackCompas[,2:5]
-}
-names(trackCompas)=c("trackNb","frameNb","x","y")
+# read compass record
+# it can either be a record from the numerical compass or from the backup, physical compass
+if (file.exists("compass_log.csv")) {
 
-trackFix=read.table("track_fix.txt",skip=1,sep="\t");
-if (ncol(trackFix)>4) {
-	trackFix=trackFix[,2:5]
+	# This is the log oc the numeric compass
+	trackCompass = read.table("compass_log.csv", header=TRUE, sep=",", as.is=TRUE)
+	trackCompass$date = as.POSIXct(strptime(trackCompass$date, format="%Y-%m-%d %H:%M:%S"))
+	compassSource = "numeric"
+
+	# subtract the camera-compass orientation correction
+	trackCompass$heading = trackCompass$heading - cameraCompassDeviation
+	# this means that trackCompass$heading now correspond to the heading of the top of the picture
+
+	# convert to the appropriate circular class
+	trackCompass$heading = circular(trackCompass$heading, unit="degrees", template="geographics", modulo="2pi")
+
+
+} else if (file.exists("compass_track.txt")) {
+
+	# Else we default to a manual record of the compass track
+	trackCompass = read.table("compass_track.txt", header=TRUE, sep="\t", as.is=TRUE)
+	trackCompass = trackCompass[,-1]
+	compassSource = "manual"
+
+	# also read the coordinates of the center of the compass, to be able to compute the movement in polar coordinates
+	coordCompass = read.table("coord_compass.txt", header=TRUE, sep="\t")
+	coordCompass = coordCompass[,c("X","Y")]
+
+	# TODO compute headings in polar coordinates, interpolate the track etc.
+	# i.e. make it similar to the automatic compass track as much as possible.
 }
-names(trackFix)=c("trackNb","frameNb","x","y")
-# WARNING: The origin of the position is the upper-left corner
 
 # Read calibration data
-compas=read.table("coord_compas.txt");
-compas=compas[,1:2]
-names(compas)=c("centerX","centerY")
-aquarium=read.table("coord_aquarium.txt");
-names(aquarium)=c("centerX","centerY","perimeter")
+coordAquarium = read.table("coord_aquarium.txt", header=TRUE, sep="\t", col.names=c("nb","X","Y","Perim"))
+coordAquarium = coordAquarium[,-1]
 
 
-
-# Reformat tracks
+## Reformat tracks
 #-----------------------------------------------------------------------
-# Split larvae tracks
-trackLarvaList=split(trackLarva,trackLarva$trackNb)
-nbTracks=length(trackLarvaList)
 
-# Put all tracks into a named list
-tracks=trackLarvaList
-tracks$compas=trackCompas
-tracks$fix=trackFix
+# Split larvae tracks in a list
+tracks = split(trackLarva, trackLarva$trackNb)
+nbTracks = length(tracks)
 
-# Substract the height of the video to y position so that y axis points up
-# get height of the video in pixels
-# TODO : check for the existence of the command
-identifyCommand=system("which identify",intern=T)
-# print(identifyCommand)
-videoHeight=as.numeric(system(paste(identifyCommand," -format %h stack.tif[0]",sep=""),intern=T))
-# print(videoHeight)
+# Add time stamps to the tracks
+# check for the existence of exiftool
+exiftool = system("which exiftool",intern=TRUE)
+if (length(exiftool) == 0) {
+	stop("Please install exiftool http://www.sno.phy.queensu.ca/~phil/exiftool/")
+}
+# read the exact time with split seconds with exiftool
+picTimes = system(paste(exiftool,"-T -p '$CreateDate.$SubsecTime' ../*.jpg"), intern=TRUE)
+options("digits.secs" = 2)
+picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
+# read the names of the images
+images = as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T))
+# keep split seconds but also round times to full seconds
+picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
+# add to tracks
+tracks = llply(tracks, merge, picTimes)
+
+
+# Substract the height of the frame to y position so that y axis points up
+# get height of the frame in pixels
+videoHeight = as.numeric(
+	system(
+		paste(
+			"tool() {\n", exiftool," -T -ImageHeight $1 \n};
+			tool $(ls ../*.jpg | sort -n)", sep=""
+		), intern=T
+	)
+)
+# NB: using a function here is a trick to extract only the first argument, hence the first file that ls lists. This assumes that all frames have the same size that the first one.
 
 # correct
-for (l in 1:length(tracks)) {
-	tracks[[l]]$y=videoHeight-tracks[[l]]$y
-}
-# compas and aquarium coordinates have to be treated this way also
-compas$centerY=videoHeight-compas$centerY
-aquarium$centerY=videoHeight-aquarium$centerY
-
-# Take omited frames into account
-show.missing.values <- function(t) 
-#
-#	Add NAs where there's a skipped frame
-#
-{
-	endFrame = max(t$frameNb)
-	frames = 1:endFrame
-	# if we don't have all frames, we prepare a new data.frame and put the numbers we have in it
-	if (nrow(t) != endFrame) {
-		trackNb = t$trackNb[1]
-		new = data.frame(trackNb,frames,NA,NA)
-		names(new) = names(t)
-		new[t$frameNb,]=t
-	} else {
-		new = t
-	}
-	return(new)
-}
-tracks = lapply(tracks,show.missing.values)
-
-# Interpolate missing values in fixed point and compass tracks
-fill.missing.values <- function(t) 
-#
-#	Interpolate NAs in a track using linear interpolation
-#
-{
-	if (any(is.na(t$x))) {
-		xInterp = approx(t$frameNb, t$x, t$frameNb)$y
-		yInterp = approx(t$frameNb, t$y, t$frameNb)$y
-		t$x = xInterp
-		t$y = yInterp
-	}
-	return(t)
-}
-tracks$compas = fill.missing.values(tracks$compas)
-tracks$fix = fill.missing.values(tracks$fix)
-# TODO: in the automatic tracking routine, suppress frames when no particle can be observed and leave it to here to do the interpolation. Currently, we do not interpolate, only keep preceeding value
-# FIXME: interpolate the compas only after correction by the fixed point track (this will require some clever thinking about the dimensions of both)
-
-# Reduce information to the limiting factor
-# larva coordinates without references are useless and references for frame which we have no coordinates for is useless too. therefore we remove useless information
-limit = min(sapply(tracks,nrow))
-for (l in 1:length(tracks)) {
-	tracks[[l]]=tracks[[l]][tracks[[l]]$frameNb<=limit,]
+tracks = llply(tracks, function(x){x$y = videoHeight - x$y; return(x)})
+coordAquarium$Y = videoHeight - coordAquarium$Y
+if (compassSource == "manual") {
+	coordCompass$Y = videoHeight - coordCompass$Y
+	trackCompass$y = videoHeight - trackCompass$y
 }
 
 
-
-# Correct tracks by reference to a fixed point
-#----------------------------------------------------------------------- 
-# Compute the movement of the fixed point
-mvtFixed=as.data.frame(matrix(nrow=limit, ncol=2))
-names(mvtFixed)=c("x","y")
-# write self explanatory row names
-row.names(mvtFixed)=paste(0:(limit-1),"->",1:limit)
-# movement at the first time step is zero, it is the reference
-mvtFixed[1,]=0
-# compute movement
-for (i in 1:(limit-1)) {   
-	mvtFixed[i+1,] = tracks$fix[i+1,c("x","y")] - tracks$fix[i,c("x","y")] 
-}    
-
-# Substract the mouvement of the fixed point to all _other_ tracks    
-for (l in 1:length(tracks)) { 	
-	if (names(tracks)[l] != "fix") {
-		tracks[[l]][,c("x","y")]=tracks[[l]][,c("x","y")]-mvtFixed 	
-	} 
-} 
-# NB: All positions are usually known for the fixed point. Nevertheless, if there are NAs in the track, they are respected here.
-# 1/ the movement is NA when one of the positions is NA
-# 2/ the positions in other tracks are NA when the movement can't be computed
-
-
-# Compute larvae tracks in a cardinal reference
+## Compute larvae tracks in a cardinal reference
 #-----------------------------------------------------------------------
-# We want to put the North upwards _and_ to correct tracks for rotation during sampling
-# To achieve these goals we need to subtract the angle of the compass to the angle of the position of larvae
 
-# Compute the position of the north of the compass in polar coordinates
-# NB: angles are trigonometric angles = measured from the horizontal in counter-clockwise direction.
-source("lib_circular_stats.R")
-compasPol=car2pol(tracks$compas[,c("x","y")],c(compas[1],compas[2]))
-compasAngles=compasPol$theta
-# in addition, to avoid any mistake we make all angles positive and between [0,2*pi[
-compasAngles=(compasAngles+2*pi)%%(2*pi)
+# Interpolate compass positions at every point in time in the tracks
+tracks = llply(tracks, function(x, compass) {
+	x$compass = approx.circular(compass$date, compass$heading, x$exactDate)$y
+	return(x)
+}, trackCompass)
 
-# Correct using compas angles
+
+# Only keep data where calibration is available
+tracks = llply(tracks, function(x){x=x[!is.na(x$compass),]})
+
+
+# Correct for the rotation of the compass relative to the bearing in the first frame
 # for all larvae tracks
 for (l in 1:nbTracks) {
+
+	t = tracks[[l]]
+
 	# convert track to polar coordinates
-	trackPol=car2pol(tracks[[l]][,c("x","y")],c(aquarium$centerX,aquarium$centerY))
+	t[,c("theta","rho")] = car2pol(t[,c("x","y")], c(coordAquarium$X,coordAquarium$Y))
 
-	# substract compas angle
-	trackPol$thetaCor=trackPol$theta-compasAngles	
-	# for un corrected tracks, substract first compas angle in order to be able to compare them with corrected tracks
-	trackPol$theta=trackPol$theta-compasAngles[1]
-	
-	# after this substraction, angles are measured from the horizontal in counter clockwise direction but 0 is in fact the north. we want these angles to behave as regular angles (0 + counter-clockwise) but we want the north to be pointing up so that the trajectories look ok when we switch back to cardinal coordinates. Therefore we need to add pi/2 to these angles
-	trackPol$thetaCor = trackPol$thetaCor + pi/2
-	trackPol$theta = trackPol$theta + pi/2
-	# then we can add them in tracks
-	tracks[[l]][,c("x","y")]=pol2car(trackPol[c("theta","rho")])
-	tracks[[l]]$bearing=trackPol$theta
-	tracks[[l]][,c("xCor","yCor")]=pol2car(trackPol[c("thetaCor","rho")])
-	tracks[[l]]$bearingCor=trackPol$thetaCor
-	
-	# convert x and y positions to human significant measures (mm)
-	# conversion factor using the aquarium diameter
-	px2cm=realAquariumDiameter/(aquarium$perimeter/pi)
-	px2mm=px2cm*10
-	tracks[[l]][,c("x","y","xCor","yCor")]=tracks[[l]][,c("x","y","xCor","yCor")]*px2mm
+	# theta is in trigonometric reference:
+	# 	measures the angle, in radians, between the larva and the horizontal, in counter clockwise direction.
+	# we start by converting it to a compass heading
+	t$theta = trig2geo(t$theta)
+
+	# we then correct for the rotation by subtracting the compass heading of the top of the picture
+	t$thetaCor = t$theta - t$compass
+
+	# for un corrected track to be comparable to the corrected one, they need to start in the same reference as the corrected track. So we subtract the first angle to every frame
+	t$theta = t$theta - t$compass[1]
+
+	# finally, since we are looking at the aquarium and compass from below, the E and W are inverted. We change that by shifting the rotation direction
+	# _set_ it to counter clockswise (does not alter the numbers, just the attributes)
+	a = circularp(t$theta)
+	a$rotation="counter"
+	circularp(t$theta) = a
+	circularp(t$thetaCor) = a
+	# _convert_ back to clockwise (this actually changes the numbers)
+	t$theta = conversion.circular(t$theta, units="degrees", rotation="clock")
+	t$thetaCor = conversion.circular(t$thetaCor, units="degrees", rotation="clock")
+
+	# recompute cartesian positions from the polar definition
+	t[,c("x","y")] = pol2car(t[,c("theta","rho")])
+	t[,c("xCor","yCor")] = pol2car(t[,c("thetaCor","rho")])
+
+	# convert x, y, and rho to human significant measures (mm)
+	px2cm = aquariumDiam/(coordAquarium$Perim/pi)
+	px2mm = px2cm*10
+	t[,c("x","y","xCor","yCor","rho")] = t[,c("x","y","xCor","yCor","rho")] * px2mm
+	t$rhoCor = t$rho
+
+	# make position angles real bearings: they are already measured clockwise from the north, now we also make sure they only contain positive value
+	t$theta = (t$theta + 360) %% 360
+	t$thetaCor = (t$thetaCor + 360) %% 360
+
+	# reorganize the columns of the dataframe
+	tracks[[l]] = t[,c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho", "xCor", "yCor", "thetaCor", "rhoCor")]
+
 }
 
 
-
-# Saving variables for statistical analysis and plotting:
+## Saving tracks for statistical analysis and plotting
 #-----------------------------------------------------------------------
-for (l in 1:nbTracks) {
-	if (l==1) {
-		write.table(tracks[[l]], file="tracks.csv", sep=",", row.names=F)
-	} else {
-		write.table(tracks[[l]], file="tracks.csv", append=T, sep=",", row.names=F, col.names=F)
-	}
 
-}
+# Take omitted frames into account in larvae tracks
+tracks = llply(tracks, function(x, imgNames) {
+	t = as.data.frame(matrix(nrow=length(imgNames),ncol=length(names(x))))
+	names(t) = names(x)
+	t$trackNb = x$trackNb[1]
+	t$imgNb = imgNames
+	t[t$imgNb %in% x$imgNb,] = x;
+	return(t);
+}, images)
+
+# Concatenate all tracks into one data.frame
+tracks = do.call("rbind", tracks)
+
+# Write it to a csv file
+write.table(tracks, file="tracks.csv", sep=",", row.names=F)
 
