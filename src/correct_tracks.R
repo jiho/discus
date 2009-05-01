@@ -96,27 +96,6 @@ picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
 tracks = llply(tracks, merge, picTimes)
 
 
-# Substract the height of the frame to y position so that y axis points up
-# get height of the frame in pixels
-videoHeight = as.numeric(
-	system(
-		paste(
-			"tool() {\n", exiftool," -T -ImageHeight $1 \n};
-			tool $(ls ../*.jpg | sort -n)", sep=""
-		), intern=T
-	)
-)
-# NB: using a function here is a trick to extract only the first argument, hence the first file that ls lists. This assumes that all frames have the same size that the first one.
-
-# correct
-tracks = llply(tracks, function(x){x$y = videoHeight - x$y; return(x)})
-coordAquarium$Y = videoHeight - coordAquarium$Y
-if (compassSource == "manual") {
-	coordCompass$Y = videoHeight - coordCompass$Y
-	trackCompass$y = videoHeight - trackCompass$y
-}
-
-
 ## Compute larvae tracks in a cardinal reference
 #-----------------------------------------------------------------------
 

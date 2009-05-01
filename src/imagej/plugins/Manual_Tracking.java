@@ -341,7 +341,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         double imgNb=Double.parseDouble(label.substring(0,label.indexOf(".")));
         // System.out.println(imgNb);
         
-        double[] doub={Nbtrack,(img.getCurrentSlice()),imgNb,ox,oy};
+        // Remark: invert Y coordinate
+        double[] doub={Nbtrack,(img.getCurrentSlice()),imgNb,ox,img.getHeight()-oy};
         for (i=0; i<doub.length; i++) rt.addValue(i,doub[i]);
         rt.show("Tracks");
 

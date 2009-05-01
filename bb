@@ -241,7 +241,7 @@ then
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
 		\nPress OK when you are done');                 \
-	run('Set Measurements...', ' centroid perimeter redirect=None decimal=3'); \
+	run('Set Measurements...', ' centroid perimeter invert redirect=None decimal=3'); \
 	run('Measure');                                     \
 	saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
 	run('Quit');"
@@ -277,7 +277,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		waitForUser('Compass calibration',                  \
 			'Please click the center of one compass.\n      \
 			\nPress OK when you are done');                 \
-		run('Set Measurements...', ' centroid redirect=None decimal=3'); \
+		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
 		run('Measure');                                     \
 		saveAs('Measurements', '${TEMP}/coord_compass.txt');\
 		run('Quit');"
