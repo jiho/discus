@@ -51,7 +51,6 @@ if (file.exists("compass_log.csv")) {
 	# convert to the appropriate circular class
 	trackCompass$heading = circular(trackCompass$heading, unit="degrees", template="geographics", modulo="2pi")
 
-
 } else if (file.exists("compass_track.txt")) {
 
 	# Else we default to a manual record of the compass track
@@ -191,7 +190,9 @@ tracks = llply(tracks, function(x, imgNames) {
 	names(t) = names(x)
 	t$trackNb = x$trackNb[1]
 	t$imgNb = imgNames
-	t[t$imgNb %in% x$imgNb,] = x;
+	class(t$date) = class(x$date)
+	class(t$exactDate) = class(x$exactDate)
+	t[ t$imgNb %in% x$imgNb,] = x;
 	return(t);
 }, images)
 
@@ -200,4 +201,3 @@ tracks = do.call("rbind", tracks)
 
 # Write it to a csv file
 write.table(tracks, file="tracks.csv", sep=",", row.names=F)
-
