@@ -154,9 +154,8 @@ for (l in 1:nbTracks) {
 
 	# convert x, y, and rho to human significant measures (mm)
 	px2cm = aquariumDiam/(coordAquarium$Perim/pi)
-	px2mm = px2cm*10
-	t[,c("x","y","rho")] = t[,c("x","y","rho")] * px2mm
-	tCor[,c("x","y","rho")] = tCor[,c("x","y","rho")] * px2mm
+	t[,c("x","y","rho")] = t[,c("x","y","rho")] * px2cm
+	tCor[,c("x","y","rho")] = tCor[,c("x","y","rho")] * px2cm
 
 	# make position angles real bearings: they are already measured clockwise from the north, now we also make sure they only contain positive value
 	t$theta = (t$theta + 360) %% 360
