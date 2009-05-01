@@ -2,7 +2,7 @@
 
     Manual tracking v2.0, 15/06/05
 
-    Original plugin by Fabrice P Cordelières, fabrice.cordelieres at curie.u-psud.fr
+    Original plugin by Fabrice P Cordeli√®res, fabrice.cordelieres at curie.u-psud.fr
     Simplification by Jean-Olivier Irisson
 
 -----------------------------------------------------------------------*/
@@ -120,7 +120,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         checkPath.addItemListener(this);
         panel.add(checkPath);
 
-        butDel = new Button("Delete track nº");
+        butDel = new Button("Delete track nb");
         butDel.addActionListener(this);
         panel.add(butDel);
 
@@ -244,8 +244,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             canvas.removeMouseListener(this);
             islistening=false;
             int tracktodelete= (int) Tools.parseDouble(trackdel.getItem(trackdel.getSelectedIndex()));
-            gd = new GenericDialog("Delete Track nº" + tracktodelete);
-            gd.addMessage("Do you want to \n" + "delete track nº" + tracktodelete + " ?");
+            gd = new GenericDialog("Delete Track nb" + tracktodelete);
+            gd.addMessage("Do you want to \n" + "delete track nb" + tracktodelete + " ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
 
@@ -281,7 +281,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
                 trackdel.add(""+i);
             }
-            IJ.showStatus("Track nº"+ tracktodelete +" Deleted !");
+            IJ.showStatus("Track nb"+ tracktodelete +" Deleted !");
             Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
         }
 
