@@ -250,7 +250,7 @@ then
 
 	echo "Save aquarium coordinates"
 
-	commit_changes
+	commit_changes "coord_aquarium.txt"
 fi
 
 # Tracking
@@ -258,10 +258,11 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 
 	if [[ $TRACK_LARV == "TRUE" ]]; then
 		echoBlue "\nTRACKING LARVAE"
-		resultFileName="larvae_track"
+		resultFileName="larvae_track.txt"
+		outputFiles=$resultFileName
 	elif [[ $TRACK_COMP == "TRUE" ]]; then
 		echoBlue "\nTRACKING COMPASS"
-		resultFileName="compass_track"
+		resultFileName="compass_track.txt"
 
 		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
 		echo "Open first image for calibration"
@@ -284,6 +285,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		run('Quit');"
 
 		echo "Save compass coordinates"
+		outputFiles="$resultFileName coord_compass.txt"
 	fi
 
 	echo "Open stack"
@@ -300,12 +302,12 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
 	selectWindow('Tracks');                           \
-	saveAs('Text', '${TEMP}/${resultFileName}.txt');  \
+	saveAs('Text', '${TEMP}/${resultFileName}');  \
 	run('Quit');"
 
 	echo "Save track"
 
-	commit_changes
+	commit_changes $outputFiles
 fi
 
 # Correction
@@ -375,7 +377,7 @@ then
 
 	echo "Save track"
 
-	commit_changes
+	commit_changes "tracks.csv"
 
 fi
 
