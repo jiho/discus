@@ -66,8 +66,6 @@ source $RES/lib_discus.sh
 typeset -fx open_stack
 typeset -fx commit_changes
 
-# source $RES/lib_tracking.sh
-
 # ImageJ and Java paths
 JAVA_CMD=`which java`
 if [[ $JAVA_CMD == "" ]]; then
@@ -373,7 +371,7 @@ then
 
 	# correct larvae tracks and write output in tracks.csv
 	echo "Correcting..."
-	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < tracking.R > /dev/null)
+	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < correct_tracks.R > /dev/null)
 
 	echo "Save track"
 
