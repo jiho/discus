@@ -104,7 +104,12 @@ startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%
 # time constants
 initialLag = 5    # time to wait after the start of deployment [minute]
 duration = 20     # duration of the deployment (including initialLag) [minute]
-fuzzy = 10        # the time range is extended by this amount to select the data with a bit more fuzziness [sec]
+# the time range is extended by a few seconds to be sure to select everything [sec]
+fuzPic = 10 		# for pictures (sampling period = 2 s)
+fuzGps = 60 		# for gps (sampling period = 60 s)
+fuzCtd = 20 		# for ctd (sampling period = 10 s)
+fuzCompass = 20 	# for compass (sampling period = 10 s)
+
 
 # for each deployment (row extract the corresponding data)
 for (i in 1:nrow(log)) {
@@ -203,8 +208,8 @@ for (i in 1:nrow(log)) {
 	cat(sprintf("%5i",cLog$deployNb))
 
 	# determine start and end time for this deployment
-	startTime = cLog$dateTime + initialLag*60 - fuzzy
-	endTime = cLog$dateTime + duration*60 + fuzzy
+	startTime = cLog$dateTime + initialLag*60
+	endTime = cLog$dateTime + duration*60
 
 	# create output directory
 	dataDestination = paste(prefix, "/deployments/", cLog$deployNb, sep="")
@@ -213,7 +218,7 @@ for (i in 1:nrow(log)) {
 
 	## IMAGES
 	# find start image for this deployment
-	startList = find.image.by.time(startTime, endImage+1, imageSource)
+	startList = find.image.by.time(startTime-fuzPic, endImage+1, imageSource)
 	startImage = startList$n
 	cat("    imgs ", sprintf("%5i",startImage), " (", startList$count,")", sep="")
 	# if the image is a fallback image (the last of the current directory) then cycle to the next deployment because we don't have anything to extract for this one
@@ -223,7 +228,7 @@ for (i in 1:nrow(log)) {
 	}
 
 	# do the same for the end image
-	endList = find.image.by.time(endTime, startImage, imageSource)
+	endList = find.image.by.time(endTime+fuzPic, startImage, imageSource)
 	endImage = endList$n
 	cat(" -> ", sprintf("%5i", endImage), " (", endList$count,")", sep="")
 	if (endList$fallback) {
@@ -252,7 +257,7 @@ for (i in 1:nrow(log)) {
 	## CTD
 	if (ctdOK) {
 		# extract relevant CTD data
-		cCtd = ctd[ctd$date > startTime & ctd$date < endTime, ]
+		cCtd = ctd[ctd$date > startTime-fuzCtd & ctd$date < endTime+fuzCtd, ]
 
 		# write the CTD record with the rest of the data
 		if (nrow(cCtd) > 0) {
@@ -266,7 +271,7 @@ for (i in 1:nrow(log)) {
 	if (gpsOK) {
 		# extract relevant gps data
 		# NB: gps data is only taken every minute, so we extract more widely, increasing the range by 60 seconds exactly
-		cGps = gps[gps$date > (startTime+fuzzy-60) & gps$date < (endTime-fuzzy+60), ]
+		cGps = gps[gps$date > (startTime-fuzGps) & gps$date < (endTime+fuzGps), ]
 
 		# write the CTD record with the rest of the data
 		if (nrow(cGps) > 0) {
@@ -280,7 +285,7 @@ for (i in 1:nrow(log)) {
 	if (compassOK) {
 
 		# extract relevant compass data
-		cCompass = compass[compass$date > startTime & compass$date < endTime, ]
+		cCompass = compass[compass$date > startTime-fuzCompass & compass$date < endTime+fuzCompass, ]
 
 		if (nrow(cCompass) > 0) {
 			# wite the compass information
