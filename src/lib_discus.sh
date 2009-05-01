@@ -34,10 +34,10 @@ commit_changes()
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
-		mv -i $TEMP/*.txt $DATA/
+		mv -i $TEMP/*.txt $TEMP/*.csv $DATA/
 	else
 		echo "Ok then cleaning TEMP directory..."
 	fi
 	# clean temp directory
-	rm -f $TEMP/*.txt
+	rm -f $TEMP/*.txt $TEMP/*.csv
 }
