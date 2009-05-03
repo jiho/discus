@@ -186,7 +186,7 @@ circ.stats <- function(t, subsampleTime)
 	# - if mean time between images is long, then images were subsampled and the records are independent already
 	# - if mean time between images is short, then records are not independant and need to be subsampled
 
-	if ( mean(diff(t$exactDate)) > subsampleTime) {
+	if ( mean(diff(t$exactDate)) > subsampleTime ) {
 		# we have independant records already, just perform simple tests
 
 		# rayleigh test
@@ -204,7 +204,7 @@ circ.stats <- function(t, subsampleTime)
 		# # = sqrt( (1-r) )
 		# sd = sqrt(variance)
 
-		return(data.frame(n, mean, resample=FALSE, variance, R, p.value=p))
+		return(data.frame(n, mean, resample.lag=1, variance, R, p.value=p))
 
 	} else {
 		# the samples are not independant, so we resample independant samples with intervals of subsampleTime
@@ -254,7 +254,7 @@ circ.stats <- function(t, subsampleTime)
 		variance = var.circular(stats$mean)
 
 
-		return(data.frame(n, mean, resample=TRUE, variance, R=means[1], p.value = means[2]))
+		return(data.frame(n, mean, resample.lag=subsampleTime, variance, R=means[1], p.value = means[2]))
 	}
 }
 
