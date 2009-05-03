@@ -1,7 +1,8 @@
 # Special files
 ._*
 *~
-# Java classes
+# Java classes and jar files
 *.class
+src/imagej/ij.jar
 # Documentation, for now
 doc/
