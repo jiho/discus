@@ -35,11 +35,12 @@ echo -e "
   \033[1m-cal|-calib\033[0m       measure calibration data for the tracking
   \033[1m-com|-compass\033[0m     track the compass
   \033[1m-l|-larva\033[0m         track the larva(e)
-    \033[1m-sub\033[0m        1   subsample each 'sub' image
+    \033[1m-sub\033[0m        1   subsample each 'sub' image (must be > ssub, below)
   \033[1m-c|-correct\033[0m       correct the tracks
                                   
   \033[1m-s|-stats\033[0m         compute statistics and plots
-    \033[1m-nb|-nb-pie\033[0m 20  number of pie parts in the pie graph
+    \033[1m-ssub\033[0m       5   if images were not subsampled earlier, extract
+                    one position record every 'ssub' second
                                   
   \033[1m-clean\033[0m            clean work directory
    "
@@ -106,10 +107,10 @@ CLEAN=FALSE
 
 # diameter of the aquarium, in cm
 aquariumDiam=40
-# number of pie parts in the pie graph
-NB_PIE=20
 # subsample each 'sub' frame to speed up the analysis
 sub=1
+# subsample position data each 'ssub' frame to allow indpendence of data
+ssub=5
 
 
 # Getting options from the config file (overriding defaults)
@@ -144,11 +145,11 @@ until [[ -z "$1" ]]; do
 		-s|-stats) 
 			STATS=TRUE
 			shift 1 ;;
-		-nb|-nb-pie)
-			NB_PIE="$2"
-			shift 2 ;;
 		-sub)
 			sub="$2"
+			shift 2 ;;
+		-ssub)
+			ssub="$2"
 			shift 2 ;;
 		-a|-all) 
 			TRACK_CALIB=TRUE
@@ -198,7 +199,6 @@ fi
 export WORK DATA DATAREAL LOGS TEMP VIDEOID RES IJ_PATH JAVA_CMD
 export TEST 
 export TRACK_CALIB TRACK_COMP TRACK_LARV TRACK_CORR
-export NB_PIE
 
 
 

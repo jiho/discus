@@ -209,6 +209,17 @@ circ.stats <- function(t, subsampleTime)
 	} else {
 		# the samples are not independant, so we resample independant samples with intervals of subsampleTime
 
+		# the the validity of the subsampling interval
+		if (n/subsampleTime < 10) {
+			warning("\n  Subsampling will result in less than 10 records.\n  You are advised to decrease it with -ssub.\n", immediate.=TRUE, call.=FALSE)
+
+			if (subsampleTime > n) {
+				stop("\n  Subsampling interval larger than number of records.\n  Decrease it with the option -ssub.\n", call.=FALSE)
+			}
+		}
+
+
+
 		# time of the last record, we can't go beyond that
 		lastRecord = t$exactDate[n]
 

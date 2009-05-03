@@ -19,12 +19,18 @@ library("plyr", warn.conflicts=FALSE)
 library("ggplot2", warn.conflicts=FALSE)
 source("lib_circular_stats.R")
 
+# Parse command line arguments
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) != 3) {
+	stop("Not enough arguments")
+}
+prefix = args[1]
+aquariumDiam = as.numeric(args[2])
+subsampleTime = as.numeric(args[3])
 # In case we need to call it without the shell script
-prefix="/home/jiho/current_data/1/tmp/"
-aquariumDiam = 40
-# cameraCompassDeviation = 82
-subsampleTime = 15
-
+# prefix="/home/jiho/current_data/1/tmp/"
+# aquariumDiam = 40
+# subsampleTime = 15
 
 # # min speed to consider in order to avoid errors
 # maxErrorInPx = 2.8
