@@ -371,7 +371,12 @@ then
 
 	# correct larvae tracks and write output in tracks.csv
 	echo "Correcting..."
-	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < correct_tracks.R > /dev/null)
+	( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < correct_tracks.R )
+	# Test the exit status of R and proceed accordingly
+	stat=$(echo $?)
+	if [[ $stat != "0" ]]; then
+		exit 1
+	fi
 
 	echo "Save track"
 
@@ -393,7 +398,12 @@ then
 		exit 1
 	fi
 
-	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < stats.R > /dev/null)
+	(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${ssub} < stats.R)
+	# Test the exit status of R and proceed accordingly
+	stat=$(echo $?)
+	if [[ $stat != "0" ]]; then
+		exit 1
+	fi
 
 	echo "Save statistics and graphics"
 
