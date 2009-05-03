@@ -14,8 +14,12 @@
 options(warn=-1)
 
 # get useful functions
-library("circular", warn.conflicts=FALSE)
+library("boot", warn.conflicts=FALSE)
+library("proto", warn.conflicts=FALSE)
+library("grid", warn.conflicts=FALSE)
 library("plyr", warn.conflicts=FALSE)
+library("reshape", warn.conflicts=FALSE)
+library("circular", warn.conflicts=FALSE)
 library("ggplot2", warn.conflicts=FALSE)
 source("lib_circular_stats.R")
 
@@ -117,7 +121,7 @@ write.table(stats, file="stats.csv", row.names=FALSE, sep=",")
 
 
 # Prepare plots
-plots = llply(tracks, .progress="text", .fun=function(t, aquariumDiam) {
+plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 	# trajectory
 	traj = llply(t, function(x, radius){
@@ -179,16 +183,19 @@ plots = llply(tracks, .progress="text", .fun=function(t, aquariumDiam) {
 }, aquariumDiam)
 
 
+cat("Plotting each track\n")
+
 # Plot to PDF file
-# TODO Use llply and add a progress bar?
-if (length(tracks) > 1) {
-	for (name in names(tracks)) {
-		pdf(file=paste("plots-",name,".pdf",sep=""))
-		print(plots[name])
-		dev.off()
+for (name in names(tracks)) {
+	# reduce the number of hierachy levels to ease plotting
+	p = unlist(plots[name], F)
+	p = unlist(p, F)
+	if (length(tracks) > 1) {
+		filename = paste("plots-",name,".pdf",sep="")
+	} else {
+		filename="plots.pdf"
 	}
-} else {
-	pdf(file="plots.pdf")
-	print(plots)
-	dev.off()
+	pdf(file=filename)
+	dummy = l_ply(p, print, .progress="text")
+	dummy = dev.off()
 }

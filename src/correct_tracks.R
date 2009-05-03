@@ -10,6 +10,7 @@
 #-----------------------------------------------------------------------
 
 # Functions to deal with circular data
+library("boot", warn.conflicts=FALSE)
 library("circular", warn.conflicts=FALSE)
 library("plyr", warn.conflicts=FALSE)
 source("lib_circular_stats.R")
