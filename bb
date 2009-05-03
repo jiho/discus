@@ -64,7 +64,6 @@ typeset -fx warning
 typeset -fx error
 
 source $RES/lib_discus.sh
-typeset -fx open_stack
 typeset -fx commit_changes
 
 # ImageJ and Java paths

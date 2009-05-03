@@ -8,19 +8,6 @@
 #
 #------------------------------------------------------------------------------
 
-
-open_stack()
-#
-#	Open images as a virtual stack
-#	USAGE
-#	open_stack pathToImages
-#
-{
-	echo "Opening images as a stack ..."
-	$JAVA_CMD -Xmx1000m -jar $IJ_PATH/ij.jar -ijpath $IJ_PATH/plugins/ -eval "run(\"Image Sequence...\", \"open=${1}/*.JPG number=0 starting=1 increment=1 scale=100 file=[] or=[] sort use\");"
-}
-
-
 commit_changes()
 #
 #	Ask to commit changes and copy all .txt files from TEMP to DATA
