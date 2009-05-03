@@ -4,13 +4,13 @@
 #		Library of functions usefull to handle circular data
 #			Conversion functions, statistical tests, plots
 #
-# (c) Jean-Olivier Irisson 2005-2007
+# (c) Jean-Olivier Irisson 2005-2009
 # Released under GNU General Public Licence
 # Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 
-# Trigonometric functions
+## Trigonometric functions
 #-----------------------------------------------------------------------
 
 trig2geo <- function(x)
@@ -45,7 +45,7 @@ geo2trig <- function(x)
 		x = circular(x, units="degrees", template="geographics", modulo="2pi")
 	}
 	# Proceed to the conversion
-	x = conversion.circular(x, units="radians", template="none", modulo="asis", zero=0, rotation="counter")
+	x = conversion.circular(x, units="radians", template="none", modulo="2pi", zero=0, rotation="counter")
 	return(x)
 }
 
@@ -83,7 +83,6 @@ car2pol <- function (incar, orig=c(0,0))
 	return(inpol)
 }
 
-
 pol2car <- function (inpol, orig=c(0,0))
 #
 # Translates from polar to cardinal coordinates
@@ -119,6 +118,9 @@ pol2car <- function (inpol, orig=c(0,0))
 }
 
 
+## Manipulation of angles
+#------------------------------------------------------------------------------
+
 approx.circular <- function(x, angles, xout, ...)
 #
 # "Linearly" interpolates angles along a circle
@@ -151,286 +153,171 @@ approx.circular <- function(x, angles, xout, ...)
 	return(list(x=xInterp$x, y=inpol$theta))
 }
 
-#	Toolbox functions
-#-----------------------------------------------------------------------
-bootstrap.circ.stats <- function(angles,percentage,n_repet,name){
-#
-#	Take a sample of a dataset a percentage of the data set
-#
-#	Aguments:
-#	angles: a two collumns matrix of angular data measured in radians first collumn contains rotated data, second contains unrotated data
-#   percentage: the percentage of the data to extract
-#   n_repet: the number of repetitions of the analysis
-#   name: a character string identifying the data
-# Result:
-#   data: a list of two data frames each containing
-#           Name SampleSize MeanAngle CircDisp AngulDev Rbar Pvalue
-#         repeated n_repet times
-# Details:
-#   resamples randomly "percentage" percents of the data and call circ_stats on these resampled sets. It can also check for independence by plotting autocorellograms and mean autocorrelograms
 
-  # Prepare storage for the ciruclar stats
-  fulldata_rot=data.frame();
-  fulldata_norot=data.frame();
-
-  # Prepare storage for the autocorrelation values in a matrix
-  #   Each row contains data for a given lag
-  #   Each collumn corresponds to a subsampled data set
-  nb_obs=length(angles[,1])                                 # Number of observations
-  nb_sampled=as.integer(nb_obs*percentage/100);             # Number of sampled elements
-  max_lag=60;                                               # Autocorellation max lag
-  nb_rows=min(c(nb_sampled,max_lag));                       # Number of rows
-  all_acf_rot=matrix(,nb_rows,n_repet);
-  all_acf_norot=matrix(,nb_rows,n_repet);
-
-  # We repeat the same sequence of operations n_repet times
-  for (i in 1:n_repet) {
-    # take a sample of indexes of angles without replacement
-    indexes=sample(c(1:nb_obs),nb_sampled,replace=F);
-    indexes=sort(indexes)
-    # extract data rows from angles
-    angles_extr=angles[indexes,];
-    # compute autocorrelation
-    #dummy=check_indep(angles_extr[,1],paste("resampled positions. repetition",i))
-    A_rot=acf(angles_extr[,1],max_lag,plot=F);              # ACF without plot
-    all_acf_rot[,i]=A_rot$acf;                              # we store it in the matrix
-    A_norot=acf(angles_extr[,2],max_lag,plot=F);
-    all_acf_norot[,i]=A_norot$acf;
-    # perform circular statistics on each collumn
-    data_rot=circ_stats(angles_extr[,1],paste(name,"_rot",sep=""));
-    data_norot=circ_stats(angles_extr[,2],paste(name,"_norot",sep=""));
-    # concatenate circular statistics dataframes with previous
-    fulldata_rot=rbind(fulldata_rot,data_rot);
-    fulldata_norot=rbind(fulldata_norot,data_norot);
-  }
-
-  # Compute mean autocorrellation by line
-  size=dim(all_acf_rot)[1];
-  mean_acf_rot=vector(mode="numeric",size);
-  mean_acf_norot=vector(mode="numeric",size);
-  for (i in 1:size) {
-    mean_acf_rot[i]=mean(all_acf_rot[i,]);
-    mean_acf_norot[i]=mean(all_acf_norot[i,]);
-  }
-  # Plot the mean autocorrelation
-  plot(mean_acf_rot,type="h",main=paste("Mean autocorrelogram for resampled",name,"not rotated"),xlab="Lag",ylab="ACF")
-  plot(mean_acf_rot,type="h",main=paste("Mean autocorrelogram for resampled",name,"rotated"),xlab="Lag",ylab="ACF")
-
-  # returns a list
-  data=list(rot=fulldata_rot,norot=fulldata_norot)
-  return(data)
-}
-
-
-
-# Statistical functions
+## Statistical functions
 #-----------------------------------------------------------------------
 
-check.indep <- function(angles,lag=60,name,...)
+circ.stats <- function(t, subsampleTime)
 #
-# Computes autocorrelation of the angles series (which gives information on the independance of the data)
+#	Descriptive statistics and Rayleigh test
 #
-#	Arguments:
-#		angles: a vector of data
-#		lag: the maximum lag on which autocorrelation is computed
-#		name: a character string used to identify data
-#		...: further arguments for acf
-#	Result:
-#		autocorrelation series as a matrix [1,]
-#		plot if plot=FALSE is not specified
+# 	t						a track record
+#	subsampleTime		interval (in seconds) at which to resample data to assume the points to be independant. If the data is aleady sampled at an interval >= subsample.interval then simple statistics are computed. Otherwise, the data provided is  "bootstrapped"
 #
-{
-	library("pastecs");
-
-	# Computing autocorellation function
-	result=acf(na.exclude(angles),lag.max=lag,main=paste(c("Autocorrelogram for "),name),...);
-	# get only the autocorrellation value
-	result=t(as.matrix(result$acf))
-
-	# Computing a variogram of the data for a maximum lag of 60 frames
-	#vario(angles,60);
-	#mtext(paste(c("Variogram for "),name));
-
-	return(result)
-}
-
-
-circ.stats <- function(angles,id,trackNb,type,correction)
-#
-#	Descriptive statistics and test of the directionality of the data
-#
-#	Aguments:
-# 		angles: a vector of class circular
-#		id : the VIDEOID of the dataset
-#		trackNb: index of the track inside the id
-#		type: direction or position
-#		correction: wether it is corrected or not (TRUE or FALSE)
-#	Result:
-#		data: a data frame containing
-#			id type correction sampleSize meanAngle circularDispersion angularDeviation rayleighR pValue
-#	Details:
-# 		The functions computes descriptive statistics about the dataset, such as mean angle, angular dispersion... It also performs Rayleigh's test which calculates the probability of obtaining the observed distribution at random given the number of data.
+#	Value
+#	a data.frame with columns
+#		n			sample size
+#		mean		mean angle
+#		variance, sd	angular variance, standard deviation
+#		R			Rayleigh R
+#		p.value	Rayleigh's test p-value
 #
 {
-	angles=na.exclude(angles)
-	sampleSize=length(angles)
+	# remove NAs. we don't have a use for them here
+	t = na.omit(t)
 
-	if (sampleSize > 0) {
-		library("circular")
-		# Rayleigh test
-		#-----------------------------------------------------------------
+	# sample size
+	n = nrow(t)
+
+	# mean angle
+	mean = mean.circular(t$theta)
+
+	# From this point we do different things depending whether we have a sample of independent data or not:
+	# - if mean time between images is long, then images were subsampled and the records are independent already
+	# - if mean time between images is short, then records are not independant and need to be subsampled
+
+	if ( mean(diff(t$exactDate)) > subsampleTime) {
+		# we have independant records already, just perform simple tests
+
 		# rayleigh test
-		rayleigh=rayleigh.test(angles)
-		# rayleigh statistic = mean resultant length (r) divided by the sample size (N) (close to 1 = non random)
-		rayleighR=rayleigh[1]$statistic
-		# P value (degree of significance)
-		pValue=rayleigh[2]$p.value;
+		rayleigh = rayleigh.test(t$theta)
+		R = rayleigh$statistic
+		p = rayleigh$p.value
 
-		# Descriptive statistics
-		#-----------------------------------------------------------------
-		# mean angle
-		meanBearing=mean.circular(angles)
-		# circular dispersion		[ =(1-r)/N ]
-		circularDispersion=var.circular(angles)
-		# angular deviation			[ =sqrt(2(1-rayleighR)) ]
-		angularDeviation=sqrt(2*(1-rayleighR))
-		# TODO check what is the difference between angular deviation and circular dispersion and in what units they are
+		# angular variance ~ variance
+		#  = (1-r)
+		# NB: Batschelet, 1981. Circular Statistics in Biology. p. 34 adds a multiplication by 2 compared to this formula
+		variance = 1 - R
+		# variance = var.circular(angles)
+
+		# # angular deviation ~ standard deviation
+		# # = sqrt( (1-r) )
+		# sd = sqrt(variance)
+
+		return(data.frame(n, mean, resample=FALSE, variance, R, p.value=p))
+
 	} else {
-		rayleighR=NA
-		pValue=NA
-		meanBearing=NA
-		circularDispersion=NA
-		angularDeviation=NA
+		# the samples are not independant, so we resample independant samples with intervals of subsampleTime
+
+		# time of the last record, we can't go beyond that
+		lastRecord = t$exactDate[n]
+
+		# storage for test results
+		stats = list()
+
+		# loop on succesive lags until we reach the the first sample
+		i=1
+		startTime = t$exactDate[1]
+		while ( startTime < t$exactDate[1]+subsampleTime ) {
+			# generate time coordinates
+			startTime = t$exactDate[i]
+			times = seq(startTime, lastRecord, by=subsampleTime)
+			# find the indexes of these times
+			# (oh I love this small which.closest function ;) )
+			idx = round(approx(t$exactDate,1:n,times)$y)
+
+			# get the subsample
+			angles = t$theta[idx]
+
+			# perform rayleigh test on it
+			rayleigh = rayleigh.test(angles)
+			# and store results
+			stats = rbind(stats, data.frame(R=rayleigh$statistic, p.value=rayleigh$p.value, mean=mean.circular(angles)))
+
+			# increment lag
+			i = i+1
+		}
+
+		# compute mean statistic and p-value
+		means = mean(stats)
+		variance = var.circular(stats$mean)
+
+
+		return(data.frame(n, mean, resample=TRUE, variance, R=means[1], p.value = means[2]))
 	}
-
-	# Summarizing in a data frame
-	#--------------------------------------------------------------------
-	data=data.frame(id, trackNb, type, correction, sampleSize, meanBearing, circularDispersion, angularDeviation, rayleighR, pValue)
-
-	return(data)
 }
 
 
+## ggplot2 functions
+#------------------------------------------------------------------------------
 
-# Plotting functions
-#-----------------------------------------------------------------------
-plot.aquarium <- function(radius, type)
+scale_x_circular <- function(template=c("geographics", "none"))
 #
-#	Plots a circle of given radius = the aquarium
+#	Set the x scale appropriately for the given template
+#	template		"geographics" (for bearings) or "none" (for trigonometric angles)
 #
 {
-	# plot a symbol (circle) of given radius
-	symbols(0, 0, radius, inches=F, xlim=c(-radius,radius), ylim=c(-radius,radius) ,xlab="", ylab="", asp=1, xaxt="n", yaxt="n", bty="n")
-
-	if (type == "corrected") {
-		# write a north arrow
-		x=3*radius/4
-		# plot a arrow pointing north
-		arrows(x,x,x,x+radius/4,length=0.1)
-		# Write N at the top of the arrow
-		text(x,x+radius/9, labels="N", pos=4)
+	template = match.arg(template)
+	if (template == "geographics") {
+		# set the scale for compass bearings
+		scale = scale_x_continuous( limits=c(0,360),
+		                    breaks=seq(0,360-1,by=45),
+		                    labels=c("N","N-E","E","S-E","S","S-W","W","N-W"))
+	} else {
+		# set the scale for trigonometric angles
+		scale = scale_x_continuous( limits=c(0,2*pi),
+		                    breaks=seq(0, 2*pi-0.001 , by=pi/2),
+		                    labels=c("0", expression(frac(pi,2)), expression(pi), expression(frac(3*pi,2))))
 	}
+	return(scale)
 }
 
-
-plot.traject <- function(track, aquariumRadius, main="Trajectory", sub, ...)
+polar <- function(...)
 #
-#	Plots the trajectory as arrows
-#		track: a larva track = list with two elements "corrected" and "uncorrected"
-#		aquariumRadius: the radius of the aquarium in mm
-#		main: main title for the plot
-#		sub: 	sub title for the plot (defining which track is plotted)
-#		... : additional parameters for arrows
+#	Set polar coordinates
+#	...	passed to scale_x_circular to set the template
 #
 {
-	for (l in c("corrected","uncorrected")) {
-		x=track[[l]]$x
-		y=track[[l]]$y
-		nbObs=length(x)
-
-		# plot the aquarium
-		plot.aquarium(aquariumRadius,l)
-
-		# plot the trajectory
-		arrows(x[1:(nbObs-1)], y[1:(nbObs-1)], x[2:nbObs], y[2:nbObs], length=0.03, ...)
-
-		# title for the plot
-		title(main=main,sub=paste(sub,",",l))
-	}
+	list(coord_polar(theta="x"), scale_x_circular(...))
 }
 
-plot.dirs <- function(track, lim, main="Swimming vectors",sub,...)
+geom_density_circular <- function(x, ...)
 #
-#	Plots the direction vectors as arrows of length proportional to speed
-#		track: a larva track = list with two elements "corrected" and "uncorrected"
-#		lim: axes limit for the plot (a two element vector)
-#		main: main title for the plot
-#		sub: 	sub title for the plot (defining which track is plotted)
-#		... : additional parameters for arrows
-#
+#	Use density.circular to compute density and return a ggplot layer and a scale
+#	x		an object of class circular
+#	...	passed to density.circular
 {
-	library("circular")
-	for (l in c("corrected","uncorrected")) {
-		angle=as.numeric(conversion.circular(track[[l]]$directionBearing, units="radians", zero=0, rotation="counter"))
-		speed=track[[l]]$speed
-		nbObs=length(speed)
-
-		# prepare the vectors for 'arrows'
-		car=pol2car(cbind(angle,speed))
-		car=na.exclude(car)
-		x=car[,1]
-		y=car[,2]
-		orig=x
-		orig[]=0
-
-		# plot the swimming vectors
-		plot(0, 0, xlim=lim, ylim=lim, asp=1, xlab="", ylab="", main=main,sub=paste(sub,",",l))
-		arrows(orig,orig,x,y,length=0.03,...)
+	# safety test
+	if (!is.circular(x)) {
+		stop("geom_density_circular needs data of type circular")
 	}
-}
 
-plot.rose <- function(track, angleType, main="Rose diagram", sub,...)
-#
-#	Plots a rose diagram
-#		track: list with two elements "corrected" and "uncorrected", in each of which there should be a column named "angles"
-#		main: main title for the plot
-#		sub: 	sub title for the plot (defining which track is plotted)
-#		... : additional parameters for rose.diag
-#
-{
-	library("circular")
-	for (l in c("corrected","uncorrected")) {
-		# extract correct angles, based on angleType argument
-		angle = track[[l]]$angles
-
-		# convert to geographics template for plotting
-		angle = conversion.circular(angle,template="geographics")
-
-		# plot the rose diagram
-		rose.diag(angle,...)
-
-		# put a title on the plot
-		title(main=main,sub=paste(sub,",",l))
+	# conserve circular attributes
+	xp = circularp(x)
+	if (xp$units == "degrees") {
+		from = circular(0)
+		to = circular(360)
+	} else {
+		from = circular(0)
+		to = circular(2*pi)
 	}
+	circularp(from) <- xp
+	circularp(to) <- xp
+
+	# we use the density function of the package circular so we compute the density manually
+	dens = density.circular(x, from=from, to=to, ...)
+
+	# we will plot the density originating from a circle of radius "offset", otherwise it looks funny when it goes down to zero
+	offset=0.5
+
+	# convert it to data.frame
+	dens = data.frame(angle=as.numeric(dens$x), density=dens$y, offset=offset)
+
+	# since the whole y scale will be shifted, we recompute breaks and labels
+	labels = pretty(dens$density, 4)
+	breaks = labels + offset
+
+	# construct the layer and y scale
+	return( list(geom_ribbon(data=dens, mapping=aes(x=angle, ymin=offset, ymax=density+offset)),
+	             scale_y_continuous("density", limits=c(0, max(dens$density+offset)), breaks=breaks, labels=labels)) )
 }
-
-plot.hist <- function(track, threshold, main="Histogram of swimming speeds", sub, ...)
-#
-#	Plots a speed histogram
-#		track: a larva track = list with two elements "corrected" and "uncorrected"
-#		main: main title for the plot
-#		sub: 	sub title for the plot (defining which track is plotted)
-#		... : additional parameters for hist
-#
-{
-	for (l in c("corrected","uncorrected")) {
-		# plot the speed histogram
-		hist(track[[l]]$speed, border=rgb(1,1,1,alpha=0),main=main, sub=paste(sub,",",l), xlab="Swimming speeds (mm/s)",...)
-		# draw a dashed vertical line showing which limit speed is taked in consideration in direction stats
-		segments(threshold,0,threshold,100,lty=2,lwd=1,col="red")
-	}
-}
-
-
-
-
