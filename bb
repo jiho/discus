@@ -383,7 +383,21 @@ fi
 if [[ $STATS == "TRUE" ]]
 then
 	echoBlue "\nSTATISTICAL ANALYSIS"
-	# $RES/stats.sh
+
+	# Checking for tracks existence and copy the tracks in the TEMP directory
+	if [[ -e $DATA/tracks.csv ]]; then
+		echo "Corrected track(s) .......OK"
+		cp $DATA/tracks.csv $TEMP/
+	else
+		error "Corrected tracks missing. Use:\n\t $0 -correct"
+		exit 1
+	fi
+
+	$( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < stats.R > /dev/null)
+
+	echo "Save statistics and graphics"
+
+	commit_changes "stats.csv" plots*.pdf
 fi
 
 # Cleaning

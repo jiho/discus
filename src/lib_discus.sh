@@ -34,7 +34,7 @@ commit_changes()
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
-		$( cd $TEMP/ && mv -i "$@" $DATA/ )
+		$( cd $TEMP/ && mv -i $@ $DATA/ )
 	else
 		echo "Ok then cleaning TEMP directory..."
 	fi
