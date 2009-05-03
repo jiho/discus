@@ -98,12 +98,19 @@ p = ldply(tracks, function(t, ...){
 	return(pp)
 }, sub=subsampleTime)
 names(p)[1] = "trackNb"
-p$kind = "position"
+
+# Display statistical results
+# TODO improve the display
+cat("Statistics:\n")
+print(p)
+
 
 # TODO compute direction statistics while cutting direction data for speeds < threshold
 d = data.frame(kind="direction")
 
 # write them to file
+p$kind = "position"
+
 stats = rbind.fill(p, d)
 write.table(stats, file="stats.csv", row.names=FALSE, sep=",")
 
