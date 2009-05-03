@@ -411,15 +411,13 @@ then
 fi
 
 # Cleaning
-if [[ "$CLEAN" == "TRUE" ]]
+if [[ $CLEAN == "TRUE" ]]
 then
 	echoBlue "\nCLEANING DATA"
 	echo "Removing test directory ..."
 	rm -Rf $DATATEST
 	echo "Removing temporary files ..."
 	rm -Rf $TEMP
-	echo "Removing logs ..."
-	rm -Rf $LOGS/*
 fi
 
 
