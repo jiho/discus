@@ -99,10 +99,10 @@ log$dateTime = as.POSIXct(strptime(log$dateTime, format="%Y-%m-%d %H:%M", tz="GM
 # NB: the timezone is not GMT but we use that as a cross platform reference for a common time specification.
 # head(log)
 
-# read start time of the day log
-startLog = read.table(paste(prefix,"/log-camera_start_time.csv", sep=""), header=TRUE, sep=",", as.is=TRUE)
-startLog$dateTime = paste(startLog$date, startLog$startTime)
-startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
+# # read start time of the day log
+# startLog = read.table(paste(prefix,"/log-camera_start_time.csv", sep=""), header=TRUE, sep=",", as.is=TRUE)
+# startLog$dateTime = paste(startLog$date, startLog$startTime)
+# startLog$dateTime = as.POSIXct(strptime(startLog$dateTime, format="%Y-%m-%d %H:%M:%S", tz="GMT"))
 
 # time constants
 initialLag = 5    # time to wait after the start of deployment [minute]
@@ -198,8 +198,11 @@ for (i in 1:nrow(log)) {
 			# read compass data
 			compass = read.table(compassLog, header=TRUE, sep=",", as.is=TRUE)
 
+			# deduce the start time of the day as:
+			#     time of the first picture - camera delay after startup (~5 sec)
+			startOfDay = image.time(paste(imageSource,"/1.jpg", sep=""))
+
 			# convert time stamp into actual time
-			startOfDay = startLog[startLog$date == cLog$date, "dateTime"]
 			compass$date = startOfDay + compass$Timestamp
 		}
 
