@@ -108,7 +108,7 @@ log$dateTime = as.POSIXct(strptime(log$dateTime, format="%Y-%m-%d %H:%M", tz="GM
 initialLag = 5    # time to wait after the start of deployment [minute]
 duration = 20     # duration of the deployment (including initialLag) [minute]
 # the time range is extended by a few seconds to be sure to select everything [sec]
-fuzPic = 10 		# for pictures (sampling period = 2 s)
+fuzPic = 10 		# for pictures (sampling period = 1-2 s)
 fuzGps = 60 		# for gps (sampling period = 60 s)
 fuzCtd = 20 		# for ctd (sampling period = 10 s)
 fuzCompass = 20 	# for compass (sampling period = 10 s)
@@ -154,7 +154,8 @@ for (i in 1:nrow(log)) {
 
 				count=$(echo $count+1 | bc);
 			done;",
-			sep=""))
+			sep="")
+		)
 
 		# later in the loop, when we determine the images associated with the current deployment, we start with a guess of where the first image is. Here we set it to 1 as this is new day
 		startImage = endImage = 1
@@ -301,7 +302,7 @@ for (i in 1:nrow(log)) {
 		cCompass = compass[compass$date > startTime-fuzCompass & compass$date < endTime+fuzCompass, ]
 
 		if (nrow(cCompass) > 0) {
-			# wite the compass information
+			# write the compass information
 			names(cCompass) = tolower(names(cCompass))
 			write.table(cCompass, paste(dataDestination, "/compass_log.csv", sep=""), row.names=FALSE, sep=",")
 			cat("  +compass")
