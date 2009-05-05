@@ -46,7 +46,10 @@ find.image.by.time <- function(target, n=1, imageSource)
 	                                           units="secs")
 	                                 / 20 ) )
 	} else {
-		stop("Missing image, unable to compute time lapse interval")
+		warning("\nImpossible to compute time lapse interval. Start image:\n   ",
+		    imgStart,
+		    "\nnot found or too close to the end.\n", immediate. = FALSE)
+		return(NULL)
 	}
 
 	# compute the time difference between the time of the inital guess image and the target time, in seconds. Divided by the interval between images it gives  the number of images that we should shift by to find the image corresponding to the target time
@@ -219,10 +222,17 @@ for (i in 1:nrow(log)) {
 	## IMAGES
 	# find start image for this deployment
 	startList = find.image.by.time(startTime-fuzPic, endImage+1, imageSource)
-	startImage = startList$n
-	cat("    imgs ", sprintf("%5i",startImage), " (", startList$count,")", sep="")
-	# if the image is a fallback image (the last of the current directory) then cycle to the next deployment because we don't have anything to extract for this one
-	if (startList$fallback) {
+	if (!is.null(startList)) {
+		# if we can find a start image
+		startImage = startList$n
+		cat("    imgs ", sprintf("%5i",startImage), " (", startList$count,")", sep="")
+		# if the image is a fallback image (the last of the current directory) then cycle to the next deployment because we don't have anything to extract for this one
+		if (startList$fallback) {
+			cat("*\n")
+			next
+		}
+	} else {
+		# if we can't find any we cycle
 		cat("*\n")
 		next
 	}
