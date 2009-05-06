@@ -174,7 +174,7 @@ circ.stats <- function(t, subsampleTime)
 #
 {
 	# remove NAs. we don't have a use for them here
-	t = na.omit(t)
+	t = t[!is.na(t$theta),]
 
 	# sample size
 	n = nrow(t)
