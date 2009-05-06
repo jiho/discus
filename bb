@@ -428,25 +428,24 @@ then
 	fi
 
 	# Display the plots in a PDF reader
-	pdfReader=""
-	if [[ $(uname) == "Darwin" ]]; then
-		# on Mac OS X use "open" to open wih the default app associated with PDFs
-		pdfReader=open
-	else
-		# on linux, try to find some common pdf readers
-		if [[ $(which evince) != "" ]]; then
-			pdfReader=evince
-		elif [[ $(which xpdf) != "" ]]; then
-			pdfReader=xpdf
+	if [[ $displayPlots == "TRUE" ]]; then
+		pdfReader=""
+		if [[ $(uname) == "Darwin" ]]; then
+			# on Mac OS X use "open" to open wih the default app associated with PDFs
+			pdfReader=open
 		else
-			warning "Could not find a pdf reader, do not use option -display"
+			# on linux, try to find some common pdf readers
+			if [[ $(which evince) != "" ]]; then
+				pdfReader=evince
+			elif [[ $(which xpdf) != "" ]]; then
+				pdfReader=xpdf
+			else
+				warning "Could not find a pdf reader, do not use option -display"
+			fi
 		fi
-	fi
-	echo $pdfReader
-	echo $pdfReader
-
-	if [[ $displayPlots == "TRUE" && pdfReader != "" ]]; then
-		$pdfReader $TEMP/plots*.pdf
+		if [[ pdfReader != "" ]]; then
+			$pdfReader &>/dev/null $TEMP/plots*.pdf
+		fi
 	fi
 
 	echo "Save statistics and graphics"
