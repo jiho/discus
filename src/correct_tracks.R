@@ -90,16 +90,21 @@ exiftool = system("which exiftool",intern=TRUE)
 if (length(exiftool) == 0) {
 	stop("Please install exiftool http://www.sno.phy.queensu.ca/~phil/exiftool/")
 }
-# read the exact time with split seconds with exiftool
-picTimes = system(paste(exiftool,"-T -p '$CreateDate.$SubsecTime' ../*.jpg"), intern=TRUE)
-options("digits.secs" = 2)
-picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
-# read the names of the images
-images = as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T))
-# keep split seconds but also round times to full seconds
-picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
-# add to tracks
-tracks = llply(tracks, merge, picTimes)
+
+tracks = llply(tracks, function(t){
+	# get the number of the images where the larva is detected
+	images = t$imgNb
+
+	# for each read the exact time with split seconds with exiftool
+	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	options("digits.secs" = 2)
+	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
+
+	# keep split seconds but also round times to full seconds
+	picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
+	# add to corrected and uncorrected tracks
+	t = merge(t, picTimes)
+})
 
 
 ## Compute larvae tracks in a cardinal reference
@@ -179,8 +184,10 @@ for (l in 1:nbTracks) {
 #-----------------------------------------------------------------------
 
 # Take omitted frames into account in larvae tracks
+# fetch the names of all images
+images = as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T))
 # there are two levels of nesting of lists, hence the double llply construct
-tracks = llply(tracks, .fun=function(tr){
+tracks = llply(tracks, .fun=function(tr, ...){
 	llply(tr, .fun=function(x, imgNames) {
 		# prepare full empty data.frame
 		t = as.data.frame(matrix(nrow=length(imgNames),ncol=length(names(x))))
@@ -195,8 +202,8 @@ tracks = llply(tracks, .fun=function(tr){
 		# fill with values of x when possible
 		t[ t$imgNb %in% x$imgNb,] = x;
 		return(t);}
-	, images)}
-)
+	, ...)}
+, images)
 
 # Concatenate all tracks into one data.frame
 tracks = do.call("rbind", do.call("rbind", tracks))
