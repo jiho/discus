@@ -28,19 +28,19 @@ echo -e "
   the configuration file and the command line.
 
 \033[1mOPTIONS\033[0m
-  \033[1m-a|-all\033[0m           do everything [default: do nothing]
-  \033[1m-t|-test\033[0m          simply perform a test (valid for all entries)
+  \033[1m-t|-test\033[0m          simply perform a test
   \033[1m-h|-help\033[0m          display this help message
                                   
   \033[1m-cal|-calib\033[0m       measure calibration data for the tracking
-  \033[1m-com|-compass\033[0m     track the compass
+  \033[1m-com|-compass\033[0m     track the compass manually
   \033[1m-l|-larva\033[0m         track the larva(e)
-    \033[1m-sub\033[0m        1   subsample each 'sub' image (must be > ssub, below)
+    \033[1m-sub\033[0m        1   subsample interval, in seconds
   \033[1m-c|-correct\033[0m       correct the tracks
-                                  
   \033[1m-s|-stats\033[0m         compute statistics and plots
-    \033[1m-ssub\033[0m       5   if images were not subsampled earlier, extract
-                    one position record every 'ssub' second
+    \033[1m-ssub\033[0m       5   subsample positions every 'ssub' second
+                    (has no effect if > to -sub above)
+
+  \033[1m-a|-all\033[0m           do everything [default: do nothing]
                                   
   \033[1m-clean\033[0m            clean work directory
    "
@@ -253,6 +253,22 @@ fi
 # Tracking
 if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 
+	# Detect the time lapse between images
+	# we use an inline R script given how easy it is to deal with time in R
+	# just how cool is that!?
+	interval=$(R -q --slave << EOF
+		# get the time functions
+		source("src/lib_image_time.R")
+		# get the first x images names
+		images=system("ls -1 ${WORK}/*.jpg | head -n 10", intern=TRUE)
+		# compute time lapse and send it to standard output
+		cat(time.lapse.interval(images))
+EOF)
+# NB: for the heredoc (<< constuct) to work, there should be no tab above	
+	# Deduce the lag when subsampling images
+	subImages=$(($sub / $interval))
+	# NB: this is simple integer computaiton, so not very accurate but OK for here
+
 	if [[ $TRACK_LARV == "TRUE" ]]; then
 		echoBlue "\nTRACKING LARVAE"
 		resultFileName="larvae_track.txt"
@@ -271,7 +287,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=${sub} scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of one compass.\n      \
@@ -294,7 +310,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=${sub} scale=100 file=[] or=[] sort use'); \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort use'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
