@@ -22,10 +22,9 @@
 help() {
 echo -e "
 \033[1mUSAGE\033[0m
-  \033[1m$0 [options]\033[0m deploymentID
+  \033[1m$0 [options]\033[0m deployment
   Data extractaction and analysis script for the DISC.
-  Options are read, in order, from built-in defaults, 
-  the configuration file and the command line.
+  Deployment IDs can be specified as ranges: 1,3-5,8
 
 \033[1mOPTIONS\033[0m
   \033[1m-t|-test\033[0m          simply perform a test
@@ -85,7 +84,7 @@ fi
 IJ_MEM=1000
 
 # root folder where the folders for each deployment are
-WORK=$HERE
+BASE=$HERE
 # deployment number
 VIDEOID="0"
 
@@ -182,8 +181,14 @@ done
 # WORKSPACE
 #-----------------------------------------------------------------------
 
+# If VIDEOID is a range, expand it
+VIDEOID=$(expand_range "$VIDEOID")
+
+for id in $VIDEOID; do
+	echoBold "\nDEPLOYMENT $id"
+
 # Work directory
-WORK="$WORK/$VIDEOID"
+WORK="$BASE/$id"
 if [[ ! -d $WORK ]]; then
 	error "Working directory does not exist: $WORK"
 	exit 1
@@ -202,7 +207,7 @@ fi
 
 
 # We export everything making it available to the rest of the process
-export WORK DATA DATAREAL LOGS TEMP VIDEOID RES IJ_PATH JAVA_CMD
+export WORK DATA DATAREAL LOGS TEMP id RES IJ_PATH JAVA_CMD
 export TEST 
 export TRACK_CALIB TRACK_COMP TRACK_LARV TRACK_CORR
 
@@ -462,6 +467,8 @@ then
 	echo "Removing temporary files ..."
 	rm -Rf $TEMP
 fi
+
+done
 
 
 echo -e "\nDone. Bye"
