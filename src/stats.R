@@ -123,12 +123,25 @@ write.table(stats, file="stats.csv", row.names=FALSE, sep=",")
 # Prepare plots
 plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
-	# trajectory
-	traj = llply(t, function(x, radius){
-		x$time = as.numeric(x$date-x$date[1])
-		ggplot(x) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + opts(title=paste("Trajectory\ncorrection =", x$correction[1]))
-		# TODO add a circle around
-	}, aquariumDiam/2)
+	# detect the number of successive images to plot appropriate plots
+	# = if there anre no successive images (usually because of resampling) there is no point in plotting trajectory or computing speeds
+	x = t[[1]]
+	successive = is.na(x$date) + is.na( c(NA, x$date[-nrow(x)]) )
+	# successive = 0 when there are successive images
+	successive = sum(successive == 0)
+
+	ggplots = list()
+
+	if (successive > 0) {
+		# trajectory (only if there are at least 2 successive positions)
+		traj = llply(t, function(x, radius){
+			x$time = as.numeric(x$date-x$date[1])
+			ggplot(x) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + opts(title=paste("Trajectory\ncorrection =", x$correction[1]))
+			# TODO add a circle around
+		}, aquariumDiam/2)
+
+		ggplots = c(ggplots, traj)
+	}
 
 
 	# point positions
@@ -155,31 +168,36 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 		ggplot() + geom_density_circular(x$theta, na.rm=T, bw=100) + polar() + opts(title=paste("Density distribution of positions\ncorrection =", x$correction[1]))
 	})
 
+	ggplots = c(ggplots, positions, pHist, pDens)
 
-	# rose directions
-	dHist = llply(t, function(x){
-		# ggplot does not deal with the circular class
-		x$heading = as.numeric(x$heading)
-		# plot
-		ggplot(x) + geom_bar(aes(x=heading), binwidth=45/4) + polar() + opts(title=paste("Histogram of swimming directions\ncorrection =", x$correction[1]))
-		# TODO Add mean vector
-	})
+	if (successive > 0) {
+		# rose directions
+		dHist = llply(t, function(x){
+			# ggplot does not deal with the circular class
+			x$heading = as.numeric(x$heading)
+			# plot
+			ggplot(x) + geom_bar(aes(x=heading), binwidth=45/4) + polar() + opts(title=paste("Histogram of swimming directions\ncorrection =", x$correction[1]))
+			# TODO Add mean vector
+		})
 
 
-	# speed distribution
-	speeds = llply(t, function(x, maxSpeed){
-		# prepare the scale and the base plot
-		scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
-		p = ggplot(x, aes(x=speed)) + scale_x
-		# add geoms
-		sHist = p + geom_histogram(binwidth=0.5) + opts(title=paste("Histogram of swimming speeds\ncorrection =", x$correction[1]))
-		sDens = p + geom_density() + opts(title=paste("Density distribution of swimming speeds\ncorrection =", x$correction[1]))
-		return(list(sHist, sDens))
-	}, 5)
-	# regroup histograms and densities
-	speeds = list(speeds[[1]][[1]], speeds[[2]][[1]], speeds[[1]][[2]], speeds[[2]][[2]])
+		# speed distribution
+		speeds = llply(t, function(x, maxSpeed){
+			# prepare the scale and the base plot
+			scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
+			p = ggplot(x, aes(x=speed)) + scale_x
+			# add geoms
+			sHist = p + geom_histogram(binwidth=0.5) + opts(title=paste("Histogram of swimming speeds\ncorrection =", x$correction[1]))
+			sDens = p + geom_density() + opts(title=paste("Density distribution of swimming speeds\ncorrection =", x$correction[1]))
+			return(list(sHist, sDens))
+		}, 5)
+		# regroup histograms and densities
+		speeds = list(speeds[[1]][[1]], speeds[[2]][[1]], speeds[[1]][[2]], speeds[[2]][[2]])
 
-	return(list(traj, positions, pHist, pDens, dHist, speeds))
+		ggplots = c(ggplots, dHist, speeds)
+	}
+
+	return(ggplots)
 }, aquariumDiam)
 
 
@@ -189,7 +207,6 @@ cat("Plotting each track\n")
 for (name in names(tracks)) {
 	# reduce the number of hierachy levels to ease plotting
 	p = unlist(plots[name], F)
-	p = unlist(p, F)
 	if (length(tracks) > 1) {
 		filename = paste("plots-",name,".pdf",sep="")
 	} else {
