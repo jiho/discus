@@ -37,8 +37,9 @@ echo -e "
     \033[1m-sub\033[0m        1   subsample interval, in seconds
   \033[1m-c|-correct\033[0m       correct the tracks
   \033[1m-s|-stats\033[0m         compute statistics and plots
-    \033[1m-ssub\033[0m       5   subsample positions every 'ssub' second
+    \033[1m-ssub\033[0m       5   subsample positions every 'ssub' seconds
                     (has no effect if > to -sub above)
+    \033[1m-d|-display\033[0m     display the plots
 
   \033[1m-a|-all\033[0m           do everything [default: do nothing]
                                   
@@ -104,6 +105,9 @@ STATS=FALSE
 # clean data directory?
 CLEAN=FALSE
 
+# whether to display plots or not
+displayPlots=FALSE
+
 # diameter of the aquarium, in cm
 aquariumDiam=40
 # subsample each 'sub' frame to speed up the analysis
@@ -143,6 +147,9 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		-s|-stats) 
 			STATS=TRUE
+			shift 1 ;;
+		-d|-display)
+			displayPlots=TRUE
 			shift 1 ;;
 		-sub)
 			sub="$2"
@@ -264,7 +271,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# compute time lapse and send it to standard output
 		cat(time.lapse.interval(images))
 EOF)
-# NB: for the heredoc (<< constuct) to work, there should be no tab above	
+# NB: for the heredoc (<< constuct) to work, there should be no tab above
 	# Deduce the lag when subsampling images
 	subImages=$(($sub / $interval))
 	# NB: this is simple integer computaiton, so not very accurate but OK for here
@@ -418,6 +425,28 @@ then
 	stat=$(echo $?)
 	if [[ $stat != "0" ]]; then
 		exit 1
+	fi
+
+	# Display the plots in a PDF reader
+	pdfReader=""
+	if [[ $(uname) == "Darwin" ]]; then
+		# on Mac OS X use "open" to open wih the default app associated with PDFs
+		pdfReader=open
+	else
+		# on linux, try to find some common pdf readers
+		if [[ $(which evince) != "" ]]; then
+			pdfReader=evince
+		elif [[ $(which xpdf) != "" ]]; then
+			pdfReader=xpdf
+		else
+			warning "Could not find a pdf reader, do not use option -display"
+		fi
+	fi
+	echo $pdfReader
+	echo $pdfReader
+
+	if [[ $displayPlots == "TRUE" && pdfReader != "" ]]; then
+		$pdfReader $TEMP/plots*.pdf
 	fi
 
 	echo "Save statistics and graphics"

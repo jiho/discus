@@ -26,5 +26,5 @@ commit_changes()
 		echo "Ok then cleaning TEMP directory..."
 	fi
 	# clean temp directory
-	rm -f $TEMP/*
+	rm -Rf $TEMP/*
 }
