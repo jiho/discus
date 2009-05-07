@@ -185,7 +185,7 @@ for (l in 1:nbTracks) {
 
 # Take omitted frames into account in larvae tracks
 # fetch the names of all images
-images = as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T))
+images = sort(as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T)))
 # there are two levels of nesting of lists, hence the double llply construct
 tracks = llply(tracks, .fun=function(tr, ...){
 	llply(tr, .fun=function(x, imgNames) {
