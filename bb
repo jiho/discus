@@ -37,8 +37,8 @@ echo -e "
   \033[1m-c|-correct\033[0m       correct the tracks
   \033[1m-s|-stats\033[0m         compute statistics and plots
     \033[1m-ssub\033[0m       5   subsample positions every 'ssub' seconds
-                    (has no effect if > to -sub above)
-    \033[1m-d|-display\033[0m     display the plots
+                    (has no effect if < to -sub above)
+    \033[1m-d|-display\033[0m     display the PDF file containing the plots
 
   \033[1m-a|-all\033[0m           do everything [default: do nothing]
                                   
