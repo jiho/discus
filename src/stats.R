@@ -55,6 +55,7 @@ tracks = read.table("tracks.csv", header=TRUE, sep=",")
 # set the correct circular class for the positions bearings
 # = measured from the north, in degrees, in clockwise direction
 tracks$theta = circular(tracks$theta, units="degrees", template="geographics")
+tracks$compass = circular(tracks$compass, units="degrees", template="geographics")
 # NB: we might need them as regular angles = in radians, measured from zero in counter clockwise direction, because bearings seem to cause issues (in particular with range.circular)
 
 # set the class of times
@@ -131,6 +132,17 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	successive = sum(successive == 0)
 
 	ggplots = list()
+
+	# compass trajectory
+	# we isolate one track (the compass track is the same in both of them)
+	x = t[[1]]
+	# make imgNb relative
+	x$imgNb = x$imgNb-x$imgNb[1]
+	# plot as points (path causes issues when the trajectory traverses the 360-0 boundary)
+	compass = ggplot(x) + geom_point(aes(x=compass, y=imgNb, colour=imgNb), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$imgNb), max(x$imgNb)))
+	# NB: th y scale is so we can see the bearings of the first records
+
+	ggplots = c(ggplots, list(compass))
 
 	if (successive > 0) {
 		# trajectory (only if there are at least 2 successive positions)
