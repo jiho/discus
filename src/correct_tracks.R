@@ -167,8 +167,9 @@ for (l in 1:nbTracks) {
 	t$theta = (t$theta + 360) %% 360
 	tCor$theta = (tCor$theta + 360) %% 360
 
+
 	# reorganize the columns of the dataframe
-	colNames = c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho")
+	colNames = c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho", "compass")
 	t = t[,colNames]
 	tCor = tCor[,colNames]
 	t$correction=FALSE
