@@ -10,7 +10,7 @@
 work=$1
 
 
-echo -e "\n\e[1mdepl img   com gps ctd  tracks stats\e[0m"
+echo -e "\n\e[1mdepl img   com gps ctd   cal trk sta\e[0m"
 
 for i in `ls -1 $work/ | sort -n`; do
 	
@@ -28,6 +28,8 @@ for i in `ls -1 $work/ | sort -n`; do
 	# test the existence of data files
 	if [[ -e $work/$i/compass_log.csv ]]; then
 		echo -n "  * "
+	elif [[ -e $work/$i/coord_compass.txt && -e $work/$i/compass_track.txt ]]; then
+		echo -n " man"
 	else
 		echo -n "    "
 	fi
@@ -44,17 +46,22 @@ for i in `ls -1 $work/ | sort -n`; do
 	
 	echo -n " "
 	# test the existence of result files
-	if [[ -e $work/$i/tracks.csv ]]; then
-		echo -n "  *    "
-	elif [[ -e $work/$i/larvae_track.txt ]]; then
-		echo -n " raw   "
+	if [[ -e $work/$i/coord_aquarium.txt ]]; then
+		echo -n "   * "
 	else
-		echo -n "       "
+		echo -n "     "
+	fi
+	if [[ -e $work/$i/tracks.csv ]]; then
+		echo -n "  * "
+	elif [[ -e $work/$i/larvae_track.txt ]]; then
+		echo -n " raw"
+	else
+		echo -n "    "
 	fi
 	if [[ -e $work/$i/stats.csv ]]; then
-		echo -n "  *"
+		echo -n "  * "
 	else
-		echo -n ""
+		echo -n "    "
 	fi
 
 	echo ""
