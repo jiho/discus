@@ -275,7 +275,8 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		images=system("ls -1 ${WORK}/*.jpg | head -n 10", intern=TRUE)
 		# compute time lapse and send it to standard output
 		cat(time.lapse.interval(images))
-EOF)
+EOF
+)
 # NB: for the heredoc (<< constuct) to work, there should be no tab above
 	# Deduce the lag when subsampling images
 	subImages=$(($sub / $interval))
