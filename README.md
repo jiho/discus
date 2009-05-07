@@ -16,3 +16,7 @@
 	- circular
 	
 	and the dependencies of those packages
+
+- mktemp to create temporary directories
+
+- a PDF reader (evince, xpdf, preview)
