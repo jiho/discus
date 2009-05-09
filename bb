@@ -81,7 +81,7 @@ fi
 # Defaults
 
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
-IJ_MEM=1000
+IJ_MEM=4000
 
 # root folder where the folders for each deployment are
 BASE=$HERE
@@ -282,6 +282,18 @@ EOF
 	subImages=$(($sub / $interval))
 	# NB: this is simple integer computaiton, so not very accurate but OK for here
 
+	# Determine whether to use a virtual stack or a real one
+	# total number of images
+	allImages=$(ls -1 ${WORK}/*.jpg | wc -l)
+	# nb of images opened = total / interval
+	nbFrames=$(($allImages / $subImages))
+	# when there are less than 100 frames, loading them is fast and not too memory hungry
+	if [[ $nbFrames -le 100 ]]; then
+		virtualStack=""
+	else
+		virtualStack="use"
+	fi
+
 	if [[ $TRACK_LARV == "TRUE" ]]; then
 		echoBlue "\nTRACKING LARVAE"
 		resultFileName="larvae_track.txt"
@@ -323,7 +335,7 @@ EOF
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort use'); \
+	run('Image Sequence...', 'open=${WORK}/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
