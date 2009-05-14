@@ -138,6 +138,11 @@ for (i in 1:nrow(log)) {
 	# display current deloyment number
 	cat(sprintf("%5i",cLog$deployNb))
 
+	if (is.na(cLog$dateTime)) {
+		cat("*\n")
+		next
+	}
+
 	# determine start and end time for this deployment
 	startTime = cLog$dateTime + initialLag*60
 	endTime = cLog$dateTime + duration*60

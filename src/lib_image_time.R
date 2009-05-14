@@ -63,11 +63,16 @@ find.image.by.time <- function(target, n=1, imageSource)
 #	imageSource		directory where to find the images
 #
 {
+	# test for the existence of the start image
+	imgStart = img(n, imageSource)
+	if ( ! file.exists(imgStart) ) {
+		return(NULL)
+	}
+
 	# compute interval (in seconds) between successive images
 	interval = time.lapse.interval(img(n:(n+20), imageSource))
 
 	# compute the time difference between the time of the inital guess image and the target time, in seconds. Divided by the interval between images it gives  the number of images that we should shift by to find the image corresponding to the target time
-	imgStart = img(n, imageSource)
 	shift = as.integer( difftime(target, image.time(imgStart), units="secs") / interval )
 
 	# recursively shift until the we find the image corresponding to the target time
