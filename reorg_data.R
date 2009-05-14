@@ -36,7 +36,10 @@ fuzCompass = 20 	# for compass (sampling period = 10 s)
 
 # Possibly restrict to only a few deployments
 # log = log[log$date %in% c("2008-12-06","2008-12-07","2008-12-08"), ]
-log = log[log$deployNb %in% 145, ]
+# log = log[log$deployNb %in% 132:133, ]
+
+# Location of temporary directories
+imageSources = c()
 
 # for each deployment (row extract the corresponding data)
 for (i in 1:nrow(log)) {
@@ -59,12 +62,6 @@ for (i in 1:nrow(log)) {
 
 		cat(" collect all images")
 		# collect all images into one temporary directory
-		# start by erasing previous directory
-		if ( exists("imageSource") ) {
-			if( file.exists(imageSource) ) {
-				system("rm -Rf imageSource")
-			}
-		}
 		# create the new temp directory
 		imageSource = system(paste("mktemp -d -p", prefix), intern=TRUE)
 		# collect all images for today in it
@@ -130,6 +127,9 @@ for (i in 1:nrow(log)) {
 			# convert time stamp into actual time
 			compass$date = startOfDay + compass$Timestamp
 		}
+
+		# keep a log of the temporary directory location
+		imageSources = c(imageSources,imageSource)
 
 		cat("\n")
 
@@ -240,3 +240,8 @@ for (i in 1:nrow(log)) {
 
 	cat("\n")
 }
+
+# Erase all temporary directories
+system(paste("rm -Rf ", paste(imageSources, collapse=" ")))
+
+
