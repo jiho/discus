@@ -100,6 +100,8 @@ for (i in 1:nbTracks) {
 p = ldply(tracks, function(t, ...){
 	pp = ldply(t, function(x, ...){circ.stats(x, ...)}, ...)
 	names(pp)[1] = "correction"
+	pp$correction = as.logical(as.character(pp$correction))
+	pp[ ! pp$correction, "mean"] = NA
 	return(pp)
 }, sub=subsampleTime)
 names(p)[1] = "trackNb"
