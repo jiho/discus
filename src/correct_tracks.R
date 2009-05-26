@@ -25,7 +25,7 @@ aquariumDiam = as.numeric(args[2])
 cameraCompassDeviation = as.numeric(args[3])
 
 # In case we need to call it without the shell script
-# prefix="/home/jiho/current_data/62/tmp/"
+# prefix="/home/jiho/current_data/Lizard/46/tmp/"
 # aquariumDiam = 40
 # cameraCompassDeviation = 82
 
@@ -33,13 +33,43 @@ cameraCompassDeviation = as.numeric(args[3])
 setwd(prefix)
 
 
-## Read data
-#-----------------------------------------------------------------------
+## Read and reformat larve tracks
+#------------------------------------------------------------
 
 # larvae tracks are recorded from ImageJ "Manual tracking"
 trackLarva = read.table("larvae_track.txt", header=T, sep="\t")
 trackLarva = trackLarva[,-1]
 # WARNING: The origin of the position is the upper-left corner
+
+# Split larvae tracks in a list
+tracks = split(trackLarva, trackLarva$trackNb)
+nbTracks = length(tracks)
+
+# Add time stamps to the tracks
+# check for the existence of exiftool
+exiftool = system("which exiftool",intern=TRUE)
+if (length(exiftool) == 0) {
+	stop("Please install exiftool http://www.sno.phy.queensu.ca/~phil/exiftool/")
+}
+
+tracks = llply(tracks, function(t){
+	# get the number of the images where the larva is detected
+	images = t$imgNb
+
+	# for each read the exact time with split seconds with exiftool
+	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	options("digits.secs" = 2)
+	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
+
+	# keep split seconds but also round times to full seconds
+	picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
+	# add to each track
+	t = merge(t, picTimes)
+})
+
+
+## Read and refornat compass tracks
+#------------------------------------------------------------
 
 # read compass record
 # it can either be a record from the numerical compass or from the backup, physical compass
@@ -64,51 +94,28 @@ if (file.exists("compass_log.csv")) {
 	trackCompass = trackCompass[,-1]
 	compassSource = "manual"
 
-	# also read the coordinates of the center of the compass, to be able to compute the movement in polar coordinates
-	coordCompass = read.table("coord_compass.txt", header=TRUE, sep="\t")
-	coordCompass = coordCompass[,c("X","Y")]
+	# compute the time associated with each image
+	# this can be different from those in the tracks since we can subsample the compass and the track at a different interval
 
-	# TODO compute headings in polar coordinates, interpolate the track etc.
-	# i.e. make it similar to the automatic compass track as much as possible.
-}
-
-# Read calibration data
-coordAquarium = read.table("coord_aquarium.txt", header=TRUE, sep="\t", col.names=c("nb","X","Y","Perim"))
-coordAquarium = coordAquarium[,-1]
-
-
-## Reformat tracks
-#-----------------------------------------------------------------------
-
-# Split larvae tracks in a list
-tracks = split(trackLarva, trackLarva$trackNb)
-nbTracks = length(tracks)
-
-# Add time stamps to the tracks
-# check for the existence of exiftool
-exiftool = system("which exiftool",intern=TRUE)
-if (length(exiftool) == 0) {
-	stop("Please install exiftool http://www.sno.phy.queensu.ca/~phil/exiftool/")
-}
-
-tracks = llply(tracks, function(t){
 	# get the number of the images where the larva is detected
-	images = t$imgNb
-
-	# for each read the exact time with split seconds with exiftool
+	images = trackCompass$imgNb
+	# for each read the time using exiftool
 	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
-	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
+	picTimes = data.frame(imgNb=images, date=as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS")))
+	# add to compass tracks
+	trackCompass = merge(trackCompass, picTimes)
 
-	# keep split seconds but also round times to full seconds
-	picTimes = data.frame(imgNb=images, exactDate=picTimes, date=round(picTimes))
-	# add to corrected and uncorrected tracks
-	t = merge(t, picTimes)
-})
+	# read the coordinates of the center of the compass, to be able to compute the movement in polar coordinates
+	coordCompass = read.table("coord_compass.txt", header=TRUE, sep="\t", col.names=c("dump", "mean", "x", "y", "slice"))
 
+	# convert the coordinates to polar ones
+	trackCompass[,c("theta","rho")] = car2pol(trackCompass[,c("x","y")], coordCompass[,c("x","y")])
 
-## Compute larvae tracks in a cardinal reference
-#-----------------------------------------------------------------------
+	# convert the bearing to the appropriate circular class
+	trackCompass$theta = circular(trackCompass$theta)
+	trackCompass$heading = conversion.circular(trackCompass$theta, units="degrees", template="geographics", modulo="2pi")
+}
 
 # Interpolate compass positions at every point in time in the tracks
 tracks = llply(tracks, function(x, compass) {
@@ -117,9 +124,16 @@ tracks = llply(tracks, function(x, compass) {
 }, trackCompass)
 
 
+
+## Compute larvae tracks in a cardinal reference
+#------------------------------------------------------------
+
+# Read calibration data
+coordAquarium = read.table("coord_aquarium.txt", header=TRUE, sep="\t", col.names=c("nb","X","Y","Perim"))
+coordAquarium = coordAquarium[,-1]
+
 # Only keep data where calibration is available
 tracks = llply(tracks, function(x){x=x[!is.na(x$compass),]})
-
 
 # Correct for the rotation of the compass relative to the bearing in the first frame
 # for all larvae tracks
@@ -182,7 +196,7 @@ for (l in 1:nbTracks) {
 
 
 ## Saving tracks for statistical analysis and plotting
-#-----------------------------------------------------------------------
+#------------------------------------------------------------
 
 # Take omitted frames into account in larvae tracks
 # fetch the names of all images

@@ -315,7 +315,7 @@ EOF
 		run('Image Sequence...', 'open=${WORK}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
-			'Please click the center of one compass.\n      \
+			'Please click the center of the compass you intend to track.\n      \
 			\nPress OK when you are done');                 \
 		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
 		run('Measure');                                     \
@@ -375,7 +375,7 @@ then
 			OK=1
 		else
 			echo "Compass track ..........OK"
-			cp $DATA/compass_tracks.txt $TEMP
+			cp $DATA/compass_track.txt $TEMP
 		fi
 
 		if [[ ! -e $DATA/coord_compass.txt ]]
