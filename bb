@@ -278,7 +278,11 @@ EOF
 # NB: for the heredoc (<< constuct) to work, there should be no tab above
 	# Deduce the lag when subsampling images
 	subImages=$(($sub / $interval))
-	# NB: this is simple integer computaiton, so not very accurate but OK for here
+	# NB: this is simple integer computation, so not very accurate but OK for here
+	# when $sub is smaller than $interval (i.e. subImages <1 and in that case =0 since we are doing integer computation) it means we want all images. So subImages should be 1
+	if [[ $subImages -eq 0 ]]; then
+	        subImages=1
+	fi
 
 	# Determine whether to use a virtual stack or a real one
 	# total number of images
