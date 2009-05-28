@@ -194,7 +194,9 @@ for (i in 1:nrow(log)) {
 	cImages = paste(imageSource, "/", seq(startImage, endImage), ".jpg", sep="", collapse=" ")
 
 	# move images to destination
-	system(paste("mv", cImages, dataDestination))
+	imageDestination = paste(dataDestination, "/pics",sep="")
+	system(paste("mkdir -p ", imageDestination))
+	system(paste("mv", cImages, imageDestination))
 
 
 	## CTD

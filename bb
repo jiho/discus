@@ -245,7 +245,7 @@ then
 	# - save that to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-	run('Image Sequence...', 'open=${DATAREAL}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+	run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 	makeOval(402, 99, 1137, 1137);                      \
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
@@ -270,7 +270,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# get the time functions
 		source("src/lib_image_time.R")
 		# get the first x images names
-		images=system("ls -1 ${DATAREAL}/*.jpg | head -n 10", intern=TRUE)
+		images=system("ls -1 ${DATAREAL}/pics/*.jpg | head -n 10", intern=TRUE)
 		# compute time lapse and send it to standard output
 		cat(time.lapse.interval(images))
 EOF
@@ -286,7 +286,7 @@ EOF
 
 	# Determine whether to use a virtual stack or a real one
 	# total number of images
-	allImages=$(ls -1 ${DATAREAL}/*.jpg | wc -l)
+	allImages=$(ls -1 ${DATAREAL}/pics/*.jpg | wc -l)
 	# nb of images opened = total / interval
 	nbFrames=$(($allImages / $subImages))
 	# when there are less than 100 frames, loading them is fast and not too memory hungry
@@ -314,7 +314,7 @@ EOF
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${DATAREAL}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of the compass you intend to track.\n      \
@@ -337,7 +337,7 @@ EOF
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${DATAREAL}/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
+	run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \

@@ -19,7 +19,7 @@ for i in `ls -1 $work/ | sort -n`; do
 	# use awk for nice formatted output
 	
 	# count images
-	nbImages=$(ls 2>/dev/null $work/$i/*.jpg | wc -l)
+	nbImages=$(ls 2>/dev/null $work/$i/pics/*.jpg | wc -l)
 	if [[ ! $? ]]; then
 		nbImages=0
 	fi

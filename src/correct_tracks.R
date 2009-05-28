@@ -57,7 +57,7 @@ tracks = llply(tracks, function(t){
 	images = t$imgNb
 
 	# for each read the exact time with split seconds with exiftool
-	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
 	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
 
@@ -100,7 +100,7 @@ if (file.exists("compass_log.csv")) {
 	# get the number of the images where the larva is detected
 	images = trackCompass$imgNb
 	# for each read the time using exiftool
-	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
 	picTimes = data.frame(imgNb=images, date=as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS")))
 	# add to compass tracks
@@ -200,7 +200,7 @@ for (l in 1:nbTracks) {
 
 # Take omitted frames into account in larvae tracks
 # fetch the names of all images
-images = sort(as.numeric(system("ls -1 ../*.jpg | cut -d '/' -f 2 | cut -d '.' -f 1", intern=T)))
+images = sort(as.numeric(system("ls -1 ../pics/*.jpg | cut -d '/' -f 3 | cut -d '.' -f 1", intern=T)))
 # there are two levels of nesting of lists, hence the double llply construct
 tracks = llply(tracks, .fun=function(tr, ...){
 	llply(tr, .fun=function(x, imgNames) {
