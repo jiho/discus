@@ -170,21 +170,18 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 			# TODO Add mean vector
 		})
 
-
 		# speed distribution
-		speeds = llply(t, function(x, maxSpeed){
-			# prepare the scale and the base plot
-			scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
-			p = ggplot(x, aes(x=speed)) + scale_x
-			# add geoms
-			sHist = p + geom_histogram(binwidth=0.5) + opts(title=paste("Histogram of swimming speeds\ncorrection =", x$correction[1]))
-			sDens = p + geom_density() + opts(title=paste("Density distribution of swimming speeds\ncorrection =", x$correction[1]))
-			return(list(sHist, sDens))
-		}, 5)
-		# regroup histograms and densities
-		speeds = list(speeds[[1]][[1]], speeds[[2]][[1]], speeds[[1]][[2]], speeds[[2]][[2]])
+		# plot only for uncorrected tracks (the speeds are NA for the corrected one)
+		x = t[["FALSE"]]
+		# prepare the scale and the base plot
+		maxSpeed = 5
+		scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
+		p = ggplot(x, aes(x=speed)) + scale_x
+		# add geoms
+		sHist = p + geom_histogram(binwidth=0.5) + opts(title=paste("Histogram of swimming speeds\ncorrection =", x$correction[1]))
+		sDens = p + geom_density() + opts(title=paste("Density distribution of swimming speeds\ncorrection =", x$correction[1]))
 
-		ggplots = c(ggplots, dHist, speeds)
+		ggplots = c(ggplots, dHist, list(sHist), list(sDens))
 	}
 
 	return(ggplots)
