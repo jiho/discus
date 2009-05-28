@@ -67,7 +67,7 @@ tracks$date = as.POSIXct(tracks$date)
 tracks = llply(split(tracks, tracks$trackNb), function(x){split(x, x$correction)})
 nbTracks = length(tracks)
 
-# Compute swimming direction and speed
+# Compute swimming direction
 for (i in 1:nbTracks) {
 	tracks[[i]] = llply(tracks[[i]], function(t) {
 		# Compute swimming directions
@@ -81,12 +81,6 @@ for (i in 1:nbTracks) {
 		headings = conversion.circular(headings, units="degrees", template="geographics", modulo="2pi")
 		# store that in the orignal dataframe
 		t$heading = headings
-
-		# Compute speeds in cm/s
-		# compute time difference between pictures
-		dirs$interval = c(NA,as.numeric(diff(t$exactDate)))
-		# compute speed from displacement and interval
-		t$speed = sqrt(dirs$x^2 + dirs$y^2) / dirs$interval
 
 		return(t)
 	})

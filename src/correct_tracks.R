@@ -172,7 +172,7 @@ for (l in 1:nbTracks) {
 	t[,c("x","y")] = pol2car(t[,c("theta","rho")])
 	tCor[,c("x","y")] = pol2car(tCor[,c("theta","rho")])
 
-	# convert x, y, and rho to human significant measures (mm)
+	# convert x, y, and rho to human significant measures (cm)
 	px2cm = aquariumDiam/(coordAquarium$Perim/pi)
 	t[,c("x","y","rho")] = t[,c("x","y","rho")] * px2cm
 	tCor[,c("x","y","rho")] = tCor[,c("x","y","rho")] * px2cm
@@ -219,6 +219,22 @@ tracks = llply(tracks, .fun=function(tr, ...){
 		return(t);}
 	, ...)}
 , images)
+
+
+# Compute speeds in cm/s
+tracks = llply(tracks, .fun=function(x) {
+	# only compute speed for the uncorrected data, it does not make sense otherwise (the corrected "trajectory" is never really travelled)
+	t = x[["original"]]
+
+	# compute time difference between pictures
+	intervals = c(NA,as.numeric(diff(t$exactDate)))
+
+	# compute speed from displacement and interval
+	x[["original"]]$speed = sqrt(t$x^2 + t$y^2) / intervals
+	x[["corrected"]]$speed = NA
+
+	return(x)
+})
 
 # Concatenate all tracks into one data.frame
 tracks = do.call("rbind", do.call("rbind", tracks))
