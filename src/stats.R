@@ -56,6 +56,7 @@ tracks = read.table("tracks.csv", header=TRUE, sep=",")
 # = measured from the north, in degrees, in clockwise direction
 tracks$theta = circular(tracks$theta, units="degrees", template="geographics")
 tracks$compass = circular(tracks$compass, units="degrees", template="geographics")
+tracks$heading = circular(tracks$heading, units="degrees", template="geographics")
 # NB: we might need them as regular angles = in radians, measured from zero in counter clockwise direction, because bearings seem to cause issues (in particular with range.circular)
 
 # set the class of times
@@ -66,25 +67,6 @@ tracks$date = as.POSIXct(tracks$date)
 # reorganize tracks in a list by [[trackNb]][[original/corrected]]
 tracks = llply(split(tracks, tracks$trackNb), function(x){split(x, x$correction)})
 nbTracks = length(tracks)
-
-# Compute swimming direction
-for (i in 1:nbTracks) {
-	tracks[[i]] = llply(tracks[[i]], function(t) {
-		# Compute swimming directions
-		# compute swimming vectors in x and y directions
-		# = position at t+1 - position at t
-		dirs = t[2:nrow(t),c("x","y")] - t[1:(nrow(t)-1),c("x","y")]
-		dirs = rbind(NA,dirs)
-		# convert to headings by considering that these vectors originate from 0,0
-		headings = car2pol(dirs, c(0,0))$theta
-		# cast to the appropriate circular class
-		headings = conversion.circular(headings, units="degrees", template="geographics", modulo="2pi")
-		# store that in the orignal dataframe
-		t$heading = headings
-
-		return(t)
-	})
-}
 
 
 ## Statistics and plots

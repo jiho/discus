@@ -195,7 +195,7 @@ for (l in 1:nbTracks) {
 }
 
 
-## Saving tracks for statistical analysis and plotting
+## Compute tracks characteristics
 #------------------------------------------------------------
 
 # Take omitted frames into account in larvae tracks
@@ -221,21 +221,37 @@ tracks = llply(tracks, .fun=function(tr, ...){
 , images)
 
 
-# Compute speeds in cm/s
-tracks = llply(tracks, .fun=function(x) {
-	# only compute speed for the uncorrected data, it does not make sense otherwise (the corrected "trajectory" is never really travelled)
-	t = x[["original"]]
+# Compute swimming direction and speed
+for (i in 1:nbTracks) {
+	tracks[[i]] = llply(tracks[[i]], function(t) {
+		# Compute swimming directions
+		# compute swimming vectors in x and y directions
+		# = position at t+1 - position at t
+		dirs = t[2:nrow(t),c("x","y")] - t[1:(nrow(t)-1),c("x","y")]
+		dirs = rbind(NA,dirs)
+		# convert to headings by considering that these vectors originate from 0,0
+		headings = car2pol(dirs, c(0,0))$theta
+		# cast to the appropriate circular class
+		headings = conversion.circular(headings, units="degrees", template="geographics", modulo="2pi")
+		# store that in the orignal dataframe
+		t$heading = headings
 
-	# compute time difference between pictures
-	intervals = c(NA,as.numeric(diff(t$exactDate)))
+		# Compute speeds in cm/s
+		# compute time difference between pictures
+		dirs$interval = c(NA,as.numeric(diff(t$exactDate)))
+		# compute speed from displacement and interval
+		t$speed = sqrt(dirs$x^2 + dirs$y^2) / dirs$interval
 
-	# compute speed from displacement and interval
-	x[["original"]]$speed = sqrt(t$x^2 + t$y^2) / intervals
-	x[["corrected"]]$speed = NA
+		return(t)
+	})
 
-	return(x)
-})
+	# Suppress speed for the uncorrected data: it does not make sense because the corrected "trajectory" is never really travelled
+	tracks[[i]][["corrected"]]$speed = NA
+}
 
+
+## Saving tracks for statistical analysis and plotting
+#------------------------------------------------------------
 # Concatenate all tracks into one data.frame
 tracks = do.call("rbind", do.call("rbind", tracks))
 
