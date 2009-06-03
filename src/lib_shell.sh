@@ -99,3 +99,58 @@ expand_range() {
 		echo "${ids[$i]}"
 	done | sort -n
 }
+
+
+#
+# Read the whole config file and give information on what is read
+#
+read_config() {
+	configFile=$1
+
+	echoBold "Picked up configuration variables"
+	cat $configFile | while read line; do
+		case $line in
+			\#*) ;;
+			'') ;;
+			*)
+				# Parse the line and give information
+				echo "$line" | awk -F "=" {'print "  "$1" = "$2'}
+				;;
+		esac
+	done
+	echo ""
+
+	# Actually source the file
+	source $configFile
+}
+
+
+#
+# Usage:
+#	write_pref [file] [variable name]
+# write the current value of the variable in the preferences file.
+# if the preference already exists, update it. otherwise, create it.
+#
+write_pref() {
+	configFile=$1
+	pref=$2		# this is only the name of the variable, i.e. a string
+
+	# test whether the variable currently has a value
+	if [[ $(eval echo \$$pref) == "" ]]; then
+		error "$pref does not have a value"
+		exit 1
+	fi
+
+	# test whether the preference already exists
+	cat $configFile | grep "^[^#]*$pref" > /dev/null
+
+	if [[ $? == "0"  ]]; then
+		# if there is a match, update the preference in the config file
+		sed -e 's/'$pref'=.*/'$pref'='\"$(eval echo \$$pref)\"'/' -i '' $configFile
+	else
+		# otherwise, write the pref at the end of the file
+		echo "$pref=\"$(eval echo \$$pref)\"" >> $configFile
+	fi
+
+	return 0
+}

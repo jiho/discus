@@ -62,6 +62,8 @@ typeset -fx echoGreen
 typeset -fx echoBlue
 typeset -fx warning
 typeset -fx error
+typeset -fx read_config
+typeset -fx write_pref
 
 source $RES/lib_discus.sh
 typeset -fx commit_changes
@@ -113,14 +115,15 @@ aquariumDiam=40
 sub=1
 # subsample position data each 'ssub' frame to allow indpendence of data
 ssub=5
+# aquarium boundary coordinates
+aquariumBounds="10,10,100,100"
 
 
 # Getting options from the config file (overriding defaults)
-for CONFIG_FILE in "bb.conf" "BlueBidule.conf"; do
-	if [[ -e $CONFIG_FILE ]]; then
-		source $CONFIG_FILE
-	fi
-done
+CONFIG_FILE="bb.conf"
+if [[ -e $CONFIG_FILE ]]; then
+	read_config $CONFIG_FILE
+fi
 
 # Getting options from the command line (overriding config file and defaults)
 # until argument is null, check against known options
@@ -238,22 +241,31 @@ then
 
 	echo "Open first image for calibration"
 	# Use an ImageJ macro to run everything. The macro proceeds this way
-	# - Use Image Sequence to open only the first image
-	# - Create a default oval
+	# - use Image Sequence to open only the first image
+	# - create a default oval
 	# - use waitForUser to let the time for the user to tweak the selection
 	# - measure centroid and perimeter in pixels
 	# - save that to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
 	run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
-	makeOval(402, 99, 1137, 1137);                      \
+	makeOval(${aquariumBounds});                        \
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
 		\nPress OK when you are done');                 \
-	run('Set Measurements...', ' centroid perimeter invert redirect=None decimal=3'); \
+	run('Set Measurements...', '  centroid perimeter invert redirect=None decimal=3'); \
 	run('Measure');                                     \
 	saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
+	run('Clear Results');                               \
+	run('Set Measurements...', '  bounding redirect=None decimal=3'); \
+	run('Measure');                                     \
+	saveAs('Measurements', '${TEMP}/bounding_aquarium.txt');     \
 	run('Quit');"
+
+	# save the bounding rectangle measurements in the configuration file
+	aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
+
+	write_pref $CONFIG_FILE aquariumBounds
 
 	echo "Save aquarium coordinates"
 
