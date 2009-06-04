@@ -67,11 +67,15 @@ fi
 
 # Set defaults
 
-# Parameters: only set here
+# Parameters: stick from one deployment to the next
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
-IJ_MEM=4000
+ijMem=1000
 # aquarium boundary coordinates
 aquariumBounds="10,10,300,300"
+# angle between the top of the picture and the forward direction of the compass
+cameraCompassAngle=90
+# diameter of the aquarium, in cm
+aquariumDiam=40
 
 # Actions: determined on the command line, all FALSE by default
 # perform calibration?
@@ -92,16 +96,12 @@ CLEAN=FALSE
 base=$HERE
 # deployment number (i.e. deployment directory name)
 deployNb="0"
-# diameter of the aquarium, in cm
-aquariumDiam=40
 # subsample images every 'sub' seconds to speed up the analysis
 sub=1
 # subsample positions each 'psub' seconds for the statistical analysis, to allow independence of data
 psub=5
 # whether to display plots or not after the statistical analysis
 displayPlots=FALSE
-# angle between the top of the picture and the forward direction of the compass
-cameraCompassAngle=90
 
 
 # Get options from the config file (overriding defaults)
@@ -164,6 +164,10 @@ until [[ -z "$1" ]]; do
 		-a|-angle)
 			cameraCompassAngle="$2"
 			write_pref $configFile cameraCompassAngle
+			shift 2 ;;
+		-m|-mem)
+			ijMem="$2"
+			write_pref $configFile ijMem
 			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
@@ -338,7 +342,7 @@ EOF
 		# - use waitForUser to let the time for the user to track larvae
 		# - save the tracks to an appropriate file
 		# - quit
-		$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
+		$JAVA_CMD -Xmx${ijMem}m -jar ${IJ_PATH}/ij.jar   \
 		-ijpath ${IJ_PATH}/plugins/ -eval "               \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
