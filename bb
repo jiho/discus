@@ -17,61 +17,11 @@
 #
 #-----------------------------------------------------------------------
 
-# HELP
-#-----------------------------------------------------------------------
-help() {
-echo -e "
-\033[1mUSAGE\033[0m
-  \033[1m$0 [options]\033[0m action[s] deployment
-  Data extraction and analysis script for the DISC.
-  Actions perform a data analysis step and are whole or abbreviated words.
-  Options modify the behaviour of the script and are prepended a \"-\" sign.
-  Deployment numbers can be specified as ranges: 1,3-5,8
 
-\033[1mACTIONS / relevant OPTIONS\033[0m
-  \033[1mh|help\033[0m            display this help message
-
-  \033[1mstatus\033[0m            prints information about the data directory
-
-
-  \033[1mcal|calib\033[0m         measure calibration data for the tracking
-
-  \033[1mcom|compass\033[0m       track the compass manually
-  \033[1ml|larva\033[0m           track the larva(e)
-    \033[1m-sub\033[0m        1   subsample interval, in seconds
-
-  \033[1mc|correct\033[0m         correct the tracks
-    \033[1m-diam\033[0m       40  aquarium diameter, in cm
-    \033[1m-a|-angle\033[0m   90  angle between camera and compass in degrees
-          \033[1mNB\033[0m both options are written in the configuration file
-             therefore, they \"stick\" from one run to the other
-
-  \033[1ms|stats\033[0m           compute statistics and plots
-    \033[1m-psub\033[0m       5   subsample positions every 'psub' seconds
-                    (has no effect when < to -sub above)
-    \033[1m-d|-display\033[0m     display the plots [default: don't display]
-
-  \033[1mclean\033[0m             clean work directory
-
-  \033[1mall\033[0m               do everything
-   "
-
-	return 0
-}
-
-# detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
-echo $* | grep -E -e "h|help" > /dev/null
-if [[ $? -eq 0 ]]; then
-	help
-	exit 0
-fi
-
-
-# CONFIGURATION
+# SOURCE
 #-----------------------------------------------------------------------
 
-# Gather source code
-# set directories
+# set source directories
 HERE=`pwd`
 RES="$HERE/src"
 
@@ -92,6 +42,14 @@ source $RES/lib_discus.sh
 typeset -fx commit_changes
 typeset -fx data_status
 
+# Help message (should be done early)
+# detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
+echo $* | grep -E -e "h|help" > /dev/null
+if [[ $? -eq 0 ]]; then
+	help
+	exit 0
+fi
+
 # Test ImageJ and Java paths
 JAVA_CMD=`which java`
 status $? "Java not found"
@@ -103,6 +61,10 @@ if [[ ! -e $IJ_PATH/ij.jar ]]; then
 fi
 
 
+
+# CONFIGURATION
+#-----------------------------------------------------------------------
+
 # Set defaults
 
 # Parameters: only set here
@@ -110,7 +72,6 @@ fi
 IJ_MEM=500
 # aquarium boundary coordinates
 aquariumBounds="10,10,300,300"
-
 
 # Actions: determined on the command line, all FALSE by default
 # perform calibration?
@@ -126,14 +87,11 @@ STATS=FALSE
 # clean data directory?
 CLEAN=FALSE
 
-
 # Options: set in the config file or on the command line
-
 # root directory where the directories for each deployment are
 base=$HERE
 # deployment number (i.e. deployment directory name)
 deployNb="0"
-
 # diameter of the aquarium, in cm
 aquariumDiam=40
 # subsample images every 'sub' seconds to speed up the analysis
@@ -146,14 +104,15 @@ displayPlots=FALSE
 cameraCompassAngle=90
 
 
-# Getting options from the config file (overriding defaults)
+# Get options from the config file (overriding defaults)
 configFile="bb.conf"
 if [[ -e $configFile ]]; then
 	read_config $configFile
 	status $? "Cannot read configuration file"
 fi
 
-# Getting options from the command line (overriding config file and defaults)
+
+# Get options from the command line (overriding config file and defaults)
 # until argument is null, check against known options
 until [[ -z "$1" ]]; do
 	case "$1" in
@@ -216,9 +175,10 @@ until [[ -z "$1" ]]; do
 	esac
 done
 
-
 # If deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
+
+
 
 
 for id in $deployNb; do

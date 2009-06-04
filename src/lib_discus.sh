@@ -8,6 +8,50 @@
 #
 #------------------------------------------------------------------------------
 
+help()
+#
+#	Display a help message
+#
+{
+echo -e "
+\033[1mUSAGE\033[0m
+  \033[1m$0 [options]\033[0m action[s] deployment
+  Data extraction and analysis script for the DISC.
+  Actions perform a data analysis step and are whole or abbreviated words.
+  Options modify the behaviour of the script and are prepended a \"-\" sign.
+  Deployment numbers can be specified as ranges: 1,3-5,8
+
+\033[1mACTIONS / relevant OPTIONS\033[0m
+  \033[1mh|help\033[0m            display this help message
+
+  \033[1mstatus\033[0m            prints information about the data directory
+
+
+  \033[1mcal|calib\033[0m         measure calibration data for the tracking
+
+  \033[1mcom|compass\033[0m       track the compass manually
+  \033[1ml|larva\033[0m           track the larva(e)
+    \033[1m-sub\033[0m        1   subsample interval, in seconds
+
+  \033[1mc|correct\033[0m         correct the tracks
+    \033[1m-diam\033[0m       40  aquarium diameter, in cm
+    \033[1m-a|-angle\033[0m   90  angle between camera and compass in degrees
+          \033[1mNB\033[0m both options are written in the configuration file
+             therefore, they \"stick\" from one run to the other
+
+  \033[1ms|stats\033[0m           compute statistics and plots
+    \033[1m-psub\033[0m       5   subsample positions every 'psub' seconds
+                    (has no effect when < to -sub above)
+    \033[1m-d|-display\033[0m     display the plots [default: don't display]
+
+  \033[1mclean\033[0m             clean work directory
+
+  \033[1mall\033[0m               do everything
+   "
+
+	return 0
+}
+
 commit_changes()
 #
 #	Ask to commit changes and copy all .txt files from TEMP to DATA
