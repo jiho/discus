@@ -12,7 +12,7 @@ STORAGE="/media/data/DISC-Lizard-Nov_Dec_08/DISC/deployments"
 
 
 # Copy results from data to storage
-rsync -avz --exclude='.*' --exclude='*test/'  --exclude='*tmp/' --include='*/' --include='*.csv' --include='*.pdf' --include='*.txt' --exclude='*' $DATA/ $STORAGE
+rsync -avz --exclude='.*'  --exclude='*tmp/' --include='*/' --include='*.csv' --include='*.pdf' --include='*.txt' --exclude='*' $DATA/ $STORAGE
 
 # Synchronize pictures from storage to data
 # only those that exist already in the DATA dir

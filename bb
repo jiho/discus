@@ -31,7 +31,8 @@ echo -e "
 \033[1mACTIONS / relevant OPTIONS\033[0m
   \033[1mh|help\033[0m            display this help message
 
-  \033[1m-t|-test\033[0m          simply perform a test
+  \033[1mstatus\033[0m            prints information about the data directory
+
 
   \033[1mcal|calib\033[0m         measure calibration data for the tracking
 
@@ -53,8 +54,6 @@ echo -e "
   \033[1mclean\033[0m             clean work directory
 
   \033[1mall\033[0m               do everything
-
-  \033[1mstatus\033[0m            prints information about the data directory
    "
 
 	return 0
@@ -129,8 +128,6 @@ CLEAN=FALSE
 
 
 # Options: set in the config file or on the command line
-# test switch, uses a subset of data for a smaller footprint
-TEST=FALSE
 
 # root directory where the directories for each deployment are
 base=$HERE
@@ -192,9 +189,6 @@ until [[ -z "$1" ]]; do
 			STATS=TRUE
 			CLEAN=TRUE
 			shift 1 ;;
-		-t|-test)
-			TEST=TRUE
-			shift 1 ;;
 		-d|-display)
 			displayPlots=TRUE
 			shift 1 ;;
@@ -235,17 +229,14 @@ for id in $deployNb; do
 echoBold "\nDEPLOYMENT $id"
 
 # Work directory
-dataReal="$base/$id"
-if [[ ! -d $dataReal ]]; then
-	error "Deployment directory does not exist:\n  $dataReal\nDid you specify a deployment number on the command line?"
+data="$base/$id"
+if [[ ! -d $data ]]; then
+	error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
 	exit 1
 fi
 
-# When we only perform tests, test data is saved in a subdirectory
-dataTest="$dataReal/test"
-
 # Temporary directory, where all operations are done
-TEMP="$dataReal/tmp"
+TEMP="$data/tmp"
 if [[ ! -e $TEMP ]]; then
 	mkdir $TEMP
 fi
@@ -254,22 +245,6 @@ fi
 
 # LAUNCH COMPONENTS
 #-----------------------------------------------------------------------
-# Test mode switches
-if [[ $TEST == "TRUE" ]]; then
-	warning "Test mode"
-	# nb of images to read as a stack
-	nbImages=10
-	# use special test directory to store test results
-	if [[ ! -e $dataTest ]]; then
-		mkdir $dataTest
-	fi
-	DATA=$dataTest
-else
-	nbImages=0
-	# NB: zero means all
-	# use the regular data directory
-	DATA=$dataReal
-fi
 
 
 # Calibration
@@ -286,7 +261,7 @@ then
 	# - save that to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-	run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+	run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 	makeOval(${aquariumBounds});                        \
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
@@ -326,7 +301,7 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# get the time functions
 		source("src/lib_image_time.R")
 		# get the first x images names
-		images=system("ls -1 ${dataReal}/pics/*.jpg | head -n 10", intern=TRUE)
+		images=system("ls -1 ${data}/pics/*.jpg | head -n 10", intern=TRUE)
 		# compute time lapse and send it to standard output
 		cat(time.lapse.interval(images))
 EOF
@@ -344,7 +319,7 @@ EOF
 
 	# Determine whether to use a virtual stack or a real one
 	# total number of images
-	allImages=$(ls -1 ${dataReal}/pics/*.jpg | wc -l)
+	allImages=$(ls -1 ${data}/pics/*.jpg | wc -l)
 	# nb of images opened = total / interval
 	nbFrames=$(($allImages / $subImages))
 	# when there are less than 100 frames, loading them is fast and not too memory hungry
@@ -372,7 +347,7 @@ EOF
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of the compass you intend to track.\n      \
@@ -397,7 +372,7 @@ EOF
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
+	run('Image Sequence...', 'open=${data}/pics/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
@@ -535,8 +510,6 @@ fi
 if [[ $CLEAN == "TRUE" ]]
 then
 	echoBlue "\nCLEANING DATA"
-	echo "Removing test directory ..."
-	rm -Rf $dataTest
 	echo "Removing temporary files ..."
 	rm -Rf $TEMP
 fi
