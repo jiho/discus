@@ -69,7 +69,7 @@ fi
 
 # Parameters: only set here
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
-IJ_MEM=500
+IJ_MEM=4000
 # aquarium boundary coordinates
 aquariumBounds="10,10,300,300"
 
