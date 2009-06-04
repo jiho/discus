@@ -56,6 +56,8 @@ echo -e "
 
   \033[1mstatus\033[0m            prints information about the data directory
    "
+
+	return 0
 }
 
 # detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
@@ -157,7 +159,7 @@ until [[ -z "$1" ]]; do
 	case "$1" in
 		h|help)
 			help
-			exit 0 ;;
+			exit $? ;;
 		status)
 			data_status $base
 			exit $? ;;
@@ -216,7 +218,6 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 	esac
 done
-
 
 
 # DATAREALSPACE
