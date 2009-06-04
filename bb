@@ -223,296 +223,296 @@ deployNb=$(expand_range "$deployNb")
 
 for id in $deployNb; do
 
-# PREPARE WORKSPACE
-#-----------------------------------------------------------------------
+	# PREPARE WORKSPACE
+	#-----------------------------------------------------------------------
 
-echoBold "\nDEPLOYMENT $id"
+	echoBold "\nDEPLOYMENT $id"
 
-# Work directory
-data="$base/$id"
-if [[ ! -d $data ]]; then
-	error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
-	exit 1
-fi
-
-# Temporary directory, where all operations are done
-TEMP="$data/tmp"
-if [[ ! -e $TEMP ]]; then
-	mkdir $TEMP
-fi
-
-
-
-# LAUNCH COMPONENTS
-#-----------------------------------------------------------------------
-
-
-# Calibration
-if [[ $TRACK_CALIB == "TRUE" ]]
-then
-	echoBlue "\nCALIBRATION"
-
-	echo "Open first image for calibration"
-	# Use an ImageJ macro to run everything. The macro proceeds this way
-	# - use Image Sequence to open only the first image
-	# - create a default oval
-	# - use waitForUser to let the time for the user to tweak the selection
-	# - measure centroid and perimeter in pixels
-	# - save that to an appropriate file
-	# - quit
-	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-	run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
-	makeOval(${aquariumBounds});                        \
-	waitForUser('Aquarium selection',                   \
-		'If necessary, alter the selection to fit the aquarium better.\n \
-		\nPress OK when you are done');                 \
-	run('Set Measurements...', '  centroid perimeter invert redirect=None decimal=3'); \
-	run('Measure');                                     \
-	saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
-	run('Clear Results');                               \
-	run('Set Measurements...', '  bounding redirect=None decimal=3'); \
-	run('Measure');                                     \
-	saveAs('Measurements', '${TEMP}/bounding_aquarium.txt');     \
-	run('Quit');"
-
-	status $? "ImageJ exited abnormally"
-
-	if [[ -e "${TEMP}/bounding_aquarium.txt" ]]; then
-		# save the bounding rectangle measurements in the configuration file
-		aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
-
-		write_pref $configFile aquariumBounds
-	else
-		warning "Cannot save bounding box of the aquarium"
+	# Work directory
+	data="$base/$id"
+	if [[ ! -d $data ]]; then
+		error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
+		exit 1
 	fi
 
-	echo "Save aquarium radius"
-
-	commit_changes "coord_aquarium.txt"
-fi
-
-# Tracking
-if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
-
-	# Detect the time lapse between images
-	# we use an inline R script given how easy it is to deal with time in R
-	# just how cool is that!?
-	interval=$(R -q --slave << EOF
-		# get the time functions
-		source("src/lib_image_time.R")
-		# get the first x images names
-		images=system("ls -1 ${data}/pics/*.jpg | head -n 10", intern=TRUE)
-		# compute time lapse and send it to standard output
-		cat(time.lapse.interval(images))
-EOF
-)
-# NB: for the heredoc (<< constuct) to work, there should be no tab above
-	status $? "R exited abnormally"
-
-	# Deduce the lag when subsampling images
-	subImages=$(($sub / $interval))
-	# NB: this is simple integer computation, so not very accurate but OK for here
-	# when $sub is smaller than $interval (i.e. subImages <1 and in that case =0 since we are doing integer computation) it means we want all images. So subImages should be 1
-	if [[ $subImages -eq 0 ]]; then
-		subImages=1
+	# Temporary directory, where all operations are done
+	TEMP="$data/tmp"
+	if [[ ! -e $TEMP ]]; then
+		mkdir $TEMP
 	fi
 
-	# Determine whether to use a virtual stack or a real one
-	# total number of images
-	allImages=$(ls -1 ${data}/pics/*.jpg | wc -l)
-	# nb of images opened = total / interval
-	nbFrames=$(($allImages / $subImages))
-	# when there are less than 100 frames, loading them is fast and not too memory hungry
-	if [[ $nbFrames -le 100 ]]; then
-		virtualStack=""
-	else
-		virtualStack="use"
-	fi
 
-	if [[ $TRACK_LARV == "TRUE" ]]; then
-		echoBlue "\nTRACKING LARVAE"
-		resultFileName="larvae_track.txt"
-		outputFiles=$resultFileName
-	elif [[ $TRACK_COMP == "TRUE" ]]; then
-		echoBlue "\nTRACKING COMPASS"
-		resultFileName="compass_track.txt"
 
-		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
+	# LAUNCH COMPONENTS
+	#-----------------------------------------------------------------------
+
+
+	# Calibration
+	if [[ $TRACK_CALIB == "TRUE" ]]
+	then
+		echoBlue "\nCALIBRATION"
+
 		echo "Open first image for calibration"
 		# Use an ImageJ macro to run everything. The macro proceeds this way
 		# - use Image Sequence to open only the first image
-		# - select the point selection tool
-		# - use waitForUser to let the time for the user to click the compass
-		# - measure centroid coordinates in pixels
+		# - create a default oval
+		# - use waitForUser to let the time for the user to tweak the selection
+		# - measure centroid and perimeter in pixels
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
-		setTool(7);                                         \
-		waitForUser('Compass calibration',                  \
-			'Please click the center of the compass you intend to track.\n      \
+		run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+		makeOval(${aquariumBounds});                        \
+		waitForUser('Aquarium selection',                   \
+			'If necessary, alter the selection to fit the aquarium better.\n \
 			\nPress OK when you are done');                 \
-		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
+		run('Set Measurements...', '  centroid perimeter invert redirect=None decimal=3'); \
 		run('Measure');                                     \
-		saveAs('Measurements', '${TEMP}/coord_compass.txt');\
+		saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
+		run('Clear Results');                               \
+		run('Set Measurements...', '  bounding redirect=None decimal=3'); \
+		run('Measure');                                     \
+		saveAs('Measurements', '${TEMP}/bounding_aquarium.txt');     \
 		run('Quit');"
 
 		status $? "ImageJ exited abnormally"
 
-		echo "Save compass coordinates"
-		outputFiles="$resultFileName coord_compass.txt"
-	fi
+		if [[ -e "${TEMP}/bounding_aquarium.txt" ]]; then
+			# save the bounding rectangle measurements in the configuration file
+			aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
 
-	echo "Open stack"
-	# Use an ImageJ macro to run everything. The macro proceeds this way
-	# - use Image Sequence to open the stack
-	# - call the Manual Tracking plugin
-	# - use waitForUser to let the time for the user to track larvae
-	# - save the tracks to an appropriate file
-	# - quit
-	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
-	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${data}/pics/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
-	run('Manual Tracking');                           \
-	waitForUser('Track finised?',                     \
-		'Press OK when done tracking');               \
-	selectWindow('Tracks');                           \
-	saveAs('Text', '${TEMP}/${resultFileName}');  \
-	run('Quit');"
-
-	status $? "ImageJ exited abnormally"
-
-	echo "Save track"
-
-	commit_changes $outputFiles
-fi
-
-# Correction
-if [[ $TRACK_CORR == "TRUE" ]]
-then
-	echoBlue "\nCORRECTION OF TRACKS"
-
-	# We start by checking that everything is available and copy stuff to the temporary directory
-
-	OK=0
-
-	if [[ ! -e $DATA/coord_aquarium.txt ]]
-	then
-		error "Aquarium coordinates missing. Use:\n\t$0 calib $id"
-		OK=1
-	else
-		echo "Aquarium coordinates ....OK"
-		cp $DATA/coord_aquarium.txt $TEMP
-	fi
-
-	if [[ ! -e $DATA/compass_log.csv ]]; then
-
-		warning "Numeric compass track missing.\n  Falling back on manual compass track."
-
-		if [[ ! -e $DATA/compass_track.txt ]]; then
-			error "Manual compass track missing. Use:\n\t $0 compass $id"
-			OK=1
+			write_pref $configFile aquariumBounds
 		else
-			echo "Compass track ..........OK"
-			cp $DATA/compass_track.txt $TEMP
+			warning "Cannot save bounding box of the aquarium"
 		fi
 
-		if [[ ! -e $DATA/coord_compass.txt ]]
+		echo "Save aquarium radius"
+
+		commit_changes "coord_aquarium.txt"
+	fi
+
+	# Tracking
+	if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
+
+		# Detect the time lapse between images
+		# we use an inline R script given how easy it is to deal with time in R
+		# just how cool is that!?
+		interval=$(R -q --slave << EOF
+			# get the time functions
+			source("src/lib_image_time.R")
+			# get the first x images names
+			images=system("ls -1 ${data}/pics/*.jpg | head -n 10", intern=TRUE)
+			# compute time lapse and send it to standard output
+			cat(time.lapse.interval(images))
+	EOF
+	)
+	# NB: for the heredoc (<< constuct) to work, there should be no tab above
+		status $? "R exited abnormally"
+
+		# Deduce the lag when subsampling images
+		subImages=$(($sub / $interval))
+		# NB: this is simple integer computation, so not very accurate but OK for here
+		# when $sub is smaller than $interval (i.e. subImages <1 and in that case =0 since we are doing integer computation) it means we want all images. So subImages should be 1
+		if [[ $subImages -eq 0 ]]; then
+			subImages=1
+		fi
+
+		# Determine whether to use a virtual stack or a real one
+		# total number of images
+		allImages=$(ls -1 ${data}/pics/*.jpg | wc -l)
+		# nb of images opened = total / interval
+		nbFrames=$(($allImages / $subImages))
+		# when there are less than 100 frames, loading them is fast and not too memory hungry
+		if [[ $nbFrames -le 100 ]]; then
+			virtualStack=""
+		else
+			virtualStack="use"
+		fi
+
+		if [[ $TRACK_LARV == "TRUE" ]]; then
+			echoBlue "\nTRACKING LARVAE"
+			resultFileName="larvae_track.txt"
+			outputFiles=$resultFileName
+		elif [[ $TRACK_COMP == "TRUE" ]]; then
+			echoBlue "\nTRACKING COMPASS"
+			resultFileName="compass_track.txt"
+
+			# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
+			echo "Open first image for calibration"
+			# Use an ImageJ macro to run everything. The macro proceeds this way
+			# - use Image Sequence to open only the first image
+			# - select the point selection tool
+			# - use waitForUser to let the time for the user to click the compass
+			# - measure centroid coordinates in pixels
+			# - save that to an appropriate file
+			# - quit
+			$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
+			run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
+			setTool(7);                                         \
+			waitForUser('Compass calibration',                  \
+				'Please click the center of the compass you intend to track.\n      \
+				\nPress OK when you are done');                 \
+			run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
+			run('Measure');                                     \
+			saveAs('Measurements', '${TEMP}/coord_compass.txt');\
+			run('Quit');"
+
+			status $? "ImageJ exited abnormally"
+
+			echo "Save compass coordinates"
+			outputFiles="$resultFileName coord_compass.txt"
+		fi
+
+		echo "Open stack"
+		# Use an ImageJ macro to run everything. The macro proceeds this way
+		# - use Image Sequence to open the stack
+		# - call the Manual Tracking plugin
+		# - use waitForUser to let the time for the user to track larvae
+		# - save the tracks to an appropriate file
+		# - quit
+		$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
+		-ijpath ${IJ_PATH}/plugins/ -eval "               \
+		run('Image Sequence...', 'open=${data}/pics/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
+		run('Manual Tracking');                           \
+		waitForUser('Track finised?',                     \
+			'Press OK when done tracking');               \
+		selectWindow('Tracks');                           \
+		saveAs('Text', '${TEMP}/${resultFileName}');  \
+		run('Quit');"
+
+		status $? "ImageJ exited abnormally"
+
+		echo "Save track"
+
+		commit_changes $outputFiles
+	fi
+
+	# Correction
+	if [[ $TRACK_CORR == "TRUE" ]]
+	then
+		echoBlue "\nCORRECTION OF TRACKS"
+
+		# We start by checking that everything is available and copy stuff to the temporary directory
+
+		OK=0
+
+		if [[ ! -e $DATA/coord_aquarium.txt ]]
 		then
-			error "Compass coordinates missing. Use:\n\t $0 compass $id"
+			error "Aquarium coordinates missing. Use:\n\t$0 calib $id"
 			OK=1
 		else
-			echo "Compass coordinates .....OK"
-			cp $DATA/coord_compass.txt $TEMP
+			echo "Aquarium coordinates ....OK"
+			cp $DATA/coord_aquarium.txt $TEMP
 		fi
 
-	else
-		echo "Compass track ...........OK"
-		cp $DATA/compass_log.csv $TEMP
-	fi
+		if [[ ! -e $DATA/compass_log.csv ]]; then
 
-	if [[ ! -e $DATA/larvae_track.txt ]]
-	then
-		error "Larva(e) track(s) missing. Use:\n\t $0 larva $id"
-		OK=1
-	else
-		echo "Larva(e) track(s) .......OK"
-		cp $DATA/larvae_track.txt $TEMP
-	fi
+			warning "Numeric compass track missing.\n  Falling back on manual compass track."
 
-
-	if [[ "$OK" == "1" ]]
-	then
-		echo "Exiting..."
-		rm -f $TEMP/*
-		exit 1
-	fi
-
-	# correct larvae tracks and write output in tracks.csv
-	echo "Correcting..."
-	( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
-
-	status $? "R exited abnormally"
-
-	echo "Save track"
-
-	commit_changes "tracks.csv"
-
-fi
-
-# Tracks analysis
-if [[ $STATS == "TRUE" ]]
-then
-	echoBlue "\nSTATISTICAL ANALYSIS"
-
-	# Checking for tracks existence and copy the tracks in the TEMP directory
-	if [[ -e $DATA/tracks.csv ]]; then
-		echo "Corrected track(s) .......OK"
-		cp $DATA/tracks.csv $TEMP/
-	else
-		error "Corrected tracks missing. Use:\n\t $0 -correct"
-		exit 1
-	fi
-
-	(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${psub} < stats.R)
-
-	status $? "R exited abnormally"
-
-	# Display the plots in a PDF reader
-	if [[ $displayPlots == "TRUE" ]]; then
-		pdfReader=""
-		if [[ $(uname) == "Darwin" ]]; then
-			# on Mac OS X use "open" to open wih the default app associated with PDFs
-			pdfReader=open
-		else
-			# on linux, try to find some common pdf readers
-			if [[ $(which evince) != "" ]]; then
-				pdfReader=evince
-			elif [[ $(which xpdf) != "" ]]; then
-				pdfReader=xpdf
+			if [[ ! -e $DATA/compass_track.txt ]]; then
+				error "Manual compass track missing. Use:\n\t $0 compass $id"
+				OK=1
 			else
-				warning "Could not find a pdf reader, do not use option -display"
+				echo "Compass track ..........OK"
+				cp $DATA/compass_track.txt $TEMP
+			fi
+
+			if [[ ! -e $DATA/coord_compass.txt ]]
+			then
+				error "Compass coordinates missing. Use:\n\t $0 compass $id"
+				OK=1
+			else
+				echo "Compass coordinates .....OK"
+				cp $DATA/coord_compass.txt $TEMP
+			fi
+
+		else
+			echo "Compass track ...........OK"
+			cp $DATA/compass_log.csv $TEMP
+		fi
+
+		if [[ ! -e $DATA/larvae_track.txt ]]
+		then
+			error "Larva(e) track(s) missing. Use:\n\t $0 larva $id"
+			OK=1
+		else
+			echo "Larva(e) track(s) .......OK"
+			cp $DATA/larvae_track.txt $TEMP
+		fi
+
+
+		if [[ "$OK" == "1" ]]
+		then
+			echo "Exiting..."
+			rm -f $TEMP/*
+			exit 1
+		fi
+
+		# correct larvae tracks and write output in tracks.csv
+		echo "Correcting..."
+		( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
+
+		status $? "R exited abnormally"
+
+		echo "Save track"
+
+		commit_changes "tracks.csv"
+
+	fi
+
+	# Tracks analysis
+	if [[ $STATS == "TRUE" ]]
+	then
+		echoBlue "\nSTATISTICAL ANALYSIS"
+
+		# Checking for tracks existence and copy the tracks in the TEMP directory
+		if [[ -e $DATA/tracks.csv ]]; then
+			echo "Corrected track(s) .......OK"
+			cp $DATA/tracks.csv $TEMP/
+		else
+			error "Corrected tracks missing. Use:\n\t $0 -correct"
+			exit 1
+		fi
+
+		(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${psub} < stats.R)
+
+		status $? "R exited abnormally"
+
+		# Display the plots in a PDF reader
+		if [[ $displayPlots == "TRUE" ]]; then
+			pdfReader=""
+			if [[ $(uname) == "Darwin" ]]; then
+				# on Mac OS X use "open" to open wih the default app associated with PDFs
+				pdfReader=open
+			else
+				# on linux, try to find some common pdf readers
+				if [[ $(which evince) != "" ]]; then
+					pdfReader=evince
+				elif [[ $(which xpdf) != "" ]]; then
+					pdfReader=xpdf
+				else
+					warning "Could not find a pdf reader, do not use option -display"
+				fi
+			fi
+			if [[ pdfReader != "" ]]; then
+				$pdfReader &>/dev/null $TEMP/plots*.pdf
 			fi
 		fi
-		if [[ pdfReader != "" ]]; then
-			$pdfReader &>/dev/null $TEMP/plots*.pdf
-		fi
+
+		status $? "The PDF reader exited abnormally"
+
+		echo "Save statistics and graphics"
+
+		commit_changes "stats.csv" plots*.pdf
 	fi
 
-	status $? "The PDF reader exited abnormally"
-
-	echo "Save statistics and graphics"
-
-	commit_changes "stats.csv" plots*.pdf
-fi
-
-# Cleaning
-if [[ $CLEAN == "TRUE" ]]
-then
-	echoBlue "\nCLEANING DATA"
-	echo "Removing temporary files ..."
-	rm -Rf $TEMP
-fi
+	# Cleaning
+	if [[ $CLEAN == "TRUE" ]]
+	then
+		echoBlue "\nCLEANING DATA"
+		echo "Removing temporary files ..."
+		rm -Rf $TEMP
+	fi
 
 done
 
