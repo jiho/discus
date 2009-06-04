@@ -177,6 +177,7 @@ done
 
 # If deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
+status $? "Could not interpret deployment number"
 
 
 
@@ -188,10 +189,17 @@ for id in $deployNb; do
 
 	echoBold "\nDEPLOYMENT $id"
 
-	# Work directory
+	# Current deployment directory
 	data="$base/$id"
 	if [[ ! -d $data ]]; then
 		error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
+		exit 1
+	fi
+
+	# Pictures
+	pics="$data/pics"
+	if [[ ! -d $pics ]]; then
+		error "Cannot find pictures directory:\n  $pics"
 		exit 1
 	fi
 
@@ -205,7 +213,6 @@ for id in $deployNb; do
 
 	# LAUNCH COMPONENTS
 	#-----------------------------------------------------------------------
-
 
 	# Calibration
 	if [[ $TRACK_CALIB == "TRUE" ]]
@@ -221,7 +228,7 @@ for id in $deployNb; do
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 		makeOval(${aquariumBounds});                        \
 		waitForUser('Aquarium selection',                   \
 			'If necessary, alter the selection to fit the aquarium better.\n \
@@ -261,25 +268,26 @@ for id in $deployNb; do
 			# get the time functions
 			source("src/lib_image_time.R")
 			# get the first x images names
-			images=system("ls -1 ${data}/pics/*.jpg | head -n 10", intern=TRUE)
+			images=system("ls -1 ${pics}/*.jpg | head -n 10", intern=TRUE)
 			# compute time lapse and send it to standard output
 			cat(time.lapse.interval(images))
-	EOF
-	)
-	# NB: for the heredoc (<< constuct) to work, there should be no tab above
+EOF
+)
+# NB: for the heredoc (<< constuct) to work, there should be no tab above
 		status $? "R exited abnormally"
 
 		# Deduce the lag when subsampling images
 		subImages=$(($sub / $interval))
 		# NB: this is simple integer computation, so not very accurate but OK for here
-		# when $sub is smaller than $interval (i.e. subImages <1 and in that case =0 since we are doing integer computation) it means we want all images. So subImages should be 1
+		# when $sub is smaller than $interval (i.e. subImages < 1 i.e. = 0 here because we are doing integer computation) it means we want all images. 
+		# so subImages should in fact be 1
 		if [[ $subImages -eq 0 ]]; then
 			subImages=1
 		fi
 
 		# Determine whether to use a virtual stack or a real one
 		# total number of images
-		allImages=$(ls -1 ${data}/pics/*.jpg | wc -l)
+		allImages=$(ls -1 ${pics}/*.jpg | wc -l)
 		# nb of images opened = total / interval
 		nbFrames=$(($allImages / $subImages))
 		# when there are less than 100 frames, loading them is fast and not too memory hungry
@@ -307,7 +315,7 @@ for id in $deployNb; do
 			# - save that to an appropriate file
 			# - quit
 			$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-			run('Image Sequence...', 'open=${data}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
+			run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 			setTool(7);                                         \
 			waitForUser('Compass calibration',                  \
 				'Please click the center of the compass you intend to track.\n      \
@@ -332,7 +340,7 @@ for id in $deployNb; do
 		# - quit
 		$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 		-ijpath ${IJ_PATH}/plugins/ -eval "               \
-		run('Image Sequence...', 'open=${data}/pics/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
+		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
 		waitForUser('Track finised?',                     \
 			'Press OK when done tracking');               \
@@ -356,48 +364,48 @@ for id in $deployNb; do
 
 		OK=0
 
-		if [[ ! -e $DATA/coord_aquarium.txt ]]
+		if [[ ! -e $data/coord_aquarium.txt ]]
 		then
 			error "Aquarium coordinates missing. Use:\n\t$0 calib $id"
 			OK=1
 		else
 			echo "Aquarium coordinates ....OK"
-			cp $DATA/coord_aquarium.txt $TEMP
+			cp $data/coord_aquarium.txt $TEMP
 		fi
 
-		if [[ ! -e $DATA/compass_log.csv ]]; then
+		if [[ ! -e $data/compass_log.csv ]]; then
 
 			warning "Numeric compass track missing.\n  Falling back on manual compass track."
 
-			if [[ ! -e $DATA/compass_track.txt ]]; then
+			if [[ ! -e $data/compass_track.txt ]]; then
 				error "Manual compass track missing. Use:\n\t $0 compass $id"
 				OK=1
 			else
 				echo "Compass track ..........OK"
-				cp $DATA/compass_track.txt $TEMP
+				cp $data/compass_track.txt $TEMP
 			fi
 
-			if [[ ! -e $DATA/coord_compass.txt ]]
+			if [[ ! -e $data/coord_compass.txt ]]
 			then
 				error "Compass coordinates missing. Use:\n\t $0 compass $id"
 				OK=1
 			else
 				echo "Compass coordinates .....OK"
-				cp $DATA/coord_compass.txt $TEMP
+				cp $data/coord_compass.txt $TEMP
 			fi
 
 		else
 			echo "Compass track ...........OK"
-			cp $DATA/compass_log.csv $TEMP
+			cp $data/compass_log.csv $TEMP
 		fi
 
-		if [[ ! -e $DATA/larvae_track.txt ]]
+		if [[ ! -e $data/larvae_track.txt ]]
 		then
 			error "Larva(e) track(s) missing. Use:\n\t $0 larva $id"
 			OK=1
 		else
 			echo "Larva(e) track(s) .......OK"
-			cp $DATA/larvae_track.txt $TEMP
+			cp $data/larvae_track.txt $TEMP
 		fi
 
 
@@ -426,9 +434,9 @@ for id in $deployNb; do
 		echoBlue "\nSTATISTICAL ANALYSIS"
 
 		# Checking for tracks existence and copy the tracks in the TEMP directory
-		if [[ -e $DATA/tracks.csv ]]; then
+		if [[ -e $data/tracks.csv ]]; then
 			echo "Corrected track(s) .......OK"
-			cp $DATA/tracks.csv $TEMP/
+			cp $data/tracks.csv $TEMP/
 		else
 			error "Corrected tracks missing. Use:\n\t $0 -correct"
 			exit 1

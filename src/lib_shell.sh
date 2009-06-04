@@ -1,8 +1,8 @@
 #!/bin/bash
-# 
+#
 # 	Usefull shell functions
-# 
-# (c) 2009 Jean-Olivier Irisson <irisson@normalesup.org>. 
+#
+# (c) 2009 Jean-Olivier Irisson <irisson@normalesup.org>.
 # GNU General Public License http://www.gnu.org/copyleft/gpl.html
 #
 #------------------------------------------------------------
@@ -27,12 +27,11 @@
 echoBold () {
 	echo -e "\e[1m$1\e[0m"
 }
-
 echoB () {
 	echoBold "$*"
 }
 
-# echo in green
+# echo in red
 echoRed() {
 	echo -e "\e[0;31m$1\e[0m"
 }
@@ -47,21 +46,21 @@ echoBlue() {
 	echo -e "\e[0;34m$1\e[0m"
 }
 
-# writes a warning on stantard out
+
+# write a warning on stantard out
 warning() {
 	echo -e "\e[0;31m\e[1mWARNING:\e[0m $1\e[0m"
 }
 
+# write an error on stantard out
 error() {
 	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
 }
 
-
-status()
-# Checks the exit status
 # USAGE
-#	check_error return_code message_on_failure
-{
+#	status [return_code] [message_on_failure]
+# Check the exit status
+status() {
 	if (( ${1})) ; then
 		#NB: (( ... )) tests whether ... is different from zero
 
@@ -73,12 +72,12 @@ status()
 	fi
 }
 
+
 #
 # Given a range of numbers such as:
 #	1,10,1-5,12
-# it outputs the list of all numbers, sorted and with duplicates
+# output the list of all numbers, sorted and with duplicates
 #	1 1 2 3 4 5 10 12
-#
 expand_range() {
 
 	# Change the Internal Field Separator
@@ -119,7 +118,10 @@ expand_range() {
 
 
 #
-# Read the whole config file and give information on what is read
+# USAGE
+#	read_config [path_to_configuration_file]
+# Read a configuration file in valid bash syntax
+# and give information on what is read
 #
 read_config() {
 	configFile=$1
@@ -128,8 +130,10 @@ read_config() {
 
 	cat $configFile | while read line; do
 		case $line in
-			\#*) ;;
-			'') ;;
+			\#*)
+				;;
+			'')
+				;;
 			*)
 				# Parse the line and give information
 				echo "$line" | awk -F "=" {'print "  "$1" = "$2'}
@@ -144,12 +148,11 @@ read_config() {
 	return 0
 }
 
-
 #
-# Usage:
+# USAGE
 #	write_pref [file] [variable name]
-# write the current value of the variable in the preferences file.
-# if the preference already exists, update it. otherwise, create it.
+# Write the current value of the variable in the preferences file.
+# If the preference already exists, update it. otherwise, create it.
 #
 write_pref() {
 	configFile=$1

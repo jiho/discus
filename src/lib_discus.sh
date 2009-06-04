@@ -8,11 +8,10 @@
 #
 #------------------------------------------------------------------------------
 
-help()
 #
 #	Display a help message
 #
-{
+help() {
 echo -e "
 \033[1mUSAGE\033[0m
   \033[1m$0 [options]\033[0m action[s] deployment
@@ -52,11 +51,20 @@ echo -e "
 	return 0
 }
 
-commit_changes()
+
 #
-#	Ask to commit changes and copy all .txt files from TEMP to DATA
+# USAGE
+#	commit_changes [files_to_commit]
+# Ask to commit changes and copy specified files from $TEMP to $DATA
+# The environment variables $TEMP and $DATA must be already defined
 #
-{
+commit_changes() {
+	if [[ $TEMP == "" ]]; then
+		error "Temporary directory undefined"
+	fi
+	if [[ $data == "" ]]; then
+		error "Data directory undefined"
+	fi
 	echoB "Committing changes"
 	echo=`which echo`
 	$echo -n "Do you want to commit changes? (y/n [n]) : "
@@ -65,7 +73,7 @@ commit_changes()
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
-		$( cd $TEMP/ && mv -i $@ $DATA/ )
+		$( cd $TEMP/ && mv -i $@ $data/ )
 	else
 		echo "OK, cleaning TEMP directory then..."
 	fi
@@ -76,13 +84,12 @@ commit_changes()
 }
 
 
-data_status()
 #
-#	Prints some status information about the content of the data directory
-#	USAGE
-#	data_status data_directory
+# USAGE
+#	data_status [data_directory]
+# Prints some status information about the content of the data directory
 #
-{
+data_status() {
 	work=$1
 
 	echo -e "\n\e[1mdepl img   com gps ctd   cal trk sta\e[0m"
