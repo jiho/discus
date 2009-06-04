@@ -22,30 +22,46 @@
 help() {
 echo -e "
 \033[1mUSAGE\033[0m
-  \033[1m$0 [options]\033[0m deployment
-  Data extractaction and analysis script for the DISC.
-  Deployment IDs can be specified as ranges: 1,3-5,8
+  \033[1m$0 [options]\033[0m action[s] deployment
+  Data extraction and analysis script for the DISC.
+  Actions perform a data analysis step and are whole or abbreviated words.
+  Options modify the behaviour of the script and are prepended a \"-\" sign.
+  Deployment numbers can be specified as ranges: 1,3-5,8
 
-\033[1mOPTIONS\033[0m
+\033[1mACTIONS / relevant OPTIONS\033[0m
+  \033[1mh|help\033[0m            display this help message
+
   \033[1m-t|-test\033[0m          simply perform a test
-  \033[1m-h|-help\033[0m          display this help message
-                                  
-  \033[1m-cal|-calib\033[0m       measure calibration data for the tracking
-  \033[1m-com|-compass\033[0m     track the compass manually
-  \033[1m-l|-larva\033[0m         track the larva(e)
-    \033[1m-sub\033[0m        1   subsample interval, in seconds
-  \033[1m-c|-correct\033[0m       correct the tracks
-  \033[1m-s|-stats\033[0m         compute statistics and plots
-    \033[1m-ssub\033[0m       5   subsample positions every 'ssub' seconds
-                    (has no effect when < to -sub above)
-    \033[1m-d|-display\033[0m     display the PDF file containing the plots
 
-  \033[1m-a|-all\033[0m           do everything [default: do nothing]
-                                  
-  \033[1m-clean\033[0m            clean work directory
+  \033[1mcal|calib\033[0m         measure calibration data for the tracking
+
+  \033[1mcom|compass\033[0m       track the compass manually
+  \033[1ml|larva\033[0m           track the larva(e)
+    \033[1m-sub\033[0m        1   subsample interval, in seconds
+
+  \033[1mc|correct\033[0m         correct the tracks
+    \033[1m-diam\033[0m       40  aquarium diameter, in cm
+    \033[1m-a|-angle\033[0m   90  angle between camera and compass in degrees
+          \033[1mNB\033[0m both options are written in the configuration file
+             therefore, they \"stick\" from one run to the other
+
+  \033[1ms|stats\033[0m           compute statistics and plots
+    \033[1m-psub\033[0m       5   subsample positions every 'psub' seconds
+                    (has no effect when < to -sub above)
+    \033[1m-d|-display\033[0m     display the plots [default: don't display]
+
+  \033[1mclean\033[0m             clean work directory
+
+  \033[1mall\033[0m               do everything
    "
 }
 
+# detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
+echo $* | grep -E -e "h|help" > /dev/null
+if [[ $? == "0" ]]; then
+	help
+	exit 0
+fi
 
 # CONFIGURATION
 #-----------------------------------------------------------------------
@@ -80,19 +96,17 @@ if [[ ! -e $IJ_PATH/ij.jar ]]; then
 	exit 1
 fi
 
+
 # Defaults
 
+# Parameters: only set here
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
-IJ_MEM=4000
+IJ_MEM=500
+# aquarium boundary coordinates
+aquariumBounds="10,10,300,300"
 
-# root folder where the folders for each deployment are
-BASE=$HERE
-# deployment number
-VIDEOID="0"
 
-# test switch, uses a subset of data for a smaller footprint
-TEST=FALSE
-
+# Actions: determined on the command line, all FALSE by default
 # perform calibration?
 TRACK_CALIB=FALSE
 # track compass?
@@ -106,17 +120,26 @@ STATS=FALSE
 # clean data directory?
 CLEAN=FALSE
 
-# whether to display plots or not
-displayPlots=FALSE
+
+# Options: set in the config file or on the command line
+# test switch, uses a subset of data for a smaller footprint
+TEST=FALSE
+
+# root directory where the directories for each deployment are
+base=$HERE
+# deployment number (i.e. deployment directory name)
+deployNb="0"
 
 # diameter of the aquarium, in cm
 aquariumDiam=40
-# subsample each 'sub' frame to speed up the analysis
+# subsample images every 'sub' seconds to speed up the analysis
 sub=1
-# subsample position data each 'ssub' frame to allow indpendence of data
-ssub=5
-# aquarium boundary coordinates
-aquariumBounds="10,10,100,100"
+# subsample positions each 'psub' seconds for the statistical analysis, to allow independence of data
+psub=5
+# whether to display plots or not after the statistical analysis
+displayPlots=FALSE
+# angle between the top of the picture and the forward direction of the compass
+cameraCompassAngle=90
 
 
 # Getting options from the config file (overriding defaults)
@@ -129,26 +152,37 @@ fi
 # until argument is null, check against known options
 until [[ -z "$1" ]]; do
 	case "$1" in
-		-t|-test)
-			TEST=TRUE
-			shift 1 ;;
-		-h|-help) 
+		h|help)
 			help
-			exit 1 ;; 
-		-cal|-calib) 
+			exit 0 ;;
+		cal|calib)
 			TRACK_CALIB=TRUE
-			shift 1 ;;  
-		-com|-compass) 
+			shift 1 ;;
+		com|compass)
 			TRACK_COMP=TRUE
 			shift 1 ;;
-		-l|-larva) 
+		l|larva)
 			TRACK_LARV=TRUE
 			shift 1 ;;
-		-c|-correct) 
+		c|correct)
 			TRACK_CORR=TRUE
 			shift 1 ;;
-		-s|-stats) 
+		s|stats)
 			STATS=TRUE
+			shift 1 ;;
+		clean)
+			CLEAN=TRUE
+			shift 1 ;;
+		all)
+			TRACK_CALIB=TRUE
+			TRACK_COMP=TRUE
+			TRACK_LARV=TRUE
+			TRACK_CORR=TRUE
+			STATS=TRUE
+			CLEAN=TRUE
+			shift 1 ;;
+		-t|-test)
+			TEST=TRUE
 			shift 1 ;;
 		-d|-display)
 			displayPlots=TRUE
@@ -156,25 +190,23 @@ until [[ -z "$1" ]]; do
 		-sub)
 			sub="$2"
 			shift 2 ;;
-		-ssub)
-			ssub="$2"
+		-psub)
+			psub="$2"
 			shift 2 ;;
-		-a|-all) 
-			TRACK_CALIB=TRUE
-			TRACK_COMP=TRUE
-			TRACK_LARV=TRUE
-			TRACK_CORR=TRUE
-			STATS=TRUE
-			shift 1 ;;
-		-clean) 
-			CLEAN=TRUE
-			shift 1 ;;      
+		-diam)
+			aquariumDiam="$2"
+			write_pref $CONFIG_FILE aquariumDiam
+			shift 2 ;;
+		-a|-angle)
+			cameraCompassAngle="$2"
+			write_pref $CONFIG_FILE cameraCompassAngle
+			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
 			help
 			exit 4 ;;
 		*)
-			VIDEOID="$1"
+			deployNb="$1"
 			shift 1 ;;
 	esac
 done
@@ -184,14 +216,14 @@ done
 # DATAREALSPACE
 #-----------------------------------------------------------------------
 
-# If VIDEOID is a range, expand it
-VIDEOID=$(expand_range "$VIDEOID")
+# If deployNb is a range, expand it
+deployNb=$(expand_range "$deployNb")
 
-for id in $VIDEOID; do
+for id in $deployNb; do
 	echoBold "\nDEPLOYMENT $id"
 
 # Work directory
-DATAREAL="$BASE/$id"
+DATAREAL="$base/$id"
 if [[ ! -d $DATAREAL ]]; then
 	error "DATA directory does not exist:\n  $DATAREAL"
 	exit 1
@@ -205,12 +237,6 @@ TEMP="$DATAREAL/tmp"
 if [[ ! -e $TEMP ]]; then
 	mkdir $TEMP
 fi
-
-
-# We export everything making it available to the rest of the process
-export DATAREAL DATA DATAREAL LOGS TEMP id RES IJ_PATH JAVA_CMD
-export TEST 
-export TRACK_CALIB TRACK_COMP TRACK_LARV TRACK_CORR
 
 
 
@@ -425,7 +451,7 @@ then
 
 	# correct larvae tracks and write output in tracks.csv
 	echo "Correcting..."
-	( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassDeviation} < correct_tracks.R )
+	( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
 	# Test the exit status of R and proceed accordingly
 	stat=$(echo $?)
 	if [[ $stat != "0" ]]; then
@@ -452,7 +478,7 @@ then
 		exit 1
 	fi
 
-	(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${ssub} < stats.R)
+	(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${psub} < stats.R)
 	# Test the exit status of R and proceed accordingly
 	stat=$(echo $?)
 	if [[ $stat != "0" ]]; then

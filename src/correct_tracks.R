@@ -22,12 +22,12 @@ if (length(args) != 3) {
 }
 prefix = args[1]
 aquariumDiam = as.numeric(args[2])
-cameraCompassDeviation = as.numeric(args[3])
+cameraCompassAngle = as.numeric(args[3])
 
 # In case we need to call it without the shell script
 # prefix="/home/jiho/current_data/Lizard/46/tmp/"
 # aquariumDiam = 40
-# cameraCompassDeviation = 82
+# cameraCompassAngle = 82
 
 # Set working directory
 setwd(prefix)
@@ -81,7 +81,7 @@ if (file.exists("compass_log.csv")) {
 	compassSource = "numeric"
 
 	# subtract the camera-compass orientation correction
-	trackCompass$heading = trackCompass$heading - cameraCompassDeviation
+	trackCompass$heading = trackCompass$heading - cameraCompassAngle
 	# this means that trackCompass$heading now correspond to the heading of the top of the picture
 
 	# convert to the appropriate circular class

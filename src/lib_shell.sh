@@ -59,7 +59,7 @@ error() {
 #
 # Given a range of numbers such as:
 #	1,10,1-5,12
-# it outputs the list of all numbers, sorted and with duplicates if there are any
+# it outputs the list of all numbers, sorted and with duplicates
 #	1 1 2 3 4 5 10 12
 #
 expand_range() {
@@ -107,7 +107,8 @@ expand_range() {
 read_config() {
 	configFile=$1
 
-	echoBold "Picked up configuration variables"
+	echoBold "Options picked up from the configuration file"
+
 	cat $configFile | while read line; do
 		case $line in
 			\#*) ;;
