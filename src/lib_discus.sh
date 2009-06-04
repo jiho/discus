@@ -33,7 +33,6 @@ echo -e "
     \033[1m-psub\033[0m       5   subsample positions every 'psub' seconds
                     (has no effect when < to -sub above)
     \033[1m-d|-display\033[0m     display the plots [default: don't display]
-  \033[1mclean\033[0m             clean work directory
 
   \033[1mall\033[0m               do everything
 

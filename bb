@@ -88,8 +88,6 @@ TRACK_LARV=FALSE
 TRACK_CORR=FALSE
 # perform statistical analysis of current track?
 STATS=FALSE
-# clean data directory?
-CLEAN=FALSE
 
 # Options: set in the config file or on the command line
 # root directory where the directories for each deployment are
@@ -136,9 +134,6 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		s|stats)
 			STATS=TRUE
-			shift 1 ;;
-		clean)
-			CLEAN=TRUE
 			shift 1 ;;
 		all)
 			TRACK_CALIB=TRUE
@@ -479,13 +474,9 @@ EOF
 	fi
 
 	# Cleaning
-	if [[ $CLEAN == "TRUE" ]]
-	then
-		echoBlue "\nCLEANING DATA"
-		echo "Removing temporary files ..."
-		rm -Rf $TEMP
-	fi
-
+	rm -Rf $TEMP
+	status $? "Could not remove temporary directory"
+	
 done
 
 
