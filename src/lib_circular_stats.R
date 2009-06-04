@@ -204,7 +204,7 @@ circ.stats <- function(t, subsampleTime)
 		# # = sqrt( (1-r) )
 		# sd = sqrt(variance)
 
-		return(data.frame(n, mean, resample.lag=1, variance, R, p.value=p))
+		return(data.frame(n, mean, resample.lag=NA, variance, R, p.value=p))
 
 	} else {
 		# the samples are not independant, so we resample independant samples with intervals of subsampleTime
@@ -243,18 +243,17 @@ circ.stats <- function(t, subsampleTime)
 			# perform rayleigh test on it
 			rayleigh = rayleigh.test(angles)
 			# and store results
-			stats = rbind(stats, data.frame(R=rayleigh$statistic, p.value=rayleigh$p.value, mean=mean.circular(angles)))
+			stats = rbind(stats, data.frame(n=length(angles), R=rayleigh$statistic, p.value=rayleigh$p.value, mean=mean.circular(angles)))
 
 			# increment lag
 			i = i+1
 		}
 
 		# compute mean statistic and p-value
-		means = mean(stats)
 		variance = var.circular(stats$mean)
 
 
-		return(data.frame(n, mean, resample.lag=subsampleTime, variance, R=means[1], p.value = means[2]))
+		return(data.frame(n=round(mean(stats$n)), mean, resample.lag=subsampleTime, variance, R=mean(stats$R), p.value = mean(stats$p.value)))
 	}
 }
 
