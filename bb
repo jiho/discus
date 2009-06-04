@@ -53,6 +53,8 @@ echo -e "
   \033[1mclean\033[0m             clean work directory
 
   \033[1mall\033[0m               do everything
+
+  \033[1mstatus\033[0m            prints information about the data directory
    "
 }
 
@@ -83,6 +85,7 @@ typeset -fx write_pref
 
 source $RES/lib_discus.sh
 typeset -fx commit_changes
+typeset -fx data_status
 
 # ImageJ and Java paths
 JAVA_CMD=`which java`
@@ -155,6 +158,9 @@ until [[ -z "$1" ]]; do
 		h|help)
 			help
 			exit 0 ;;
+		status)
+			data_status $base
+			exit $? ;;
 		cal|calib)
 			TRACK_CALIB=TRUE
 			shift 1 ;;
