@@ -17,16 +17,18 @@ commit_changes()
 	echo=`which echo`
 	$echo -n "Do you want to commit changes? (y/n [n]) : "
 	read -e COMMIT
-	if [[ "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" ]]
+	if [[ "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" || "$COMMIT" == "YES" ]]
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
 		$( cd $TEMP/ && mv -i $@ $DATA/ )
 	else
-		echo "Ok then cleaning TEMP directory..."
+		echo "OK, cleaning TEMP directory then..."
 	fi
 	# clean temp directory
 	rm -Rf $TEMP/*
+
+	return 0
 }
 
 

@@ -211,10 +211,10 @@ circ.stats <- function(t, subsampleTime)
 
 		# the the validity of the subsampling interval
 		if (n/subsampleTime < 10) {
-			warning("\n  Subsampling will result in less than 10 records.\n  You are advised to decrease it with -psub.\n", immediate.=TRUE, call.=FALSE)
+			warning("\n  Subsampling positions will result in less than 10 records.\n  You are advised to decrease the subsampling interval with -psub.\n", immediate.=TRUE, call.=FALSE)
 
 			if (subsampleTime > n) {
-				stop("\n  Subsampling interval larger than number of records.\n  Decrease it with the option -psub.\n", call.=FALSE)
+				stop("\n  Subsampling interval larger than number of records.\n  Decrease it with the -psub.\n", call.=FALSE)
 			}
 		}
 

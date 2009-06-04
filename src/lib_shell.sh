@@ -56,6 +56,23 @@ error() {
 	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
 }
 
+
+status()
+# Checks the exit status
+# USAGE
+#	check_error return_code message_on_failure
+{
+	if (( ${1})) ; then
+		#NB: (( ... )) tests whether ... is different from zero
+
+		# print an error message
+		error "${2}"
+
+		# as a bonus, make the script exit with the right error code.
+		exit ${1}
+	fi
+}
+
 #
 # Given a range of numbers such as:
 #	1,10,1-5,12
@@ -123,6 +140,8 @@ read_config() {
 
 	# Actually source the file
 	source $configFile
+
+	return 0
 }
 
 

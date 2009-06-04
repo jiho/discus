@@ -62,18 +62,21 @@ echo -e "
 
 # detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
 echo $* | grep -E -e "h|help" > /dev/null
-if [[ $? == "0" ]]; then
+if [[ $? -eq 0 ]]; then
 	help
 	exit 0
 fi
 
+
 # CONFIGURATION
 #-----------------------------------------------------------------------
-# Source code resources path = where the source code is
+
+# Gather source code
+# set directories
 HERE=`pwd`
 RES="$HERE/src"
 
-# Get library functions
+# get library functions
 source $RES/lib_shell.sh
 typeset -fx echoBold
 typeset -fx echoB
@@ -82,6 +85,7 @@ typeset -fx echoGreen
 typeset -fx echoBlue
 typeset -fx warning
 typeset -fx error
+typeset -fx status
 typeset -fx read_config
 typeset -fx write_pref
 
@@ -89,12 +93,10 @@ source $RES/lib_discus.sh
 typeset -fx commit_changes
 typeset -fx data_status
 
-# ImageJ and Java paths
+# Test ImageJ and Java paths
 JAVA_CMD=`which java`
-if [[ $JAVA_CMD == "" ]]; then
-	error "Java not found"
-	exit 1
-fi
+status $? "Java not found"
+
 IJ_PATH=$RES/imagej/
 if [[ ! -e $IJ_PATH/ij.jar ]]; then
 	error "ImageJ not found. ij.jar should be in $IJ_PATH"
@@ -102,7 +104,7 @@ if [[ ! -e $IJ_PATH/ij.jar ]]; then
 fi
 
 
-# Defaults
+# Set defaults
 
 # Parameters: only set here
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
@@ -148,9 +150,10 @@ cameraCompassAngle=90
 
 
 # Getting options from the config file (overriding defaults)
-CONFIG_FILE="bb.conf"
-if [[ -e $CONFIG_FILE ]]; then
-	read_config $CONFIG_FILE
+configFile="bb.conf"
+if [[ -e $configFile ]]; then
+	read_config $configFile
+	status $? "Cannot read configuration file"
 fi
 
 # Getting options from the command line (overriding config file and defaults)
@@ -203,11 +206,11 @@ until [[ -z "$1" ]]; do
 			shift 2 ;;
 		-diam)
 			aquariumDiam="$2"
-			write_pref $CONFIG_FILE aquariumDiam
+			write_pref $configFile aquariumDiam
 			shift 2 ;;
 		-a|-angle)
 			cameraCompassAngle="$2"
-			write_pref $CONFIG_FILE cameraCompassAngle
+			write_pref $configFile cameraCompassAngle
 			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
@@ -220,27 +223,29 @@ until [[ -z "$1" ]]; do
 done
 
 
-# DATAREALSPACE
-#-----------------------------------------------------------------------
-
 # If deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
 
+
 for id in $deployNb; do
-	echoBold "\nDEPLOYMENT $id"
+
+# PREPARE WORKSPACE
+#-----------------------------------------------------------------------
+
+echoBold "\nDEPLOYMENT $id"
 
 # Work directory
-DATAREAL="$base/$id"
-if [[ ! -d $DATAREAL ]]; then
-	error "DATA directory does not exist:\n  $DATAREAL"
+dataReal="$base/$id"
+if [[ ! -d $dataReal ]]; then
+	error "Deployment directory does not exist:\n  $dataReal\nDid you specify a deployment number on the command line?"
 	exit 1
 fi
 
 # When we only perform tests, test data is saved in a subdirectory
-DATATEST="$DATAREAL/test"
+dataTest="$dataReal/test"
 
 # Temporary directory, where all operations are done
-TEMP="$DATAREAL/tmp"
+TEMP="$dataReal/tmp"
 if [[ ! -e $TEMP ]]; then
 	mkdir $TEMP
 fi
@@ -255,15 +260,15 @@ if [[ $TEST == "TRUE" ]]; then
 	# nb of images to read as a stack
 	nbImages=10
 	# use special test directory to store test results
-	if [[ ! -e $DATATEST ]]; then
-		mkdir $DATATEST
+	if [[ ! -e $dataTest ]]; then
+		mkdir $dataTest
 	fi
-	DATA=$DATATEST
+	DATA=$dataTest
 else
 	nbImages=0
 	# NB: zero means all
 	# use the regular data directory
-	DATA=$DATAREAL
+	DATA=$dataReal
 fi
 
 
@@ -281,7 +286,7 @@ then
 	# - save that to an appropriate file
 	# - quit
 	$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-	run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+	run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 	makeOval(${aquariumBounds});                        \
 	waitForUser('Aquarium selection',                   \
 		'If necessary, alter the selection to fit the aquarium better.\n \
@@ -295,12 +300,18 @@ then
 	saveAs('Measurements', '${TEMP}/bounding_aquarium.txt');     \
 	run('Quit');"
 
-	# save the bounding rectangle measurements in the configuration file
-	aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
+	status $? "ImageJ exited abnormally"
 
-	write_pref $CONFIG_FILE aquariumBounds
+	if [[ -e "${TEMP}/bounding_aquarium.txt" ]]; then
+		# save the bounding rectangle measurements in the configuration file
+		aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
 
-	echo "Save aquarium coordinates"
+		write_pref $configFile aquariumBounds
+	else
+		warning "Cannot save bounding box of the aquarium"
+	fi
+
+	echo "Save aquarium radius"
 
 	commit_changes "coord_aquarium.txt"
 fi
@@ -315,23 +326,25 @@ if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
 		# get the time functions
 		source("src/lib_image_time.R")
 		# get the first x images names
-		images=system("ls -1 ${DATAREAL}/pics/*.jpg | head -n 10", intern=TRUE)
+		images=system("ls -1 ${dataReal}/pics/*.jpg | head -n 10", intern=TRUE)
 		# compute time lapse and send it to standard output
 		cat(time.lapse.interval(images))
 EOF
 )
 # NB: for the heredoc (<< constuct) to work, there should be no tab above
+	status $? "R exited abnormally"
+
 	# Deduce the lag when subsampling images
 	subImages=$(($sub / $interval))
 	# NB: this is simple integer computation, so not very accurate but OK for here
 	# when $sub is smaller than $interval (i.e. subImages <1 and in that case =0 since we are doing integer computation) it means we want all images. So subImages should be 1
 	if [[ $subImages -eq 0 ]]; then
-	        subImages=1
+		subImages=1
 	fi
 
 	# Determine whether to use a virtual stack or a real one
 	# total number of images
-	allImages=$(ls -1 ${DATAREAL}/pics/*.jpg | wc -l)
+	allImages=$(ls -1 ${dataReal}/pics/*.jpg | wc -l)
 	# nb of images opened = total / interval
 	nbFrames=$(($allImages / $subImages))
 	# when there are less than 100 frames, loading them is fast and not too memory hungry
@@ -359,7 +372,7 @@ EOF
 		# - save that to an appropriate file
 		# - quit
 		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
-		run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
+		run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of the compass you intend to track.\n      \
@@ -368,6 +381,8 @@ EOF
 		run('Measure');                                     \
 		saveAs('Measurements', '${TEMP}/coord_compass.txt');\
 		run('Quit');"
+
+		status $? "ImageJ exited abnormally"
 
 		echo "Save compass coordinates"
 		outputFiles="$resultFileName coord_compass.txt"
@@ -382,13 +397,15 @@ EOF
 	# - quit
 	$JAVA_CMD -Xmx${IJ_MEM}m -jar ${IJ_PATH}/ij.jar   \
 	-ijpath ${IJ_PATH}/plugins/ -eval "               \
-	run('Image Sequence...', 'open=${DATAREAL}/pics/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
+	run('Image Sequence...', 'open=${dataReal}/pics/*.jpg number=${nbImages} starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 	run('Manual Tracking');                           \
 	waitForUser('Track finised?',                     \
 		'Press OK when done tracking');               \
 	selectWindow('Tracks');                           \
 	saveAs('Text', '${TEMP}/${resultFileName}');  \
 	run('Quit');"
+
+	status $? "ImageJ exited abnormally"
 
 	echo "Save track"
 
@@ -406,7 +423,7 @@ then
 
 	if [[ ! -e $DATA/coord_aquarium.txt ]]
 	then
-		error "Aquarium coordinates missing. Use:\n\t$0 -calib"
+		error "Aquarium coordinates missing. Use:\n\t$0 calib $id"
 		OK=1
 	else
 		echo "Aquarium coordinates ....OK"
@@ -418,7 +435,7 @@ then
 		warning "Numeric compass track missing.\n  Falling back on manual compass track."
 
 		if [[ ! -e $DATA/compass_track.txt ]]; then
-			error "Manual compass track missing. Use:\n\t $0 -compass"
+			error "Manual compass track missing. Use:\n\t $0 compass $id"
 			OK=1
 		else
 			echo "Compass track ..........OK"
@@ -427,7 +444,7 @@ then
 
 		if [[ ! -e $DATA/coord_compass.txt ]]
 		then
-			error "Compass coordinates missing. Use:\n\t $0 -compass"
+			error "Compass coordinates missing. Use:\n\t $0 compass $id"
 			OK=1
 		else
 			echo "Compass coordinates .....OK"
@@ -441,7 +458,7 @@ then
 
 	if [[ ! -e $DATA/larvae_track.txt ]]
 	then
-		error "Larva(e) track(s) missing. Use:\n\t $0 -larva"
+		error "Larva(e) track(s) missing. Use:\n\t $0 larva $id"
 		OK=1
 	else
 		echo "Larva(e) track(s) .......OK"
@@ -459,11 +476,8 @@ then
 	# correct larvae tracks and write output in tracks.csv
 	echo "Correcting..."
 	( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
-	# Test the exit status of R and proceed accordingly
-	stat=$(echo $?)
-	if [[ $stat != "0" ]]; then
-		exit 1
-	fi
+
+	status $? "R exited abnormally"
 
 	echo "Save track"
 
@@ -486,11 +500,8 @@ then
 	fi
 
 	(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${psub} < stats.R)
-	# Test the exit status of R and proceed accordingly
-	stat=$(echo $?)
-	if [[ $stat != "0" ]]; then
-		exit 1
-	fi
+
+	status $? "R exited abnormally"
 
 	# Display the plots in a PDF reader
 	if [[ $displayPlots == "TRUE" ]]; then
@@ -513,6 +524,8 @@ then
 		fi
 	fi
 
+	status $? "The PDF reader exited abnormally"
+
 	echo "Save statistics and graphics"
 
 	commit_changes "stats.csv" plots*.pdf
@@ -523,7 +536,7 @@ if [[ $CLEAN == "TRUE" ]]
 then
 	echoBlue "\nCLEANING DATA"
 	echo "Removing test directory ..."
-	rm -Rf $DATATEST
+	rm -Rf $dataTest
 	echo "Removing temporary files ..."
 	rm -Rf $TEMP
 fi
