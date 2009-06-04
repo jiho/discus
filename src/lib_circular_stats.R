@@ -271,12 +271,12 @@ scale_x_circular <- function(template=c("geographics", "none"))
 	template = match.arg(template)
 	if (template == "geographics") {
 		# set the scale for compass bearings
-		scale = scale_x_continuous( limits=c(0,360),
+		scale = scale_x_continuous("", limits=c(0,360),
 		                    breaks=seq(0,360-1,by=45),
 		                    labels=c("N","N-E","E","S-E","S","S-W","W","N-W"))
 	} else {
 		# set the scale for trigonometric angles
-		scale = scale_x_continuous( limits=c(0,2*pi),
+		scale = scale_x_continuous("", limits=c(0,2*pi),
 		                    breaks=seq(0, 2*pi-0.001 , by=pi/2),
 		                    labels=c("0", expression(frac(pi,2)), expression(pi), expression(frac(3*pi,2))))
 	}
@@ -290,45 +290,4 @@ polar <- function(...)
 #
 {
 	list(coord_polar(theta="x"), scale_x_circular(...))
-}
-
-geom_density_circular <- function(x, ...)
-#
-#	Use density.circular to compute density and return a ggplot layer and a scale
-#	x		an object of class circular
-#	...	passed to density.circular
-{
-	# safety test
-	if (!is.circular(x)) {
-		stop("geom_density_circular needs data of type circular")
-	}
-
-	# conserve circular attributes
-	xp = circularp(x)
-	if (xp$units == "degrees") {
-		from = circular(0)
-		to = circular(360)
-	} else {
-		from = circular(0)
-		to = circular(2*pi)
-	}
-	circularp(from) <- xp
-	circularp(to) <- xp
-
-	# we use the density function of the package circular so we compute the density manually
-	dens = density.circular(x, from=from, to=to, ...)
-
-	# we will plot the density originating from a circle of radius "offset", otherwise it looks funny when it goes down to zero
-	offset=0.5
-
-	# convert it to data.frame
-	dens = data.frame(angle=as.numeric(dens$x), density=dens$y, offset=offset)
-
-	# since the whole y scale will be shifted, we recompute breaks and labels
-	labels = pretty(dens$density, 4)
-	breaks = labels + offset
-
-	# construct the layer and y scale
-	return( list(geom_ribbon(data=dens, mapping=aes(x=angle, ymin=offset, ymax=density+offset)),
-	             scale_y_continuous("density", limits=c(0, max(dens$density+offset)), breaks=breaks, labels=labels)) )
 }

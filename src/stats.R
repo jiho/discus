@@ -102,86 +102,89 @@ write.table(stats, file="stats.csv", row.names=FALSE, sep=",")
 # Prepare plots
 plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
-	# detect the number of successive images to plot appropriate plots
-	# = if there anre no successive images (usually because of resampling) there is no point in plotting trajectory or computing speeds
-	x = t[[1]]
-	successive = is.na(x$date) + is.na( c(NA, x$date[-nrow(x)]) )
-	# successive = 0 when there are successive images
-	successive = sum(successive == 0)
+	# merge the two data.frames
+	t = do.call("rbind", t)
+	# make nicer labels for correction
+	t$correction = factor(t$correction, levels=c(FALSE,TRUE), labels=c("original","corrected"))
+	# compute time since start
+	t$time = as.numeric(t$date-min(t$date, na.rm=T))
 
+	# prepare a container for plots
 	ggplots = list()
 
-	# compass trajectory
-	# we isolate one track (the compass track is the same in both of them)
-	x = t[[1]]
-	# make imgNb relative
-	x$imgNb = x$imgNb-x$imgNb[1]
-	# plot as points (path causes issues when the trajectory traverses the 360-0 boundary)
-	compass = ggplot(x) + geom_point(aes(x=compass, y=imgNb, colour=imgNb), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$imgNb), max(x$imgNb)))
-	# NB: th y scale is so we can see the bearings of the first records
+	# detect the number of successive images to plot appropriate plots
+	# = if there are no successive images (usually because of resampling) there is no point in plotting trajectory or computing speeds
+	# we only need one of the two tracks
+	x = t[t$correction=="original", ]
+	successive = is.na(x$date) + is.na( c(NA, x$date[-nrow(x)]) )
+	# successive == 0 when there are successive images
+	# we count all those
+	successive = sum(successive == 0)
 
+
+	# Compass readings
+	# (for one track only: the compass track is the same)
+	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T)))
+	# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
 	ggplots = c(ggplots, list(compass))
 
-	if (successive > 0) {
-		# trajectory (only if there are at least 2 successive positions)
-		traj = llply(t, function(x, radius){
-			x$time = as.numeric(x$date-x$date[1])
-			ggplot(x) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + opts(title=paste("Trajectory\ncorrection =", x$correction[1]))
-			# TODO add a circle around
-		}, aquariumDiam/2)
 
-		ggplots = c(ggplots, traj)
+	# Trajectory
+	if (successive > 0) {
+		# (plotted only if there are at least 2 successive positions)
+		radius = aquariumDiam/2
+		traj = ggplot(t) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + facet_grid(~correction) + opts(title="Trajectory")
+		# TODO add a circle around
+		ggplots = c(ggplots, list(traj))
 	}
 
 
-	# point positions
-	positions = llply(t, function(x){
-		# ggplot does not deal with the circular class
-		x$theta = as.numeric(x$theta)
-		# plot
-		ggplot(x) + geom_point(aes(x=theta, y=1), alpha=0.1, size=4) + scale_y_continuous("", limits=c(0,1.05), breaks=NA) + polar() + opts(title=paste("Positions\ncorrection =", x$correction[1]))
+	# Point positions
+	positions = ggplot(t) + geom_point(aes(x=theta, y=1), alpha=0.1, size=4) + scale_y_continuous("", limits=c(0,1.05), breaks=NA) + polar() + opts(title="Positions") + facet_grid(~correction)
+
+
+	# Rose positions
+	pHist = ggplot(t) + geom_bar(aes(x=theta), binwidth=45/4) + polar() + opts(title="Histogram of positions") + facet_grid(~correction)
+	# TODO Add mean vector
+
+
+	# Density positions
+	dens = ddply(t,~correction, function(x) {
+		d = density.circular(x$theta, na.rm=T, bw=100)
+		data.frame(angle=d$x, density=d$y)
 	})
+	# make all angles positive for ggplot
+	dens$angle = (dens$angle+360) %% 360
+	# we will plot the density originating from a circle of radius "offset", otherwise it looks funny when it goes down to zero
+	offset = 0.5
+	dens$offset = offset
+	# since the whole y scale will be shifted, we recompute breaks and labels
+	labels = pretty(dens$density, 4)
+	breaks = labels + offset
+	# construct the layer and y scale
+	pDens = ggplot(dens) + geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) + scale_y_continuous("density", limits=c(0, max(dens$density+offset)), breaks=breaks, labels=labels) + polar() + opts(title="Density distribution of positions") + facet_grid(~correction)
 
+	ggplots = c(ggplots, list(positions, pHist, pDens))
 
-	# rose positions
-	pHist = llply(t, function(x){
-		# ggplot does not deal with the circular class
-		x$theta = as.numeric(x$theta)
-		# plot
-		ggplot(x) + geom_bar(aes(x=theta), binwidth=45/4) + polar() + opts(title=paste("Histogram of positions\ncorrection =", x$correction[1]))
-		# TODO Add mean vector
-	})
-
-	# density positions
-	pDens = llply(t, function(x){
-		# use a custom function for circular density
-		ggplot() + geom_density_circular(x$theta, na.rm=T, bw=100) + polar() + opts(title=paste("Density distribution of positions\ncorrection =", x$correction[1]))
-	})
-
-	ggplots = c(ggplots, positions, pHist, pDens)
 
 	if (successive > 0) {
-		# rose directions
-		dHist = llply(t, function(x){
-			# ggplot does not deal with the circular class
-			x$heading = as.numeric(x$heading)
-			# plot
-			ggplot(x) + geom_bar(aes(x=heading), binwidth=45/4) + polar() + opts(title=paste("Histogram of swimming directions\ncorrection =", x$correction[1]))
-			# TODO Add mean vector
-		})
+		# Rose directions
+		dHist = ggplot(t) + geom_bar(aes(x=heading), binwidth=45/4) + polar() + opts(title="Histogram of swimming directions") + facet_grid(~correction)
 
-		# speed distribution
+
+		# Speed distribution
 		# plot only for uncorrected tracks (the speeds are NA for the corrected one)
-		x = t[["FALSE"]]
+		x = t[t$correction=="original", ]
 		# prepare the scale and the base plot
 		maxSpeed = 5
 		scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
 		p = ggplot(x, aes(x=speed)) + scale_x
 		# add geoms
-		sHist = p + geom_histogram(binwidth=0.5) + opts(title=paste("Histogram of swimming speeds\ncorrection =", x$correction[1]))
-		sDens = p + geom_density() + opts(title=paste("Density distribution of swimming speeds\ncorrection =", x$correction[1]))
+		sHist = p + geom_histogram(binwidth=0.5) + opts(title="Histogram of swimming speeds (original track)")
+		sDens = p + geom_density(fill="grey20", colour=NA) + opts(title="Density distribution of swimming speeds (original track)")
 
-		ggplots = c(ggplots, dHist, list(sHist), list(sDens))
+
+		ggplots = c(ggplots, list(dHist, sHist, sDens))
 	}
 
 	return(ggplots)
@@ -194,12 +197,13 @@ cat("Plotting each track\n")
 for (name in names(tracks)) {
 	# reduce the number of hierachy levels to ease plotting
 	p = unlist(plots[name], F)
-	if (length(tracks) > 1) {
+	if (nbTracks > 1) {
 		filename = paste("plots-",name,".pdf",sep="")
 	} else {
 		filename="plots.pdf"
 	}
-	pdf(file=filename)
+	pdf(file=filename, width=6, height=4, pointsize=10)
+	theme_set(theme_gray(10))
 	dummy = l_ply(p, print, .progress="text")
 	dummy = dev.off()
 }
