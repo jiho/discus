@@ -157,11 +157,12 @@ approx.circular <- function(x, angles, xout, ...)
 ## Statistical functions
 #-----------------------------------------------------------------------
 
-circ.stats <- function(t, subsampleTime)
+circ.stats <- function(angles, times, subsampleTime, ...)
 #
 #	Descriptive statistics and Rayleigh test
 #
-# 	t						a track record
+#	angles				vector of angles, in circular format
+#	times					vector of times at which these angles are recorded
 #	subsampleTime		interval (in seconds) at which to resample data to assume the points to be independant. If the data is aleady sampled at an interval >= subsample.interval then simple statistics are computed. Otherwise, the data provided is  "bootstrapped"
 #
 #	Value
@@ -173,6 +174,13 @@ circ.stats <- function(t, subsampleTime)
 #		p.value	Rayleigh's test p-value
 #
 {
+	# check the class of angles
+	if (!is.circular(angles)) {
+		stop("Need a \"angles\" vector of class \"circular\"")
+	}
+
+	t = data.frame(exactDate=times, theta=angles)
+
 	# remove NAs. we don't have a use for them here
 	t = t[!is.na(t$theta),]
 

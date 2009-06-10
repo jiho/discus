@@ -36,12 +36,6 @@ subsampleTime = as.numeric(args[3])
 # aquariumDiam = 40
 # subsampleTime = 15
 
-# # min speed to consider in order to avoid errors
-# maxErrorInPx = 2.8
-# maxErrorInMm = maxErrorInPx * px2mm
-# # remove speed which are potentially more than 1/4 of random noise
-# minSpeed = maxErrorInMm * 4
-
 
 setwd(prefix)
 
@@ -74,27 +68,44 @@ nbTracks = length(tracks)
 
 # Compute positions statistics
 p = ldply(tracks, function(t, ...){
-	pp = ldply(t, function(x, ...){circ.stats(x, ...)}, ...)
+	pp = ldply(t, function(x, ...){circ.stats(x$theta, x$exactDate, ...)}, ...)
 	names(pp)[1] = "correction"
 	pp$correction = as.logical(as.character(pp$correction))
 	pp[ ! pp$correction, "mean"] = NA
 	return(pp)
-}, sub=subsampleTime)
+}, subsampleTime=subsampleTime)
 names(p)[1] = "trackNb"
-
-# Display statistical results
-# TODO improve the display
-cat("Statistics:\n")
-print(p)
-
-
-# TODO compute direction statistics while cutting direction data for speeds < threshold
-d = data.frame(kind="direction")
-
-# write them to file
 p$kind = "position"
 
+# Compute direction statistics
+# compute a speed threshold under which the movement is discarded because it could be in great part du to error of measure
+# remove speed which are potentially more than 1/4 of random noise
+minSpeed = 0.4
+# the min speed is chosen this way:
+#	meanErrorInPx * px2cm * 4
+# the mean error in pixels is estimated by tracking the same larva several times and comparing the positons recorded. It is usually about 2.5 px.
+d = ldply(tracks, function(t, ...){
+	# create a filter for speeds
+	# NB: it is based on the uncorrected tracks only since the speed are only real in that case
+	idx = t["FALSE"][[1]]$speed > minSpeed
+	# compute stats only on filtered value
+	pp = ldply(t, function(x, idx, ...){
+		x = x[!is.na(idx) & idx, ]
+		circ.stats(x$heading, x$exactDate, ...)
+	}, idx=idx, ...)
+	names(pp)[1] = "correction"
+	pp$correction = as.logical(as.character(pp$correction))
+	pp[ ! pp$correction, "mean"] = NA
+	return(pp)
+}, subsampleTime=1, minSpeed=minSpeed)
+names(d)[1] = "trackNb"
+d$kind = "direction"
+
+# Display statistical results and write them to file
+# TODO improve the display
 stats = rbind.fill(p, d)
+cat("Statistics:\n")
+print(stats)
 write.table(stats, file="stats.csv", row.names=FALSE, sep=",")
 
 
