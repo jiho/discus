@@ -63,9 +63,7 @@ commit_changes() {
 		error "Data directory undefined"
 	fi
 	echoB "Committing changes"
-	echo=`which echo`
-	$echo -n "Do you want to commit changes? (y/n [n]) : "
-	read -e COMMIT
+	read -p "Do you want to commit changes? (y/n [n]) : " COMMIT
 	if [[ "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" || "$COMMIT" == "YES" ]]
 	then
 		echo "Moving data..."
