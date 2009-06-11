@@ -24,7 +24,8 @@ echo -e "
 
 \033[1mACTIONS / relevant OPTIONS\033[0m
   \033[1mh|help\033[0m            display this help message
-  \033[1mstatus\033[0m            prints information about the data directory
+  \033[1mstatus\033[0m            prints information about the working directory
+    \033[1m-s\033[0m              status of the storage directory instead
   \033[1msync\033[0m              synchronize data between workspace and storage
 
   \033[1mcal|calib\033[0m         measure calibration data for the tracking
@@ -43,7 +44,7 @@ echo -e "
   Parameters are written in the configuration file after they are set.
   Therefore, they \"stick\" from one run to the other.
   \033[1m-work\033[0m        .    working directory, containing deployments
-  \033[1m-storage\033[0m     none storage directory, for synchronisation
+  \033[1m-storage\033[0m     none image and data storage directory
   \033[1m-diam\033[0m        40   aquarium diameter, in cm
   \033[1m-a|-angle\033[0m    90   angle between camera and compass, in degrees
   \033[1m-m|-mem\033[0m      1000 memory for Image, in MB

@@ -92,6 +92,8 @@ TRACK_CORR=FALSE
 STATS=FALSE
 # synchronize with the storage directory
 SYNC=FALSE
+# give information about the content of the data/storage directory
+STATUS=FALSE
 
 # Options: set in the config file or on the command line
 # deployment number (i.e. deployment directory name)
@@ -102,6 +104,8 @@ sub=1
 psub=5
 # whether to display plots or not after the statistical analysis
 displayPlots=FALSE
+# use the storage directory status rather than the data directory
+storageStatus=FALSE
 
 
 # Get options from the config file (overriding defaults)
@@ -120,8 +124,11 @@ until [[ -z "$1" ]]; do
 			help
 			exit $? ;;
 		status)
-			data_status $work
-			exit $? ;;
+			STATUS=TRUE
+			shift 1 ;;
+		-s)
+			storageStatus=TRUE
+			shift 1 ;;
 		cal|calib)
 			TRACK_CALIB=TRUE
 			shift 1 ;;
@@ -221,12 +228,38 @@ if [[ $SYNC == "TRUE" && $storage == "" ]]; then
 	exit 1
 fi
 
-if [[ $SYNC == "TRUE" && ! -d $storage ]]; then
+if [[ $STATUS == "TRUE" && storageStatus == "TRUE" && $storage == "" ]]; then
+	error "Status of the storage directory requested but no storage directory specified"
+	exit 1
+fi
+
+if [[ ( $SYNC == "TRUE" || ( $STATUS == "TRUE" && storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
 	error "Storage directory\n  $storage\n  does not exist"
 	exit 1
 fi
 
 
+
+# STATUS
+#------------------------------------------------------------
+# If status is requested, print first and exit
+if [[ $STATUS == "TRUE" ]]; then
+	echoBlue "DATA SUMMARY"
+	if [[ $storageStatus == "TRUE" ]]; then
+		echo "for $storage"
+		data_status $storage
+	else
+		echo "for $work"
+		data_status $work
+	fi
+
+	exit 0
+fi
+
+
+
+# PROCESS DEPLOYMENTS
+#------------------------------------------------------------
 # if deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
 status $? "Could not interpret deployment number"
@@ -235,9 +268,6 @@ if [[ $deployNb == "" ]]; then
 	warning "No deployment number specified.\nIterating command(s) on all available deployments"
 	deployNb=$(ls $work | sort -n)
 fi
-
-
-
 
 for id in $deployNb; do
 
