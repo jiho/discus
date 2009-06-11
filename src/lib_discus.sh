@@ -59,11 +59,13 @@ echo -e "
 # The environment variables $TEMP and $DATA must be already defined
 #
 commit_changes() {
-	if [[ $TEMP == "" ]]; then
+	if [[ $tmp == "" ]]; then
 		error "Temporary directory undefined"
+		exit 1
 	fi
-	if [[ $data == "" ]]; then
+	if [[ $work == "" ]]; then
 		error "Data directory undefined"
+		exit 1
 	fi
 	echoB "Committing changes"
 	read -p "Do you want to commit changes? (y/n [n]) : " COMMIT
@@ -71,12 +73,12 @@ commit_changes() {
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
-		$( cd $TEMP/ && mv -i $@ $data/ )
+		$( cd $tmp/ && mv -i $@ $work/ )
 	else
 		echo "OK, cleaning TEMP directory then..."
 	fi
 	# clean temp directory
-	rm -Rf $TEMP/*
+	rm -f $tmp/*
 
 	return 0
 }

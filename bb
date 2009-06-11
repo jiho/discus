@@ -80,7 +80,7 @@ cameraCompassAngle=90
 # diameter of the aquarium, in cm
 aquariumDiam=40
 # root directory containing directories for all deployments (workspace)
-base=$HERE
+work=$HERE
 # storage directory containing directories for all deployments (photo source and backup)
 storage=""
 
@@ -125,7 +125,7 @@ until [[ -z "$1" ]]; do
 			help
 			exit $? ;;
 		status)
-			data_status $base
+			data_status $work
 			exit $? ;;
 		cal|calib)
 			TRACK_CALIB=TRUE
@@ -178,8 +178,8 @@ until [[ -z "$1" ]]; do
 			write_pref $configFile storage
 			shift 2 ;;
 		-work)
-			base="$2"
-			write_pref $configFile base
+			work="$2"
+			write_pref $configFile work
 			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
@@ -215,12 +215,12 @@ for id in $deployNb; do
 	echoBold "\nDEPLOYMENT $id"
 
 	# Current deployment directory
-	data="$base/$id"
+	data="$work/$id"
 	if [[ ! -d $data ]]; then
 		# When the deployment is not available check wether we want synchronization
 		if [[ $SYNC == "TRUE" ]]; then
 			# in which case, the synchronization will create the deployment data
-			sync_data $base $storage $id
+			sync_data $work $storage $id
 			status $? "Check command line arguments"
 		else
 			# otherwise exit with an error
@@ -312,7 +312,7 @@ EOF
 		# Deduce the lag when subsampling images
 		subImages=$(($sub / $interval))
 		# NB: this is simple integer computation, so not very accurate but OK for here
-		# when $sub is smaller than $interval (i.e. subImages < 1 i.e. = 0 here because we are doing integer computation) it means we want all images. 
+		# when $sub is smaller than $interval (i.e. subImages < 1 i.e. = 0 here because we are doing integer computation) it means we want all images.
 		# so subImages should in fact be 1
 		if [[ $subImages -eq 0 ]]; then
 			subImages=1
@@ -511,7 +511,7 @@ EOF
 	if [[ $SYNC == "TRUE" ]]; then
 		echoBlue "\nDATA SYNCHRONISATION"
 
-		sync_data $base $storage $id
+		sync_data $work $storage $id
 	fi
 
 	# Cleaning
