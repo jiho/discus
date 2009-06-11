@@ -42,6 +42,7 @@ source $RES/lib_discus.sh
 typeset -fx help
 typeset -fx commit_changes
 typeset -fx data_status
+typeset -fx sync_data
 
 # Help message (should be done early)
 # detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
@@ -77,6 +78,8 @@ aquariumBounds="10,10,300,300"
 cameraCompassAngle=90
 # diameter of the aquarium, in cm
 aquariumDiam=40
+# storage directory
+storage=""
 
 # Actions: determined on the command line, all FALSE by default
 # perform calibration?
@@ -89,6 +92,8 @@ TRACK_LARV=FALSE
 TRACK_CORR=FALSE
 # perform statistical analysis of current track?
 STATS=FALSE
+# synchronize with the storage directory
+SYNC=FALSE
 
 # Options: set in the config file or on the command line
 # root directory where the directories for each deployment are
@@ -136,13 +141,15 @@ until [[ -z "$1" ]]; do
 		s|stats)
 			STATS=TRUE
 			shift 1 ;;
+		sync)
+			SYNC=TRUE
+			shift 1 ;;
 		all)
 			TRACK_CALIB=TRUE
 			TRACK_COMP=TRUE
 			TRACK_LARV=TRUE
 			TRACK_CORR=TRUE
 			STATS=TRUE
-			CLEAN=TRUE
 			shift 1 ;;
 		-d|-display)
 			displayPlots=TRUE
@@ -165,6 +172,10 @@ until [[ -z "$1" ]]; do
 			ijMem="$2"
 			write_pref $configFile ijMem
 			shift 2 ;;
+		-storage)
+			storage="$2"
+			write_pref $configFile storage
+			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
 			help
@@ -175,7 +186,16 @@ until [[ -z "$1" ]]; do
 	esac
 done
 
-# If deployNb is a range, expand it
+
+# Check arguments
+
+# compatibility of arguments
+if [[ $SYNC == "TRUE" && $storage == "" ]]; then
+	error "Synchronization requested but no storage directory specified"
+	exit 1
+fi
+
+# if deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
 status $? "Could not interpret deployment number"
 
@@ -192,8 +212,16 @@ for id in $deployNb; do
 	# Current deployment directory
 	data="$base/$id"
 	if [[ ! -d $data ]]; then
-		error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
-		exit 1
+		# When the deployment is not available check wether we want synchronization
+		if [[ $SYNC == "TRUE" ]]; then
+			# in which case, the synchronization will create the deployment data
+			sync_data $base $storage $id
+			status $? "Check command line arguments"
+		else
+			# otherwise exit with an error
+			error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
+			exit 1
+		fi
 	fi
 
 	# Pictures
@@ -474,10 +502,17 @@ EOF
 		commit_changes "stats.csv" plots*.pdf
 	fi
 
+	# Synchronization with the storage directory
+	if [[ $SYNC == "TRUE" ]]; then
+		echoBlue "\nDATA SYNCHRONISATION"
+
+		sync_data $base $storage $id
+	fi
+
 	# Cleaning
 	rm -Rf $TEMP
 	status $? "Could not remove temporary directory"
-	
+
 done
 
 

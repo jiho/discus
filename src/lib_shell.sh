@@ -116,6 +116,17 @@ expand_range() {
 	done | sort -n
 }
 
+# USAGE
+# 	yes [string]
+# Tests whether the string is something that means yes
+yes()
+{
+	if [[ "$1" == "Y" || "$1" == "y" || "$1" == "yes" || "$1" == "Yes" || "$1" == "YES" ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
 
 #
 # USAGE

@@ -2,6 +2,10 @@
 
 - the BASH shell environment (not just any shell, many constructs are BASH specific)
 
+- usual unix tools: awk, sed, rsync, etc.
+
+- mktemp to create temporary directories
+
 - [ImageJ](http://rsbweb.nih.gov/ij/ "ImageJ"), jar archive version
 
 - Java Virtual Machine, for ImageJ
@@ -16,7 +20,5 @@
 	- circular
 	
 	and the dependencies of those packages
-
-- mktemp to create temporary directories
 
 - a PDF reader (evince, xpdf, preview)
