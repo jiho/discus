@@ -79,7 +79,9 @@ aquariumBounds="10,10,300,300"
 cameraCompassAngle=90
 # diameter of the aquarium, in cm
 aquariumDiam=40
-# storage directory
+# root directory containing directories for all deployments (workspace)
+base=$HERE
+# storage directory containing directories for all deployments (photo source and backup)
 storage=""
 
 # Actions: determined on the command line, all FALSE by default
@@ -97,8 +99,6 @@ STATS=FALSE
 SYNC=FALSE
 
 # Options: set in the config file or on the command line
-# root directory where the directories for each deployment are
-base=$HERE
 # deployment number (i.e. deployment directory name)
 deployNb="0"
 # subsample images every 'sub' seconds to speed up the analysis
@@ -176,6 +176,10 @@ until [[ -z "$1" ]]; do
 		-storage)
 			storage="$2"
 			write_pref $configFile storage
+			shift 2 ;;
+		-work)
+			base="$2"
+			write_pref $configFile base
 			shift 2 ;;
 		-*)
 			error "Unknown option \"$1\" "
