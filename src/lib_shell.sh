@@ -72,6 +72,17 @@ status() {
 	fi
 }
 
+# USAGE
+#	dereference [path]
+# Find the original to which a link points
+dereference() {
+	foo=$1
+	while [[ -h "$foo" ]]; do
+		foo=$(readlink "$foo")
+	done
+	echo $foo
+}
+
 
 #
 # Given a range of numbers such as:

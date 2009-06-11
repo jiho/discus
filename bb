@@ -35,6 +35,7 @@ typeset -fx echoBlue
 typeset -fx warning
 typeset -fx error
 typeset -fx status
+typeset -fx dereference
 typeset -fx read_config
 typeset -fx write_pref
 
