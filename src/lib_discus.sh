@@ -63,8 +63,8 @@ commit_changes() {
 		error "Temporary directory undefined"
 		exit 1
 	fi
-	if [[ $work == "" ]]; then
-		error "Data directory undefined"
+	if [[ $data == "" ]]; then
+		error "Deployment directory undefined"
 		exit 1
 	fi
 	echoB "Committing changes"
@@ -73,7 +73,7 @@ commit_changes() {
 	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
-		$( cd $tmp/ && mv -i $@ $work/ )
+		$( cd $tmp/ && mv -i $@ $data/ )
 	else
 		echo "OK, cleaning TEMP directory then..."
 	fi
