@@ -17,12 +17,16 @@
 #
 #-----------------------------------------------------------------------
 
+# Give a bit of room
+echo ""
+
+
 
 # SOURCE
 #-----------------------------------------------------------------------
 
 # set source directories
-HERE=`pwd`
+HERE=$(pwd)
 RES="$HERE/src"
 
 # get library functions
@@ -45,22 +49,13 @@ typeset -fx commit_changes
 typeset -fx data_status
 typeset -fx sync_data
 
+
 # Help message (should be done early)
 # detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
 echo $* | grep -E -e "h|help" > /dev/null
 if [[ $? -eq 0 ]]; then
 	help
 	exit 0
-fi
-
-# Test ImageJ and Java paths
-JAVA_CMD=`which java`
-status $? "Java not found"
-
-IJ_PATH=$RES/imagej/
-if [[ ! -e $IJ_PATH/ij.jar ]]; then
-	error "ImageJ not found. ij.jar should be in $IJ_PATH"
-	exit 1
 fi
 
 
@@ -100,7 +95,7 @@ SYNC=FALSE
 
 # Options: set in the config file or on the command line
 # deployment number (i.e. deployment directory name)
-deployNb="0"
+deployNb=""
 # subsample images every 'sub' seconds to speed up the analysis
 sub=1
 # subsample positions each 'psub' seconds for the statistical analysis, to allow independence of data
@@ -192,17 +187,54 @@ until [[ -z "$1" ]]; do
 done
 
 
-# Check arguments
 
-# compatibility of arguments
+# CHECKS
+#------------------------------------------------------------
+
+# Existence of commands
+javaCmd=$(which java)
+status $? "Java not found. Please install a Java JRE"
+
+ijPath=$RES/imagej/
+if [[ ! -e $ijPath/ij.jar ]]; then
+	error "ImageJ not found"
+	echo -e "Download the platform independent file from\n  http://rsbweb.nih.gov/ij/download.html\nand place ij.jar in $ijPath"
+	exit 1
+fi
+
+R=$(which R)
+status $? "R not found. Please install it,\ntogether with packages ggplot2 and circular."
+
+sed=$(which sed)
+status $? "sed not found. Check your PATH."
+
+mktemp=$(which mktemp)
+status $? "mktemp not found. Check your PATH."
+
+rsync=$(which rsync)
+status $? "rsync not found. Check your PATH."
+
+
+# Compatibility of arguments
 if [[ $SYNC == "TRUE" && $storage == "" ]]; then
 	error "Synchronization requested but no storage directory specified"
 	exit 1
 fi
 
+if [[ $SYNC == "TRUE" && ! -d $storage ]]; then
+	error "Storage directory\n  $storage\n  does not exist"
+	exit 1
+fi
+
+
 # if deployNb is a range, expand it
 deployNb=$(expand_range "$deployNb")
 status $? "Could not interpret deployment number"
+# if deployNb is not specified, process all available deployments
+if [[ $deployNb == "" ]]; then
+	warning "No deployment number specified.\nIterating command(s) on all available deployments"
+	deployNb=$(ls $work | sort -n)
+fi
 
 
 
@@ -219,12 +251,12 @@ for id in $deployNb; do
 	if [[ ! -d $data ]]; then
 		# When the deployment is not available check wether we want synchronization
 		if [[ $SYNC == "TRUE" ]]; then
-			# in which case, the synchronization will create the deployment data
+			# in which case, the synchronization will import the deployment data in the workspace
 			sync_data $work $storage $id
 			status $? "Check command line arguments"
 		else
 			# otherwise exit with an error
-			error "Deployment directory does not exist:\n  $data\nDid you specify a deployment number on the command line?"
+			error "Deployment directory does not exist:\n  $data"
 			exit 1
 		fi
 	fi
@@ -237,14 +269,15 @@ for id in $deployNb; do
 	fi
 
 	# Temporary directory, where all operations are done
-	TEMP="$data/tmp"
-	if [[ ! -e $TEMP ]]; then
-		mkdir $TEMP
+	tmp="$data/tmp"
+	if [[ ! -e $tmp ]]; then
+		mkdir $tmp
+		status $? "Could not create temporary directory"
 	fi
 
 
 
-	# LAUNCH COMPONENTS
+	# LAUNCH ACTIONS
 	#-----------------------------------------------------------------------
 
 	# Calibration
@@ -260,26 +293,26 @@ for id in $deployNb; do
 		# - measure centroid and perimeter in pixels
 		# - save that to an appropriate file
 		# - quit
-		$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
+		$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 		makeOval(${aquariumBounds});                        \
 		waitForUser('Aquarium selection',                   \
-			'If necessary, alter the selection to fit the aquarium better.\n \
+			'If necessary, alter the selection to fit the aquarium better.\n               \
 			\nPress OK when you are done');                 \
 		run('Set Measurements...', '  centroid perimeter invert redirect=None decimal=3'); \
 		run('Measure');                                     \
-		saveAs('Measurements', '${TEMP}/coord_aquarium.txt');     \
+		saveAs('Measurements', '${tmp}/coord_aquarium.txt');\
 		run('Clear Results');                               \
 		run('Set Measurements...', '  bounding redirect=None decimal=3'); \
 		run('Measure');                                     \
-		saveAs('Measurements', '${TEMP}/bounding_aquarium.txt');     \
-		run('Quit');"
+		saveAs('Measurements', '${tmp}/bounding_aquarium.txt');           \
+		run('Quit');"  > /dev/null 2>&1
 
 		status $? "ImageJ exited abnormally"
 
-		if [[ -e "${TEMP}/bounding_aquarium.txt" ]]; then
+		if [[ -e "${tmp}/bounding_aquarium.txt" ]]; then
 			# save the bounding rectangle measurements in the configuration file
-			aquariumBounds=$(sed \1d ${TEMP}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
+			aquariumBounds=$(sed \1d ${tmp}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
 
 			write_pref $configFile aquariumBounds
 		else
@@ -347,7 +380,7 @@ EOF
 			# - measure centroid coordinates in pixels
 			# - save that to an appropriate file
 			# - quit
-			$JAVA_CMD -Xmx200m -jar $IJ_PATH/ij.jar -eval "     \
+			$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
 			run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
 			setTool(7);                                         \
 			waitForUser('Compass calibration',                  \
@@ -355,8 +388,8 @@ EOF
 				\nPress OK when you are done');                 \
 			run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
 			run('Measure');                                     \
-			saveAs('Measurements', '${TEMP}/coord_compass.txt');\
-			run('Quit');"
+			saveAs('Measurements', '${tmp}/coord_compass.txt'); \
+			run('Quit');"  > /dev/null 2>&1
 
 			status $? "ImageJ exited abnormally"
 
@@ -371,15 +404,15 @@ EOF
 		# - use waitForUser to let the time for the user to track larvae
 		# - save the tracks to an appropriate file
 		# - quit
-		$JAVA_CMD -Xmx${ijMem}m -jar ${IJ_PATH}/ij.jar   \
-		-ijpath ${IJ_PATH}/plugins/ -eval "               \
+		$javaCmd -Xmx${ijMem}m -jar ${ijPath}/ij.jar      \
+		-ijpath ${ijPath}/plugins/ -eval "                \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
 		waitForUser('Track finised?',                     \
 			'Press OK when done tracking');               \
 		selectWindow('Tracks');                           \
-		saveAs('Text', '${TEMP}/${resultFileName}');  \
-		run('Quit');"
+		saveAs('Text', '${tmp}/${resultFileName}');       \
+		run('Quit');"  > /dev/null 2>&1
 
 		status $? "ImageJ exited abnormally"
 
@@ -403,7 +436,7 @@ EOF
 			OK=1
 		else
 			echo "Aquarium coordinates ....OK"
-			cp $data/coord_aquarium.txt $TEMP
+			cp $data/coord_aquarium.txt $tmp
 		fi
 
 		if [[ ! -e $data/compass_log.csv ]]; then
@@ -415,7 +448,7 @@ EOF
 				OK=1
 			else
 				echo "Compass track ..........OK"
-				cp $data/compass_track.txt $TEMP
+				cp $data/compass_track.txt $tmp
 			fi
 
 			if [[ ! -e $data/coord_compass.txt ]]
@@ -424,12 +457,12 @@ EOF
 				OK=1
 			else
 				echo "Compass coordinates .....OK"
-				cp $data/coord_compass.txt $TEMP
+				cp $data/coord_compass.txt $tmp
 			fi
 
 		else
 			echo "Compass track ...........OK"
-			cp $data/compass_log.csv $TEMP
+			cp $data/compass_log.csv $tmp
 		fi
 
 		if [[ ! -e $data/larvae_track.txt ]]
@@ -438,20 +471,20 @@ EOF
 			OK=1
 		else
 			echo "Larva(e) track(s) .......OK"
-			cp $data/larvae_track.txt $TEMP
+			cp $data/larvae_track.txt $tmp
 		fi
 
 
 		if [[ "$OK" == "1" ]]
 		then
 			echo "Exiting..."
-			rm -f $TEMP/*
+			rm -f $tmp/*
 			exit 1
 		fi
 
 		# correct larvae tracks and write output in tracks.csv
 		echo "Correcting..."
-		( cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
+		( cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
 
 		status $? "R exited abnormally"
 
@@ -466,16 +499,16 @@ EOF
 	then
 		echoBlue "\nSTATISTICAL ANALYSIS"
 
-		# Checking for tracks existence and copy the tracks in the TEMP directory
+		# Checking for tracks existence and copy the tracks in the tmp directory
 		if [[ -e $data/tracks.csv ]]; then
 			echo "Corrected track(s) .......OK"
-			cp $data/tracks.csv $TEMP/
+			cp $data/tracks.csv $tmp/
 		else
-			error "Corrected tracks missing. Use:\n\t $0 -correct"
+			error "Corrected larvae tracks missing. Use:\n\t $0 correct $id"
 			exit 1
 		fi
 
-		(cd $RES && R -q --slave --args ${TEMP} ${aquariumDiam} ${psub} < stats.R)
+		(cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${psub} < stats.R)
 
 		status $? "R exited abnormally"
 
@@ -496,11 +529,10 @@ EOF
 				fi
 			fi
 			if [[ pdfReader != "" ]]; then
-				$pdfReader &>/dev/null $TEMP/plots*.pdf
+				$pdfReader > /dev/null 2>&1 $tmp/plots*.pdf &
+				status $? "The PDF reader exited abnormally"
 			fi
 		fi
-
-		status $? "The PDF reader exited abnormally"
 
 		echo "Save statistics and graphics"
 
@@ -515,8 +547,11 @@ EOF
 	fi
 
 	# Cleaning
-	rm -Rf $TEMP
-	status $? "Could not remove temporary directory"
+	if [[ -e $tmp ]]; then
+		# NB: this rm -Rf is potentially harmful, so take precautions
+		rm -Rf $tmp
+		status $? "Could not remove temporary directory"
+	fi
 
 done
 
