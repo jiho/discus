@@ -191,7 +191,10 @@ write_pref() {
 
 	if [[ $? == "0"  ]]; then
 		# if there is a match, update the preference in the config file
-		sed -e 's/'$pref'=.*/'$pref'='\"$(eval echo \$$pref)\"'/' -i='' $configFile
+		tmpConf=$(mktemp /tmp/bbconf.XXXXX)
+		sed -e 's/'$pref'=.*/'$pref'='\"$(eval echo \$$pref)\"'/' $configFile > $tmpConf
+		cp -f $tmpConf $configFile
+		rm -f $tmpConf
 	else
 		# otherwise, write the pref at the end of the file
 		echo "$pref=\"$(eval echo \$$pref)\"" >> $configFile
