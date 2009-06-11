@@ -57,6 +57,7 @@ error() {
 	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
 }
 
+
 # USAGE
 #	status [return_code] [message_on_failure]
 # Check the exit status
@@ -72,6 +73,7 @@ status() {
 	fi
 }
 
+
 # USAGE
 #	dereference [path]
 # Find the original to which a link points
@@ -84,10 +86,13 @@ dereference() {
 }
 
 #
-# Given a range of numbers such as:
+# USAGE
+#	expand_range [string]
+# Given a string describing a range of numbers such as:
 #	1,10,1-5,12
-# output the list of all numbers, sorted and with duplicates
+# output the list of all numbers, sorted and *with* duplicates
 #	1 1 2 3 4 5 10 12
+#
 expand_range() {
 
 	# Change the Internal Field Separator
@@ -126,9 +131,12 @@ expand_range() {
 	done | sort -n
 }
 
+#
 # USAGE
 # 	yes [string]
-# Tests whether the string is something that means yes
+# Tests whether the string is something that means yes. To be used in tests such as:
+# 	if yes $foo; then ...; fi
+#
 yes()
 {
 	if [[ "$1" == "Y" || "$1" == "y" || "$1" == "yes" || "$1" == "Yes" || "$1" == "YES" ]]; then

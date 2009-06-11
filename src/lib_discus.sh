@@ -9,7 +9,9 @@
 #------------------------------------------------------------------------------
 
 #
-#	Display a help message
+# USAGE
+#	help
+# Displays a help message
 #
 help() {
 echo -e "
