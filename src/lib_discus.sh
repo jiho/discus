@@ -208,7 +208,7 @@ sync_data()
 
 				# Update pictures in working directory
 				echo -e "\e[1mWorking directory <- Storage\e[0m : update pictures"
-				rsync -a --delete --size-only --out-format="  %o %n" --include='*.jpg' --exclude='*'  $storage/$id/pics/ $base/$id/pics
+				rsync -rltD --delete --size-only --out-format="  %o %n" --include='*.jpg' --exclude='*'  $storage/$id/pics/ $base/$id/pics
 
 				# Ask the user whether we should still transfer results
 				echo -e "Because of that, the results that are about to be copied from the working\ndirectory to the storage will not match the pictures there."
@@ -231,7 +231,7 @@ sync_data()
 				else
 					# Copy results to storage
 					echo -e "\e[1mWorking directory -> Storage\e[0m : store (or update) results files"
-					rsync -ac --out-format="  %n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id
+					rsync -rltoDc --out-format="  %n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id
 				fi
 
 			fi
@@ -242,7 +242,7 @@ sync_data()
 			# The deployment is only present in the storage
 			# = we want to copy pictures from the storage to the working dir
 			echo -e "\e[1mWorking directory <- Storage\e[0m : copy deployment $id"
-			cp -a $storage/$id $base
+			cp -R --preserve=timestamps $storage/$id $base
 			# NB : preserve attributes, timestamps, users etc.
 
 		fi
@@ -262,7 +262,7 @@ sync_data()
 				# Create parent directory
 				mkdir -p $storage
 				# Copy data
-				cp -a $base/$id $storage
+				cp -R --preserve=timestamps $base/$id $storage
 			else
 				echo "Skipping $id"
 			fi
