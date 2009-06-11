@@ -83,7 +83,6 @@ dereference() {
 	echo $foo
 }
 
-
 #
 # Given a range of numbers such as:
 #	1,10,1-5,12
@@ -137,68 +136,4 @@ yes()
 	else
 		return 1
 	fi
-}
-
-#
-# USAGE
-#	read_config [path_to_configuration_file]
-# Read a configuration file in valid bash syntax
-# and give information on what is read
-#
-read_config() {
-	configFile=$1
-
-	echoBold "Options picked up from the configuration file"
-
-	cat $configFile | while read line; do
-		case $line in
-			\#*)
-				;;
-			'')
-				;;
-			*)
-				# Parse the line and give information
-				echo "$line" | awk -F "=" {'print "  "$1" = "$2'}
-				;;
-		esac
-	done
-	echo ""
-
-	# Actually source the file
-	source $configFile
-
-	return 0
-}
-
-#
-# USAGE
-#	write_pref [file] [variable name]
-# Write the current value of the variable in the preferences file.
-# If the preference already exists, update it. otherwise, create it.
-#
-write_pref() {
-	configFile=$1
-	pref=$2		# this is only the name of the variable, i.e. a string
-
-	# test whether the variable currently has a value
-	if [[ $(eval echo \$$pref) == "" ]]; then
-		error "$pref does not have a value"
-		exit 1
-	fi
-
-	# test whether the preference already exists
-	cat $configFile | grep "^[^#]*$pref" > /dev/null
-
-	if [[ $? == "0"  ]]; then
-		# if there is a match, update the preference in the config file
-		tmpConf=$(mktemp /tmp/bbconf.XXXXX)
-		sed -e 's/'$pref'=.*/'$pref'='\"$(eval echo \$$pref)\"'/' $configFile > $tmpConf
-		cp -f $tmpConf $configFile
-		rm -f $tmpConf
-	else
-		# otherwise, write the pref at the end of the file
-		echo "$pref=\"$(eval echo \$$pref)\"" >> $configFile
-	fi
-
-	return 0
 }
