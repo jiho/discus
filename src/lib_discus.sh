@@ -208,7 +208,7 @@ sync_data()
 
 				# Update pictures in working directory
 				echo -e "\e[1mWorking directory <- Storage\e[0m : update pictures"
-				rsync -rltD --delete --size-only --out-format="  %o %n" --include='*.jpg' --exclude='*'  $storage/$id/pics/ $base/$id/pics
+				rsync -r --times --omit-dir-times --delete --size-only --out-format="  %o %n" --include='*.jpg' --exclude='*'  $storage/$id/pics/ $base/$id/pics
 
 				# Ask the user whether we should still transfer results
 				echo -e "Because of that, the results that are about to be copied from the working\ndirectory to the storage will not match the pictures there."
@@ -223,7 +223,7 @@ sync_data()
 			if yes $copyResults; then
 
 				# Test whether the results have changed
-				differences=$(rsync --dry-run --recursive -c --out-format="%n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id)
+				differences=$(rsync --dry-run -r --checksum --out-format="%n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id)
 				# NB: since the files are small here we do the most robust comparison, based on the checksum
 
 				if [[ $differences = "" ]]; then
@@ -231,7 +231,7 @@ sync_data()
 				else
 					# Copy results to storage
 					echo -e "\e[1mWorking directory -> Storage\e[0m : store (or update) results files"
-					rsync -rltoDc --out-format="  %n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id
+					rsync -r --times --omit-dir-times --owner --checksum --out-format="  %n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id
 				fi
 
 			fi
