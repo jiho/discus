@@ -68,9 +68,8 @@ commit_changes() {
 		exit 1
 	fi
 	echoB "Committing changes"
-	read -p "Do you want to commit changes? (y/n [n]) : " COMMIT
-	if [[ "$COMMIT" == "Y" || "$COMMIT" == "y" || "$COMMIT" == "yes" || "$COMMIT" == "Yes" || "$COMMIT" == "YES" ]]
-	then
+	read -p "Do you want to commit changes? (y/n [n]) : " commit
+	if yes $commit;	then
 		echo "Moving data..."
 		# we move the files to the DATA directory
 		$( cd $tmp/ && mv -i $@ $data/ )
