@@ -39,6 +39,7 @@ typeset -fx read_config
 typeset -fx write_pref
 
 source $RES/lib_discus.sh
+typeset -fx help
 typeset -fx commit_changes
 typeset -fx data_status
 
