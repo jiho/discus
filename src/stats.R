@@ -218,7 +218,7 @@ for (name in names(tracks)) {
 	} else {
 		filename="plots.pdf"
 	}
-	pdf(file=filename, width=6, height=4, pointsize=10)
+	pdf(file=filename, width=7, height=5, pointsize=10)
 	theme_set(theme_gray(10))
 	dummy = l_ply(p, print, .progress="text")
 	dummy = dev.off()
