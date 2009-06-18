@@ -91,7 +91,12 @@ d = ldply(tracks, function(t, ...){
 	# compute stats only on filtered value
 	pp = ldply(t, function(x, idx, ...){
 		x = x[!is.na(idx) & idx, ]
-		circ.stats(x$heading, x$exactDate, ...)
+		# if there are no speeds, skip the computation of stats
+		if (nrow(x) == 0) {
+			return(c(mean=NA))
+		} else {
+			return(circ.stats(x$heading, x$exactDate, ...))
+		}
 	}, idx=idx, ...)
 	names(pp)[1] = "correction"
 	pp$correction = as.logical(as.character(pp$correction))
