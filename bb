@@ -52,7 +52,7 @@ typeset -fx sync_data
 
 # Help message (should be done early)
 # detect whether we just want the help (this overrides all the other options and we want it here to avoid dealing with the config file etc when the user just wants to read the help)
-echo $* | grep -E -e "h|help" > /dev/null
+echo $* | grep -E -e "\b(h|help)\b" > /dev/null
 if [[ $? -eq 0 ]]; then
 	help
 	exit 0
