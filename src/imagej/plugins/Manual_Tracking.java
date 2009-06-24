@@ -196,12 +196,13 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 for (j=0; j<head.length; j++) rtmp.addValue(j, rt.getValue(j,i));
             }
 
+            // Clean original table
             rt.reset();
 
-            //Copy data back to original table except last point
-
+            // Set header back
             for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
 
+            //Copy data back to original table except last point
             for (i=0; i<((rtmp.getCounter())-1); i++) {
                 rt.incrementCounter();
                 for (j=0; j<head.length; j++) rt.addValue(j, rtmp.getValue(j,i));
@@ -216,9 +217,14 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 islistening=true;
             }
 
-            prevx=(int) rt.getValue(2, rt.getCounter()-1);
-            prevy=(int) rt.getValue(3, rt.getCounter()-1);
+            // Reset the last point
+            prevx=(int) rt.getValue(3, rt.getCounter()-1);
+            prevy=(int) rt.getValue(4, rt.getCounter()-1);
+            NbPoint--;
+
+            // Set stack to previous slice
             img.setSlice(((int) rt.getValue(1, rt.getCounter()-1))+1);
+
             IJ.showStatus("Last Point Deleted !");
         }
 
