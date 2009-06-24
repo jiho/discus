@@ -282,7 +282,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
             rt.reset();
 
-            //Copy data back to original table
+            // Copy data back to original table
             for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
 
             for (i=0; i<(rtmp.getCounter()); i++) {
@@ -413,6 +413,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             // add a new track
             trackdel.add(""+Nbtrack);
             Nbtrack++;
+            // add last point to the polyline
+            roi=new PolygonRoi(xRoi,yRoi,NbPoint,Roi.POLYLINE);
             // display the polyline
             img.setRoi(roi);
             // stop tracking
