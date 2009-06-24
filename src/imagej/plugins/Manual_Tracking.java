@@ -247,7 +247,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
         // Button Del Track pressed---------------------------------------------
         if (e.getSource() == butDel) {
-            // Ask user
+            // Ask user whether the current track should be stopped
             if (islistening) {
                 gd = new GenericDialog("Delete Track");
                 gd.addMessage("This will end current track\n" + "Do you want to continue?");
@@ -256,6 +256,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             }
 
             // Stop tracking
+            trackdel.add(""+Nbtrack);
+            Nbtrack++;
             canvas.removeMouseListener(this);
             islistening=false;
 
