@@ -296,16 +296,23 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
             rt.show("Tracks");
 
-            // ??
+            // Reset the drop down choices for deleting the tracks
             trackdel.removeAll();
-            for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
-                trackdel.add(""+i);
+            // If there are tracks left
+            if ((rt.getCounter()) != 0) {
+                // add them back as choices
+                for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
+                    trackdel.add(""+i);
+                }
+                // reset track counter
+                Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
+            } else {
+                // If there are no tracks left, just set track counter to 1
+                Nbtrack=1;
             }
 
             IJ.showStatus("Track nb"+ tracktodelete +" Deleted !");
 
-            // Reset track counter
-            Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
         }
 
         // Button Del All Tracks pressed----------------------------------------
