@@ -78,10 +78,6 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     int NbPoint=1; // Number of tracked points in the current track
     int ox;     // x coordinate of the current tracked point
     int oy;     // y coordinate of the current tracked point
-    int prevx;  // x coordinate of the previous tracked point
-    int prevy;  // y coordinate of the previous tracked point
-    int pprevx; // x coordinate of the antepenultimate tracked point
-    int pprevy; // y coordinate of the antepenultimate tracked point
 
 
     //Dialog boxes--------------------------------------------------------------
@@ -229,9 +225,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 islistening=true;
             }
 
-            // Reset the coordinates of the last point
-            prevx=(int) rt.getValue(3, rt.getCounter()-1);
-            prevy=(int) rt.getValue(4, rt.getCounter()-1);
+            // Decrement the point counter
             NbPoint--;
 
             // Set stack to previous slice
@@ -399,9 +393,6 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             img.setSlice(img.getCurrentSlice()+1);
             // increase counter of points for polyline
             NbPoint++;
-            // store previous coordinates
-            prevx=ox;
-            prevy=oy;
             // add point to the polyline
             roi=new PolygonRoi(xRoi,yRoi,NbPoint-1,Roi.POLYLINE);
             // display the polyline if requested
