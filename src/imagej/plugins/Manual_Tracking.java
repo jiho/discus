@@ -73,15 +73,15 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
     int[] xRoi; //Defines the ROI to be shown using the 'Show path' option - x coordinates
     int[] yRoi; //Defines the ROI to be shown using the 'Show path' option - y coordinates
-    Roi roi; //ROI
+    Roi roi;    // ROI to be shown using the 'Show path' option
     int Nbtrack=1; // Number of tracks
     int NbPoint=1; // Number of tracked points in the current track
-    int ox; //x coordinate of the current tracked point
-    int oy; //y coordinate of the current tracked point
-    int prevx; //x coordinate of the previous tracked point
-    int prevy; //y coordinate of the previous tracked point
-    int pprevx; //x coordinate of the antepenultimate tracked point
-    int pprevy; //y coordinate of the antepenultimate tracked point
+    int ox;     // x coordinate of the current tracked point
+    int oy;     // y coordinate of the current tracked point
+    int prevx;  // x coordinate of the previous tracked point
+    int prevy;  // y coordinate of the previous tracked point
+    int pprevx; // x coordinate of the antepenultimate tracked point
+    int pprevy; // y coordinate of the antepenultimate tracked point
 
 
     //Dialog boxes--------------------------------------------------------------
@@ -89,9 +89,10 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
 
     //Results tables------------------------------------------------------------
-    ResultsTable rt; //2D results table
-    ResultsTable rtmp; // Temporary results table
-    String[] head={"trackNb","sliceNb","imgNb","x","y"}; //2D results table's headings
+    ResultsTable rt;    //2D results table
+    ResultsTable rtmp;  // Temporary results table
+    // results table's heading
+    String[] head={"trackNb","sliceNb","imgNb","x","y"};
 
 
     public Manual_Tracking() {
@@ -153,30 +154,40 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     public void actionPerformed(ActionEvent e) {
         // Button Add Track pressed---------------------------------------------
         if (e.getSource() == butAdd) {
+            // Check whether the stack is already being followed
             if (islistening){
                 IJ.showMessage("This operation can't be completed:\na track is already being followed...");
                 return;
             }
+
+            // Prepare the stack
             img=WindowManager.getCurrentImage();
             stack = img.getStack();
             imgtitle = img.getTitle();
             if (imgtitle.indexOf(".")!=-1) imgtitle=imgtitle.substring(0,imgtitle.indexOf("."));
+            // Set point tool
             IJ.setTool(7);
 
+            // Arrays to store the coordinates of points to draw a polyline at the last step
             xRoi=new int[img.getStackSize()];
             yRoi=new int[img.getStackSize()];
 
+            // Check for stack existence
             if (img==null){
                 IJ.showMessage("Error", "Man,\n"+"You're in deep troubles:\n"+"no opened stack...");
                 return;
             }
 
+            // Go to the first slice
             win = img.getWindow();
             canvas=win.getCanvas();
             img.setSlice(1);
 
+            // Initialiwe counters
             NbPoint=1;
             IJ.showProgress(2,1);
+
+            // Listen to mouse events
             canvas.addMouseListener(this);
             islistening=true;
             return;
@@ -184,12 +195,13 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
         // Button Delete last point pressed-------------------------------------
         if (e.getSource() == butDlp) {
+            // Ask the user
             gd = new GenericDialog("Delete last point");
             gd.addMessage("Are you sure you want to\n" + "delete last point ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
 
-            //Create a temporary ResultTable and copy only the non deleted data
+            // Create a temporary ResultTable and copy data from the original
             rtmp=new ResultsTable();
             for (i=0; i<(rt.getCounter()); i++) {
                 rtmp.incrementCounter();
@@ -217,7 +229,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 islistening=true;
             }
 
-            // Reset the last point
+            // Reset the coordinates of the last point
             prevx=(int) rt.getValue(3, rt.getCounter()-1);
             prevy=(int) rt.getValue(4, rt.getCounter()-1);
             NbPoint--;
@@ -241,21 +253,28 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
 
         // Button Del Track pressed---------------------------------------------
         if (e.getSource() == butDel) {
+            // Ask user
             if (islistening) {
                 gd = new GenericDialog("Delete Track");
                 gd.addMessage("This will end current track\n" + "Do you want to continue?");
                 gd.showDialog();
                 if (gd.wasCanceled()) return;
             }
+
+            // Stop tracking
             canvas.removeMouseListener(this);
             islistening=false;
+
+            // Fecth track number
             int tracktodelete= (int) Tools.parseDouble(trackdel.getItem(trackdel.getSelectedIndex()));
+
+            // Ask the user for confirmation again
             gd = new GenericDialog("Delete Track nb" + tracktodelete);
             gd.addMessage("Do you want to \n" + "delete track nb" + tracktodelete + " ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
 
-            //Create a temporary ResultTable and copy only the non deleted data
+            // Create a temporary ResultTable and copy data from the original except for the deleted track
             rtmp=new ResultsTable();
             for (i=0; i<(rt.getCounter()); i++) {
                 int nbtrack=(int) rt.getValue(0,i);
@@ -268,7 +287,6 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             rt.reset();
 
             //Copy data back to original table
-
             for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
 
             for (i=0; i<(rtmp.getCounter()); i++) {
@@ -283,34 +301,48 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             }
 
             rt.show("Tracks");
+
+            // ??
             trackdel.removeAll();
             for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
                 trackdel.add(""+i);
             }
+
             IJ.showStatus("Track nb"+ tracktodelete +" Deleted !");
+
+            // Reset track counter
             Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
         }
 
         // Button Del All Tracks pressed----------------------------------------
         if (e.getSource() == butDelAll) {
+            // Ask the user
             if (islistening) {
                 gd = new GenericDialog("Delete Track");
                 gd.addMessage("This will also delete current track\n" + "Do you want to continue?");
                 gd.showDialog();
                 if (gd.wasCanceled()) return;
             }
+
+            // Stop tracking
             canvas.removeMouseListener(this);
             islistening=false;
             IJ.showProgress(2,1);
             IJ.showStatus("Tracking is over");
+
+            // Ask the user for confirmation again
             gd = new GenericDialog("Delete All Tracks");
             gd.addMessage("Do you want to \n" + "delete all measurements ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
+
+            // Reset result table
             rt.reset();
             rt.show("Tracks");
             trackdel.removeAll();
             IJ.showStatus("All Tracks Deleted !");
+
+            // Reset track counter
             Nbtrack=1;
             return;
         }
@@ -320,14 +352,19 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     // Click on image-----------------------------------------------------------
     public void mouseReleased(MouseEvent m) {
 
+        // Status message in the main window
         IJ.showProgress(img.getCurrentSlice()+1,img.getStackSize()+1);
         IJ.showStatus("Tracking slice "+(img.getCurrentSlice()+1)+" of "+(img.getStackSize()+1));
+
+        // If this is the first point, set the results table heading
         if (Nbtrack==1 && NbPoint==1){
             for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
         }
 
+        // Suppress possible ROIs
         img.killRoi();
 
+        // Get clicked coordinates
         int x=m.getX();
         int y=m.getY();
         ox=canvas.offScreenX(x);
@@ -336,8 +373,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         xRoi[NbPoint-1]=ox;
         yRoi[NbPoint-1]=oy;
 
+        // Go to the next line in the results table
         rt.incrementCounter();
-        
+
         // Detect the filename of the image (which is a number) and add that to the output table
         int sliceNb=img.getCurrentSlice();
         String label=stack.getSliceLabel(sliceNb);
@@ -345,24 +383,39 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         // System.out.println(label.indexOf("."));
         // System.out.println(label.substring(0,label.indexOf(".")));
         double imgNb=Double.parseDouble(label.substring(0,label.indexOf(".")));
-        // System.out.println(imgNb);
-        
-        // Remark: invert Y coordinate
+
+        // Prepare the output line (only double numbers)
+        // NB: invert Y coordinate
         double[] doub={Nbtrack,(img.getCurrentSlice()),imgNb,ox,img.getHeight()-oy};
+
+        // Add the line to the results table
         for (i=0; i<doub.length; i++) rt.addValue(i,doub[i]);
         rt.show("Tracks");
 
         if ((img.getCurrentSlice())<img.getStackSize()) {
-            NbPoint++;
+            // If we are not at the last slice:
+
+            // go to the next slice
             img.setSlice(img.getCurrentSlice()+1);
+            // increase counter of points for polyline
+            NbPoint++;
+            // store previous coordinates
             prevx=ox;
             prevy=oy;
+            // add point to the polyline
             roi=new PolygonRoi(xRoi,yRoi,NbPoint-1,Roi.POLYLINE);
+            // display the polyline if requested
             if(checkPath.getState()) img.setRoi(roi);
+
         } else {
+            // If this is the last slice:
+
+            // add a new track
             trackdel.add(""+Nbtrack);
             Nbtrack++;
+            // display the polyline
             img.setRoi(roi);
+            // stop tracking
             canvas.removeMouseListener(this);
             islistening=false;
             IJ.showStatus("Tracking is over");
