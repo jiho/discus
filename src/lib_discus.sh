@@ -74,13 +74,43 @@ commit_changes() {
 	read -p "Do you want to commit changes? (y/n [n]) : " commit
 	if yes $commit;	then
 		echo "Moving data..."
-		# we move the files to the DATA directory
-		$( cd $tmp/ && mv -i $@ $data/ )
+		# perform shell expansion on the parameters passed to commit_changes
+		# this allows to pass plot*.pdf and have all plot-1.pdf, plot-2.pdf etc. copied
+		allItems=$(cd $tmp; echo $@)
+
+		# move the files interactively to the DATA directory
+		# i.e. we want to explicitly ask for overwrites
+		for item in $allItems; do
+			# check for existence
+			if [[ -e $tmp/$item ]]; then
+				# directories do not work well with mv -i
+				# so we cook our own interactive directory overwrite
+				# if the directory exists in both locations, ask whether to overwrite
+				if [[ -d $tmp/$item && -d $data/$item ]]; then
+					read -p "mv: overwrite \`${data}/$item'? " overwrite
+					if yes $overwrite; then
+						rm -f $data/$item/*
+						rmdir $data/$item
+						mv $tmp/$item $data
+					fi
+					# NB: if we do not want to overwrite then we just loop to the next item
+				else
+					# for files or non-existing directories, we simply use mv -i
+					mv -i $tmp/$item $data
+				fi
+			else
+				warning "$item does not exist"
+			fi
+			# go to the next argument
+			shift 1
+		done
 	else
 		echo "OK, cleaning TEMP directory then..."
 	fi
 	# clean temp directory
-	rm -f $tmp/*
+	if [[ -d $tmp ]]; then
+		rm -Rf $tmp/*
+	fi
 
 	return 0
 }
