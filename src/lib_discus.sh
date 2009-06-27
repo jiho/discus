@@ -22,33 +22,36 @@ echo -e "
   Options modify the behaviour of the script and are prepended a \"-\" sign.
   Deployment numbers can be specified as ranges: 1,3-5,8
 
-\033[1mACTIONS / relevant OPTIONS\033[0m
-  \033[1mh|help\033[0m            display this help message
-  \033[1mstatus\033[0m            prints information about the working directory
-    \033[1m-s\033[0m              status of the storage directory instead
-  \033[1msync\033[0m              synchronize data between workspace and storage
+\033[1mACTIONS\033[0m
+  \033[1mh, help\033[0m          display this help message
+  \033[1mstatus\033[0m           prints information about the working directory
+  \033[1msync\033[0m             synchronize data between workspace and storage
+  \033[1mv, video\033[0m         extract images from a video file
+  \033[1mcal, calib\033[0m       measure calibration data for the tracking
+  \033[1mcom, compass\033[0m     track the compass manually
+  \033[1ml, larva\033[0m         track the larva(e)
+  \033[1mc, correct\033[0m       correct the tracks
+  \033[1ms, stats\033[0m         compute statistics and plots
+  \033[1mall\033[0m              calibrate, track larva, correct and compute stats
 
-  \033[1mcal|calib\033[0m         measure calibration data for the tracking
-  \033[1mcom|compass\033[0m       track the compass manually
-  \033[1ml|larva\033[0m           track the larva(e)
-    \033[1m-sub\033[0m        1   subsample interval, in seconds
-  \033[1mc|correct\033[0m         correct the tracks
-  \033[1ms|stats\033[0m           compute statistics and plots
-    \033[1m-psub\033[0m       5   subsample positions every 'psub' seconds
-                    (has no effect when < to -sub above)
-    \033[1m-d|-display\033[0m     display the plots [default: don't display]
-
-  \033[1mall\033[0m               do everything
+\033[1mOPTIONS\033[0m
+  Each lines give the options, the action it is applicable to, 
+  and its default when it requires a value.
+  \033[1m-s\033[0m                    get status of the storage directory instead
+  \033[1m-sub\033[0m  video,larva  1  subsample interval, in seconds
+  \033[1m-psub\033[0m       stats  5  subsample positions every 'psub' seconds
+                        (has no effect when < to -sub)
+  \033[1m-d|-display\033[0m stats     display the plots after stats
 
 \033[1mPARAMETERS\033[0m
   Parameters are written in the configuration file after they are set.
   Therefore, they \"stick\" from one run to the other.
-  \033[1m-work\033[0m        .    working directory, containing deployments
-  \033[1m-storage\033[0m     none image and data storage directory
-  \033[1m-diam\033[0m        40   aquarium diameter, in cm
-  \033[1m-a|-angle\033[0m    90   angle between camera and compass, in degrees
-  \033[1m-m|-mem\033[0m      1000 memory for Image, in MB
-                    (should be at most a 2/3 of the physical memory)
+  \033[1m-work\033[0m      .     working directory, containing deployments
+  \033[1m-storage\033[0m   none  image and data storage directory
+  \033[1m-diam\033[0m      40    aquarium diameter, in cm
+  \033[1m-a|-angle\033[0m  90    angle between camera and compass, in degrees
+  \033[1m-m|-mem\033[0m    1000  memory for Image, in MB
+                   (should be at most a 2/3 of the physical memory)
    "
 
 	return 0

@@ -80,6 +80,8 @@ work=$HERE
 storage=""
 
 # Actions: determined on the command line, all FALSE by default
+# get images from video
+VIDEO=FALSE
 # perform calibration?
 TRACK_CALIB=FALSE
 # track compass?
@@ -128,6 +130,9 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		-s)
 			storageStatus=TRUE
+			shift 1 ;;
+		v|video)
+			VIDEO=TRUE
 			shift 1 ;;
 		cal|calib)
 			TRACK_CALIB=TRUE
@@ -212,6 +217,9 @@ fi
 R=$(which R)
 status $? "R not found. Please install it,\ntogether with packages ggplot2 and circular."
 
+mplayer=$(which mplayer)
+status $? "mplayer not found. Please install it."
+
 sed=$(which sed)
 status $? "sed not found. Check your PATH."
 
@@ -220,6 +228,9 @@ status $? "mktemp not found. Check your PATH."
 
 rsync=$(which rsync)
 status $? "rsync not found. Check your PATH."
+
+exiftool=$(which exiftool)
+status $? "exiftool not found. Please install it\nhttp://www.sno.phy.queensu.ca/~phil/exiftool/"
 
 
 # Compatibility of arguments
@@ -291,11 +302,19 @@ for id in $deployNb; do
 		fi
 	fi
 
-	# Pictures
+	# Source of images (pictures or video)
 	pics="$data/pics"
-	if [[ ! -d $pics ]]; then
-		error "Cannot find pictures directory:\n  $pics"
-		exit 1
+	videoFile="$data/video.mov"
+	if [[ $VIDEO == "TRUE" ]]; then
+		if [[ ! -e $videoFile ]]; then
+			error "Cannot find video file:\n  $pics"
+			exit 1
+		fi
+	else
+		if [[ ! -d $pics ]]; then
+			error "Cannot find pictures directory:\n  $pics"
+			exit 1
+		fi
 	fi
 
 	# Temporary directory, where all operations are done
@@ -306,9 +325,69 @@ for id in $deployNb; do
 	fi
 
 
-
 	# LAUNCH ACTIONS
 	#-----------------------------------------------------------------------
+
+	# Video processing into individual files
+	if [[ $VIDEO == "TRUE" ]]
+	then
+		echoBlue "\nVIDEO PROCESSING"
+
+		# get the frame rate of the video
+		videoFPS=$($mplayer 2>/dev/null -vo null -nosound -frames 1 $videoFile | awk '/VIDEO/ {print $5}')
+		videoFPS=$(echo $videoFPS | cut -d " " -f 1)
+		# compute the step size at which to export frames based of the subsampling parameter
+		frameStep=$(echo "$videoFPS * $sub" | bc -l)
+		# round the number
+		frameStep=$(echo "scale=0;($frameStep+0.5)/ 1" | bc -l)
+		# the rounding above means that images are not exactly 'sub' seconds apart
+		# recompute the real subsample interval
+		exactSub=$(echo "$frameStep/$videoFPS" | bc -l)
+
+		# set up MPlayer's options
+		mplayerOptions="-nolirc -benchmark -vf framestep=$frameStep -nosound -vo jpeg:quality=90:outdir=$tmp/pics"
+		# -nolirc       don't try to find infra-red support (avoids messages on stdout)
+		# -benchmark    speeds up mplayer when no visible video output is actually provided
+		# -vf           video filter
+		#  framestep    render only every Nth frame
+		# -nosound      disables sound (speedup?)
+		# -vo           video output
+		#  jpeg:outdir  to jpeg files in directory outdir
+
+		# use MPLayer to export the frames of the video to JPEG images
+		echo "Export video frames to images"
+		$mplayer 1>/dev/null -frames 10 $mplayerOptions $videoFile
+
+		# rename output files (so that they are handled correctly in R afterwards)
+		# = suppress the zeros
+		for img in $(ls $tmp/pics); do
+			mv $tmp/pics/$img $tmp/pics/${img//0/}
+		done
+
+		# Set time in the EXIF properties of the images
+		echo "Update time stamps"
+		# Use R inline because it is easier to deal with dates
+		dummy=$(R --slave << EOF
+			# set an arbitrary initial date and time
+			initialDate = as.POSIXct(strptime("1900:01:01 00:00:00", format="%Y:%m:%d %H:%M:%S"))
+			# get the pictures names
+			pics = system("ls -1 ${tmp}/pics | sort -n", intern=TRUE)
+			# create an artificial sequence of dates with the correct interval
+			options("digits.secs" = 2)
+			dates = seq(initialDate, length.out=length(pics), by=${exactSub})
+			# assign the dates using exiftool
+			for (i in seq(along=pics)) {
+				date = format(dates[i], "%Y:%m:%d %H:%M:%S")
+				subsec = substr(format(dates[i], "%OS"),4,5)
+				system(paste("exiftool -overwrite_original -CreateDate='",date,"' -SubsecTime='",subsec,"' ${tmp}/pics/",pics[i],sep=""))
+			}
+EOF
+)
+		status $? "R exited abnormally"
+
+		commit_changes pics
+
+	fi
 
 	# Calibration
 	if [[ $TRACK_CALIB == "TRUE" ]]
