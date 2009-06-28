@@ -140,8 +140,9 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 	# Compass readings
 	# (for one track only: the compass track is the same)
-	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T)))
+	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) + opts(axis.text.x=theme_blank())
 	# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
+	# the labels are suppressed because there is no actual North there: we actually track the North!
 	ggplots = c(ggplots, list(compass))
 
 
