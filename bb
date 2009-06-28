@@ -362,7 +362,7 @@ for id in $deployNb; do
 		#  jpeg:outdir  to jpeg files in directory outdir
 
 		# use MPLayer to export the frames of the video to JPEG images
-		echo "Export video frames to images"
+		echo "Export video frames every $(printf "%1.6s" $exactSub) seconds"
 		$mplayer 1>/dev/null -frames 10 $mplayerOptions $videoFile
 
 		# rename output files (so that they are handled correctly in R afterwards)
@@ -372,7 +372,7 @@ for id in $deployNb; do
 		done
 
 		# Set time in the EXIF properties of the images
-		echo "Update time stamps"
+		echo "Set time stamps on exported images"
 		# Use R inline because it is easier to deal with dates
 		dummy=$(R --slave << EOF
 			# set an arbitrary initial date and time
@@ -392,6 +392,7 @@ EOF
 )
 		status $? "R exited abnormally"
 
+		echo "Save exported images"
 		commit_changes pics
 
 	fi
