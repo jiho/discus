@@ -228,12 +228,12 @@ if [[ $SYNC == "TRUE" && $storage == "" ]]; then
 	exit 1
 fi
 
-if [[ $STATUS == "TRUE" && storageStatus == "TRUE" && $storage == "" ]]; then
+if [[ $STATUS == "TRUE" && $storageStatus == "TRUE" && $storage == "" ]]; then
 	error "Status of the storage directory requested but no storage directory specified"
 	exit 1
 fi
 
-if [[ ( $SYNC == "TRUE" || ( $STATUS == "TRUE" && storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
+if [[ ( $SYNC == "TRUE" || ( $STATUS == "TRUE" && $storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
 	error "Storage directory\n  $storage\n  does not exist"
 	exit 1
 fi
