@@ -363,7 +363,7 @@ for id in $deployNb; do
 
 		# use MPLayer to export the frames of the video to JPEG images
 		echo "Export video frames every $(printf "%1.6s" $exactSub) seconds"
-		$mplayer 1>/dev/null -frames 10 $mplayerOptions $videoFile
+		$mplayer 1>/dev/null $mplayerOptions $videoFile
 
 		# rename output files (so that they are handled correctly in R afterwards)
 		# = suppress the zeros
