@@ -17,17 +17,20 @@ source("lib_circular_stats.R")
 
 # Parse command line arguments
 args = commandArgs(trailingOnly=TRUE)
-if (length(args) != 3) {
+if (length(args) != 4) {
 	stop("Not enough arguments")
 }
 prefix = args[1]
 aquariumDiam = as.numeric(args[2])
 cameraCompassAngle = as.numeric(args[3])
+lookingUp = args[4]
 
 # In case we need to call it without the shell script
 # prefix="/home/jiho/current_data/Lizard/46/tmp/"
 # aquariumDiam = 40
 # cameraCompassAngle = 82
+# lookingUp=TRUE
+
 
 # Set working directory
 setwd(prefix)
@@ -46,18 +49,12 @@ tracks = split(trackLarva, trackLarva$trackNb)
 nbTracks = length(tracks)
 
 # Add time stamps to the tracks
-# check for the existence of exiftool
-exiftool = system("which exiftool",intern=TRUE)
-if (length(exiftool) == 0) {
-	stop("Please install exiftool http://www.sno.phy.queensu.ca/~phil/exiftool/")
-}
-
 tracks = llply(tracks, function(t){
 	# get the number of the images where the larva is detected
 	images = t$imgNb
 
 	# for each read the exact time with split seconds with exiftool
-	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	picTimes = system(paste("exiftool -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
 	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
 
@@ -68,21 +65,30 @@ tracks = llply(tracks, function(t){
 })
 
 
-## Read and refornat compass tracks
+## Read and reformat compass tracks
 #------------------------------------------------------------
 
 # read compass record
 # it can either be a record from the numerical compass or from the backup, physical compass
 if (file.exists("compass_log.csv")) {
 
-	# This is the log oc the numeric compass
+	# This is the log of the numeric compass
 	trackCompass = read.table("compass_log.csv", header=TRUE, sep=",", as.is=TRUE)
 	trackCompass$date = as.POSIXct(strptime(trackCompass$date, format="%Y-%m-%d %H:%M:%S"))
 	compassSource = "numeric"
 
+	# Detect whether the camera was looking up or down (i.e. was below of above the arena)
+	# The roll is ~180 when it is looking down and ~0 when it is looking up
+	lookingUp = mean(trackCompass$roll) < 90
+
 	# subtract the camera-compass orientation correction
-	trackCompass$heading = trackCompass$heading - cameraCompassAngle
-	# this means that trackCompass$heading now correspond to the heading of the top of the picture
+	# the correction depends on the configuration of the camera
+	if (lookingUp) {
+		trackCompass$heading = trackCompass$heading - cameraCompassAngle
+	} else {
+		trackCompass$heading = trackCompass$heading + cameraCompassAngle
+	}
+	# this means that trackCompass$heading now correspond to the heading of the *top* of the picture
 
 	# convert to the appropriate circular class
 	trackCompass$heading = circular(trackCompass$heading, unit="degrees", template="geographics", modulo="2pi")
@@ -100,7 +106,7 @@ if (file.exists("compass_log.csv")) {
 	# get the number of the images where the larva is detected
 	images = trackCompass$imgNb
 	# for each read the time using exiftool
-	picTimes = system(paste(exiftool," -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
+	picTimes = system(paste("exiftool -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
 	picTimes = data.frame(imgNb=images, date=as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS")))
 	# add to compass tracks
@@ -113,8 +119,8 @@ if (file.exists("compass_log.csv")) {
 	trackCompass[,c("theta","rho")] = car2pol(trackCompass[,c("x","y")], coordCompass[,c("x","y")])
 
 	# convert the bearing to the appropriate circular class
-	trackCompass$theta = circular(trackCompass$theta)
-	trackCompass$heading = conversion.circular(trackCompass$theta, units="degrees", template="geographics", modulo="2pi")
+	trackCompass$heading = trig2geo(trackCompass$theta)
+
 }
 
 # Interpolate compass positions at every point in time in the tracks
@@ -158,15 +164,18 @@ for (l in 1:nbTracks) {
 	# for un corrected track to be comparable to the corrected one, they need to start in the same reference as the corrected track. So we subtract the first angle to every frame
 	t$theta = t$theta - t$compass[1]
 
-	# finally, since we are looking at the aquarium and compass from below, the E and W are inverted. We change that by shifting the rotation direction
-	# _set_ it to counter clockswise (does not alter the numbers, just the attributes)
-	a = circularp(t$theta)
-	a$rotation="counter"
-	circularp(t$theta) = a
-	circularp(tCor$theta) = a
-	# _convert_ back to clockwise (this actually changes the numbers)
-	t$theta = conversion.circular(t$theta, units="degrees", rotation="clock")
-	tCor$theta = conversion.circular(tCor$theta, units="degrees", rotation="clock")
+	if (lookingUp) {
+		# Switch the direction of rotation when we look at the aquarium and compass from below
+		# This computes the symmetry and puts E and W where they belong
+		# _set_ it to counter clockwise (does not alter the numbers, just the attributes)
+		a = circularp(t$theta)
+		a$rotation="counter"
+		circularp(t$theta) = a
+		circularp(tCor$theta) = a
+		# _convert_ back to clockwise (this actually changes the numbers)
+		t$theta = conversion.circular(t$theta, units="degrees", rotation="clock")
+		tCor$theta = conversion.circular(tCor$theta, units="degrees", rotation="clock")
+	}
 
 	# recompute cartesian positions from the polar definition
 	t[,c("x","y")] = pol2car(t[,c("theta","rho")])
@@ -177,10 +186,9 @@ for (l in 1:nbTracks) {
 	t[,c("x","y","rho")] = t[,c("x","y","rho")] * px2cm
 	tCor[,c("x","y","rho")] = tCor[,c("x","y","rho")] * px2cm
 
-	# make position angles real bearings: they are already measured clockwise from the north, now we also make sure they only contain positive value
+	# make position angles real bearings: they are already measured clockwise from the north, now we also make sure they only contain positive value, just because that looks better
 	t$theta = (t$theta + 360) %% 360
 	tCor$theta = (tCor$theta + 360) %% 360
-
 
 	# reorganize the columns of the dataframe
 	colNames = c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho", "compass")

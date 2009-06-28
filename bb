@@ -108,6 +108,8 @@ psub=5
 displayPlots=FALSE
 # use the storage directory status rather than the data directory
 storageStatus=FALSE
+# whether the camera is looking up at the arena
+lookingUp=FALSE
 
 
 # Get options from the config file (overriding defaults)
@@ -558,6 +560,7 @@ EOF
 			else
 				echo "Compass track ..........OK"
 				cp $data/compass_track.txt $tmp
+				compass="manual"
 			fi
 
 			if [[ ! -e $data/coord_compass.txt ]]
@@ -572,6 +575,7 @@ EOF
 		else
 			echo "Compass track ...........OK"
 			cp $data/compass_log.csv $tmp
+			compass="auto"
 		fi
 
 		if [[ ! -e $data/larvae_track.txt ]]
@@ -591,9 +595,29 @@ EOF
 			exit 1
 		fi
 
+		# When the manual compass is used, we do not have roll information to detect whether the camera is above or below the aquarium and we need to collect input from the user
+		if [[ $compass == "manual" ]]; then
+			echo "Which was the configuration of the instrument:"
+			PS3="? "
+			select choice in "the camera was ABOVE the arena" "the camera was BELOW the arena"
+			do
+				if [[ $REPLY == 1 ]]; then
+					echo "OK, ($REPLY) the camera was above, looking down on the arena."
+					lookingUp=FALSE
+					break
+				elif [[ $REPLY == 2 ]]; then
+					echo "OK, ($REPLY) the camera was below, looking up at the arena."
+					lookingUp=TRUE
+					break
+				else
+					PS3="Not a valid choice, please choose 1 or 2 : "
+				fi
+			done
+		fi
+
 		# correct larvae tracks and write output in tracks.csv
 		echo "Correcting..."
-		( cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${cameraCompassAngle} < correct_tracks.R )
+		( cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${cameraCompassAngle} ${lookingUp} < correct_tracks.R )
 
 		status $? "R exited abnormally"
 
