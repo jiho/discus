@@ -27,6 +27,7 @@ echo -e "
   \033[1mstatus\033[0m           prints information about the working directory
   \033[1msync\033[0m             synchronize data between workspace and storage
   \033[1mv, video\033[0m         extract images from a video file
+  \033[1mstab\033[0m             stabilize image sequence
   \033[1mcal, calib\033[0m       measure calibration data for the tracking
   \033[1mcom, compass\033[0m     track the compass manually
   \033[1ml, larva\033[0m         track the larva(e)

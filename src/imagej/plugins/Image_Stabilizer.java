@@ -105,19 +105,26 @@ public class Image_Stabilizer implements PlugInFilter {
         stack = imp.getStack();
         int stackSize = stack.getSize();
 
+        // Get output directory as argument
+        outputDir = Macro.getOptions();
+        outputDir = outputDir.trim();
+        // System.out.println(outputDir);
+
         if (stack.isVirtual()) {
-            boolean ok = IJ.showMessageWithCancel(
-                "Image Stabilizer",
-                "You are using a virtual stack.\n" +
-                "You will be asked to choose an output directory to save the stablized images.\n" +
-                "If you did not intend to use a virtual stack, or if you want to view the stablized images in ImageJ directly,\n" +
-                "please reload the image sequence with the 'Use Virtual Stack' option unchecked.");
-            if (!ok) return;
-            DirectoryChooser dc = new DirectoryChooser("Output Directory");
-            outputDir = dc.getDirectory();
-            if (outputDir == null || outputDir.length() == 0)
-                return;
+            // boolean ok = IJ.showMessageWithCancel(
+            //     "Image Stabilizer",
+            //     "You are using a virtual stack.\n" +
+            //     "You will be asked to choose an output directory to save the stablized images.\n" +
+            //     "If you did not intend to use a virtual stack, or if you want to view the stablized images in ImageJ directly,\n" +
+            //     "please reload the image sequence with the 'Use Virtual Stack' option unchecked.");
+            // if (!ok) return;
+            // DirectoryChooser dc = new DirectoryChooser("Output Directory");
+            // outputDir = dc.getDirectory();
+            // if (outputDir == null || outputDir.length() == 0)
+            //     return;
             File file = new File(outputDir);
+            // Create output diretory = create the pics directory in the temp dir
+            file.mkdir();
             VirtualStack virtualStack = (VirtualStack)stack;
             String stackDir = virtualStack.getDirectory();
             if (null != stackDir) {
@@ -139,14 +146,16 @@ public class Image_Stabilizer implements PlugInFilter {
             outputNewStack = false;
         }
 
-        if (!showDialog(ip))
-            return;
+        // if (!showDialog(ip))
+        //     return;
 
-        int current = imp.getCurrentSlice();
+        // Use first slice as the reference
+        // int current = imp.getCurrentSlice();
+        int current = 1;
         ImageProcessor ipRef = stack.getProcessor(current);
 
-        if (outputNewStack)
-            stackOut = new ImageStack(ip.getWidth(), ip.getHeight());
+        // if (outputNewStack)
+        //     stackOut = new ImageStack(ip.getWidth(), ip.getHeight());
 
         showProgress(0.0);
         if (!IJ.escapePressed()) {
@@ -155,17 +164,17 @@ public class Image_Stabilizer implements PlugInFilter {
                 process(ipRef, current, stackSize, 1, current);
         }
 
-        if (!outputNewStack) // in-place processing
-            imp.updateAndDraw();
-        else if (stackOut.getSize() > 0) {
-            // Create new image using the new stack.
-            ImagePlus impOut = new ImagePlus(
-                "Stablized " + imp.getShortTitle(), stackOut);
-            impOut.setStack(null, stackOut);
-
-            // Display the new stacks.
-            impOut.show();
-        }
+        // if (!outputNewStack) // in-place processing
+        //     imp.updateAndDraw();
+        // else if (stackOut.getSize() > 0) {
+        //     // Create new image using the new stack.
+        //     ImagePlus impOut = new ImagePlus(
+        //         "Stablized " + imp.getShortTitle(), stackOut);
+        //     impOut.setStack(null, stackOut);
+        //
+        //     Display the new stacks.
+        //     impOut.show();
+        // }
     }
 
 
@@ -279,8 +288,8 @@ public class Image_Stabilizer implements PlugInFilter {
         }
 
         for (int slice = firstSlice; interval * slice <= interval * lastSlice; slice += interval) {
-            if (IJ.escapePressed() || imp.getWindow().isClosed())
-                break;
+            // if (IJ.escapePressed() || imp.getWindow().isClosed())
+            //     break;
 
             String label = stack.getSliceLabel(slice);
             if (slice == firstSlice && interval > 0) {
@@ -443,7 +452,7 @@ public class Image_Stabilizer implements PlugInFilter {
             String title = imp.getTitle();
             String baseName = getBaseName(title);
             Object[] args = { Integer.valueOf(slice) };
-            fileName = baseName + String.format("%05d", args) + ".tif";
+            fileName = baseName + String.format("%05d", args) + ".jpg";
         }
         else {
             boolean dup = false;
@@ -451,14 +460,15 @@ public class Image_Stabilizer implements PlugInFilter {
                 dup = true; // duplicated name
             String baseName = getBaseName(fileName);
             if (!dup)
-                fileName = baseName + ".tif";
+                fileName = baseName + ".jpg";
             else {
                 Object[] args = { Integer.valueOf(slice) };
-                fileName = baseName + String.format("%05d", args) + ".tif";
+                fileName = baseName + String.format("%05d", args) + ".jpg";
             }
         }
         FileSaver fs = new FileSaver(new ImagePlus(fileName, ip));
-        fs.saveAsTiff(outputDir + File.separator + fileName);
+        fs.setJpegQuality(95);
+        fs.saveAsJpeg(outputDir + File.separator + fileName);
     }
 
 

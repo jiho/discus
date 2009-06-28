@@ -82,6 +82,8 @@ storage=""
 # Actions: determined on the command line, all FALSE by default
 # get images from video
 VIDEO=FALSE
+# stabilize images
+STAB=FALSE
 # perform calibration?
 TRACK_CALIB=FALSE
 # track compass?
@@ -135,6 +137,9 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		v|video)
 			VIDEO=TRUE
+			shift 1 ;;
+		stab)
+			STAB=TRUE
 			shift 1 ;;
 		cal|calib)
 			TRACK_CALIB=TRUE
@@ -387,6 +392,31 @@ EOF
 )
 		status $? "R exited abnormally"
 
+		commit_changes pics
+
+	fi
+
+	# Image stabilization
+	if [[ $STAB == "TRUE" ]]; then
+		echo "Stabilize images"
+		# Use ImageJ to
+		# - open images as a stack
+		# - stabilize the stack
+		# - export back the slices as JPEG images
+		# We do all that in batch mode, withut user interaction
+		$javaCmd -jar $ijPath/ij.jar -ijpath $ijPath/plugins/ -batch $ijPath/macros/Run_Image_Stabilizer.ijm $data > /dev/null 2>&1
+
+		status $? "ImageJ exited abnormally"
+
+		echo "Copy images metadata"
+		for img in $(ls $data/pics); do
+			# Copy all metadata from the original image in $data
+			# -P	except the modification date (use current time)
+			# -q	be quiet
+			$exiftool -P -q -overwrite_original -TagsFromFile $data/pics/$img -all:all $tmp/pics/$img
+		done
+
+		echo "Overwrite original images with stabilized ones"
 		commit_changes pics
 
 	fi
