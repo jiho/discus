@@ -37,9 +37,9 @@ echo -e "
   \033[1mall\033[0m              calibrate, track larva, correct and compute stats
 
 \033[1mOPTIONS\033[0m
-  Each lines give the options, the action it is applicable to, 
+  Each lines give the options, the action it is applicable to,
   and its default when it requires a value.
-  \033[1m-s\033[0m                    get status of the storage directory instead
+  \033[1m-s\033[0m         status     get status of the storage directory instead
   \033[1m-sub\033[0m  video,larva  1  subsample interval, in seconds
   \033[1m-psub\033[0m       stats  5  subsample positions every 'psub' seconds
                         (has no effect when < to -sub)
