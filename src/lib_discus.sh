@@ -374,7 +374,7 @@ write_pref() {
 		newPref=$(eval echo \$$pref)
 		# espace slashes in the value of the preference
 		newPref=$(echo $newPref | sed -e 's/\//\\\//g')
-		sed -e 's/'$pref'=.*/'$pref'="'$newPref'"/' $configFile > $tmpConf
+		sed -e 's/^\s*'$pref'=.*/'$pref'="'$newPref'"/' $configFile > $tmpConf
 		cp -f $tmpConf $configFile
 		rm -f $tmpConf
 	else
