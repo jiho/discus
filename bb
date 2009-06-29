@@ -316,7 +316,7 @@ for id in $deployNb; do
 
 	# Source of images (pictures or video)
 	pics="$data/pics"
-	videoFile="$data/video.mov"
+	videoFile="$data/video_hifi.mov"
 	if [[ $VIDEO == "TRUE" && ! -e $videoFile ]]; then
 		error "Cannot find video file:\n  $pics"
 		exit 1
