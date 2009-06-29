@@ -24,13 +24,14 @@ echo -e "
 
 \033[1mACTIONS\033[0m
   \033[1mh, help\033[0m          display this help message
-  \033[1mstatus\033[0m           prints information about the working directory
-  \033[1msync\033[0m             synchronize data between workspace and storage
+  \033[1mstatus\033[0m           prints information about the deployments
+  \033[1mget\033[0m              get data from the storage to the workspace
+  \033[1mstore\033[0m            move data from the workspace to the storage
   \033[1mv, video\033[0m         extract images from a video file
-  \033[1mstab\033[0m             stabilize image sequence
+  \033[1mstab\033[0m             stabilize the image sequence
   \033[1mcal, calib\033[0m       measure calibration data for the tracking
   \033[1mcom, compass\033[0m     track the compass manually
-  \033[1ml, larva\033[0m         track the larva(e)
+  \033[1ml, larva\033[0m         track the larva(e) manually
   \033[1mc, correct\033[0m       correct the tracks
   \033[1ms, stats\033[0m         compute statistics and plots
   \033[1mall\033[0m              calibrate, track larva, correct and compute stats
@@ -197,117 +198,118 @@ data_status() {
 #
 sync_data()
 {
-	base=$1
+	work=$1
 	storage=$2
-	id=$3
+	action=$3
+	id=$4
 
-	# # Guess the storage directory (separate different campaigns)
-	#
-	# # use one of the deployNb
-	# id=$(echo ${deployNb} | awk -F " " {'print $1'})
-	#
-	# # get the name of the 100th picture in the current data dir
-	# pic=$(ls $base/$id/pics/ | sort -n | head -n 100 | tail -n 1)
-	# # we use the 100th one because it is not too close from the beginning or the end, hence should be relatively robust if the beginning and end times are changed and the beginning or end pictures change
-	#
-	# # find a path that ends by this combination of id and pic
-	# storage=$(find $storageRoot/DISC* -path *$id/pics/$pic)
-	#
-	# # suppress id and pic from the path to get the root for this id
-	# storage=$(echo ${storage/\/$id\/pics\/${pic}/})
+	# RSync options to test for differences
+	# for small files we use checksum and time comparison
+	rsoptsSmall="--recursive --checksum --update --exclude=.* --exclude=*tmp/ --exclude=*pics/ --exclude=*.mov"
+	# for large files we use size only comparison
+	rsoptsLarge="--recursive --size-only --exclude=*tmp/ --include=*/ --include=*.jpg --include=*.mov --exclude=*"
 
 
-	if [[ -e $storage/$id ]]; then
+	# GET DATA FROM STORAGE
+	if [[ $action == "get" ]]; then
 
-		if [[ -e $base/$id ]]; then
-			# SYNCHRONISATION
-			# The deployment is present in the working dir and in the storage
+		# Check the existence of the deployment
+		if [[ ! -e $storage/$id ]]; then
+			error "Deployment $id does not exist in storage:\n  $storage"
+			exit 1
+		fi
 
-			# First check whether picture files are identical in both
+		# Update or move data
+		if [[ -e $work/$id ]]; then
+			# The deployment exists in the workspace
+			# First do a test run, ask for confirmation and then proceed to the real run
 
-			# diff --brief $base/$id/pics/ $storage/$id/pics/
-			# NB: diffing compares the content of files, which is lengthy for that many binary files.
-			#     instead we use rsync which compares file size.
-			#     rsync could also compare checksums (with the -c option).
-			diffPic=$(rsync --dry-run -r --delete --size-only --out-format=%n --include='*.jpg' --exclude='*' $storage/$id/pics/ $base/$id/pics)
-			# compares presence/absence of pictures, because of --recursive --delete
-			#          picture file sizes, because of --size-only (not modif time)
-			# outputs something when files are different, because of --out-format
-			# NB: the presence or absence of "/" at the end of the paths is significant
-
-			if [[ $diffPic != "" ]] ; then
-				# When some pictures are different it is probably because something changed in the way the deployments are split from the daily data, or pictures were edited (add the north etc.).
-				# In that case we want to warn the user, ask whether we should still copy the results, and copy the new pictures to the working dir
-
-				warning "Some pictures are different between working and storage directories"
-
-				# Update pictures in working directory
-				echo -e "\e[1mWorking directory <- Storage\e[0m : update pictures"
-				rsync -r --times --omit-dir-times --delete --size-only --out-format="  %o %n" --include='*.jpg' --exclude='*'  $storage/$id/pics/ $base/$id/pics
-
-				# Ask the user whether we should still transfer results
-				echo -e "Because of that, the results that are about to be copied from the working\ndirectory to the storage will not match the pictures there."
-				read -p "Do you still want to copy them? (y/n [n]) " copyResults
+			diffS=$(rsync --dry-run --delete --out-format="  %o %n" $rsoptsSmall $storage/$id/ $work/$id)
+			diffL=$(rsync --dry-run --delete --out-format="  %o %n" $rsoptsLarge $storage/$id/ $work/$id)
+			if [[ ${diffS}${diffL} == "" ]]; then
+				echo "Already up-to-date"
 			else
-				copyResults="yes"
-			fi
-
-			# Pictures in working dir and storage are the same
-			#   or
-			# Pictures are different but we still want to copy results
-			if yes $copyResults; then
-
-				# Test whether the results have changed
-				differences=$(rsync --dry-run -r --checksum --out-format="%n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id)
-				# NB: since the files are small here we do the most robust comparison, based on the checksum
-
-				if [[ $differences = "" ]]; then
-					echo "Already up-to-date."
+				echoB "Working directory <- Storage"
+				echo "The transfers about to occur are:"
+				if [[ $diffS != "" ]]; then echo "$diffS"; fi
+				if [[ $diffL != "" ]]; then echo "$diffL"; fi
+				read -p "Do you want to proceed? (y/n [n]) " proceed
+				if yes $proceed; then
+					echo "Update deployment $id"
+					rsync --delete $rsoptsSmall $storage/$id/ $work/$id
+					rsync --delete $rsoptsLarge $storage/$id/ $work/$id
 				else
-					# Copy results to storage
-					echo -e "\e[1mWorking directory -> Storage\e[0m : store (or update) results files"
-					rsync -r --times --omit-dir-times --owner --checksum --out-format="  %n" --exclude='.*' --exclude='*tmp/' --exclude='*pics/' $base/$id/ $storage/$id
+					echo "Skipping transfer"
 				fi
-
 			fi
 
 		else
-
-			# IMPORT PICTURES (and data actually, just copy everything)
-			# The deployment is only present in the storage
-			# = we want to copy pictures from the storage to the working dir
+			# The deployment does not exist in the workspace
+			# = we want to copy data from the storage to the working dir
 			echo -e "\e[1mWorking directory <- Storage\e[0m : copy deployment $id"
-			cp -R --preserve=timestamps $storage/$id $base
+			cp -R --preserve=timestamps $storage/$id $work
 			# NB : preserve attributes, timestamps, users etc.
-
 		fi
-	else
 
-		if [[ -e $base/$id ]]; then
+	fi
 
-			# START NEW BACKUP
-			# The deployment is only present in the working dir
+	# MOVE DATA TO STORAGE
+	if [[ $action == "store" ]]; then
+
+		# Check the existence of the deployment
+		if [[ ! -e $work/$id ]]; then
+			error "Deployment $id does not exist in working directory:\n  $work"
+			exit 1
+		fi
+
+		# Update or move data
+		if [[ -e $storage/$id ]]; then
+			# the deployment exist in the storage
+			# First do a test run, ask for confirmation and then proceed to the real run
+			diffS=$(rsync --dry-run --delete --out-format="  %o %n" $rsoptsSmall $work/$id/ $storage/$id)
+			diffL=$(rsync --dry-run --delete --out-format="  %o %n" $rsoptsLarge $work/$id/ $storage/$id)
+			# for information, test whether some result files are newer or only present in storage
+			diffSsw=$(rsync --dry-run --out-format="    %n" $rsoptsSmall $storage/$id/ $work/$id)
+			if [[ ${diffS}${diffSsw}${diffL} == "" ]]; then
+				echo "Already up-to-date"
+			else
+				echoB "Working directory -> Storage"
+				if [[ $diffSsw != "" ]]; then
+					warning "The file(s)\n$diffSsw\n  are newer (or only present) in the storage"
+				fi
+				if [[ ${diffS}${diffL} != "" ]]; then
+					# If there are some files left beyond those
+					echo "The transfers about to occur are:"
+					if [[ $diffS != "" ]]; then echo "$diffS"; fi
+					if [[ $diffL != "" ]]; then echo "$diffL"; fi
+					read -p "Do you want to proceed? (y/n [n]) " proceed
+					if yes $proceed; then
+						echo "Update deployment $id"
+						rsync --delete $rsoptsSmall $work/$id/ $storage/$id
+						rsync --delete $rsoptsLarge $work/$id/ $storage/$id
+					else
+						echo "Skipping transfer"
+					fi
+				fi
+			fi
+
+		else
+			echoB "Working directory -> Storage"
+			# The deployment does not exist in the storage
 			# = there is possibly a problem in the storage path
 			#   or we want to initialize a new backup directory
 			warning "$storage/$id does not exist"
 			echo -en "Do you \e[1mreally\e[0m want to create a new storage directory?"
 			read -p " (y/n [n]) " proceed
 			if yes $proceed; then
-				echo -e "\e[1mWorking directory -> Storage\e[0m : store deployment $id"
+				echo "Create new storage for deployment $id"
 				# Create parent directory
 				mkdir -p $storage
 				# Copy data
-				cp -R --preserve=timestamps $base/$id $storage
+				cp -R --preserve=timestamps $work/$id $storage
 			else
-				echo "Skipping $id"
+				echo "Skipping transfer"
 			fi
-
-		else
-
-			# UNAVAILABLE DATA
-			error "Cannot find deployment \"$id\" in\n    $base\n  or\n    $storage"
-			return 1
-
 		fi
 
 	fi

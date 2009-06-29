@@ -94,8 +94,10 @@ TRACK_LARV=FALSE
 TRACK_CORR=FALSE
 # perform statistical analysis of current track?
 STATS=FALSE
-# synchronize with the storage directory
-SYNC=FALSE
+# get data from the storage directory
+GET=FALSE
+# store data to the storage directory
+STORE=FALSE
 # give information about the content of the data/storage directory
 STATUS=FALSE
 
@@ -156,8 +158,11 @@ until [[ -z "$1" ]]; do
 		s|stats)
 			STATS=TRUE
 			shift 1 ;;
-		sync)
-			SYNC=TRUE
+		get)
+			GET=TRUE
+			shift 1 ;;
+		store)
+			STORE=TRUE
 			shift 1 ;;
 		all)
 			TRACK_CALIB=TRUE
@@ -241,8 +246,8 @@ status $? "exiftool not found. Please install it\nhttp://www.sno.phy.queensu.ca/
 
 
 # Compatibility of arguments
-if [[ $SYNC == "TRUE" && $storage == "" ]]; then
-	error "Synchronization requested but no storage directory specified"
+if [[ ( $GET == "TRUE" || $STORE == "TRUE" ) && $storage == "" ]]; then
+	error "Exchange of data with storage requested\n  but no storage directory specified"
 	exit 1
 fi
 
@@ -251,7 +256,7 @@ if [[ $STATUS == "TRUE" && $storageStatus == "TRUE" && $storage == "" ]]; then
 	exit 1
 fi
 
-if [[ ( $SYNC == "TRUE" || ( $STATUS == "TRUE" && $storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
+if [[ ( ( $GET == "TRUE" || $STORE == "TRUE" ) || ( $STATUS == "TRUE" && $storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
 	error "Storage directory\n  $storage\n  does not exist"
 	exit 1
 fi
@@ -296,32 +301,28 @@ for id in $deployNb; do
 
 	# Current deployment directory
 	data="$work/$id"
+
+	# If requested, get it from the storage
+	if [[ $GET == "TRUE" ]]; then
+		echoBlue "\nDATA IMPORT"
+		sync_data $work $storage get $id
+		status $? "Check command line arguments"
+	fi
+	# otherwise test its existence
 	if [[ ! -d $data ]]; then
-		# When the deployment is not available check wether we want synchronization
-		if [[ $SYNC == "TRUE" ]]; then
-			# in which case, the synchronization will import the deployment data in the workspace
-			sync_data $work $storage $id
-			status $? "Check command line arguments"
-		else
-			# otherwise exit with an error
-			error "Deployment directory does not exist:\n  $data"
-			exit 1
-		fi
+		error "Deployment directory does not exist:\n  $data"
+		exit 1
 	fi
 
 	# Source of images (pictures or video)
 	pics="$data/pics"
 	videoFile="$data/video.mov"
-	if [[ $VIDEO == "TRUE" ]]; then
-		if [[ ! -e $videoFile ]]; then
-			error "Cannot find video file:\n  $pics"
-			exit 1
-		fi
-	else
-		if [[ ! -d $pics ]]; then
-			error "Cannot find pictures directory:\n  $pics"
-			exit 1
-		fi
+	if [[ $VIDEO == "TRUE" && ! -e $videoFile ]]; then
+		error "Cannot find video file:\n  $pics"
+		exit 1
+	elif [[ ( $STAB == "TRUE" || $TRACK_CALIB == "TRUE" || $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ) && ! -d $pics ]]; then
+		error "Cannot find pictures directory:\n  $pics"
+		exit 1
 	fi
 
 	# Temporary directory, where all operations are done
@@ -703,11 +704,15 @@ EOF
 		commit_changes "stats.csv" plots*.pdf
 	fi
 
-	# Synchronization with the storage directory
-	if [[ $SYNC == "TRUE" ]]; then
-		echoBlue "\nDATA SYNCHRONISATION"
 
-		sync_data $work $storage $id
+	# CLEAN WORKSPACE
+	#------------------------------------------------------------
+
+	# Move data to the storage directory
+	if [[ $STORE == "TRUE" ]]; then
+		echoBlue "\nDATA STORAGE"
+		sync_data $work $storage store $id
+		status $? "Check command line arguments"
 	fi
 
 	# Cleaning
