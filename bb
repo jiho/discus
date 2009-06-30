@@ -482,7 +482,7 @@ EOF
 			cat(time.lapse.interval(images))
 EOF
 )
-# NB: for the heredoc (<< constuct) to work, there should be no tab above
+# NB: for the heredoc (<< construct) to work, there should be no tab above
 		status $? "R exited abnormally"
 
 		# Deduce the lag when subsampling images
