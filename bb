@@ -80,6 +80,8 @@ work=$HERE
 storage=""
 
 # Actions: determined on the command line, all FALSE by default
+# perform any action
+ACT=FALSE
 # get images from video
 VIDEO=FALSE
 # stabilize images
@@ -139,30 +141,39 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		v|video)
 			VIDEO=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		stab)
 			STAB=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		cal|calib)
 			CALIB=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		com|compass)
 			TRACK_COMP=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		l|larva)
 			TRACK_LARV=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		c|correct)
 			CORR=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		s|stats)
 			STATS=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		get)
 			GET=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		store)
 			STORE=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		all)
 			CALIB=TRUE
@@ -170,6 +181,7 @@ until [[ -z "$1" ]]; do
 			TRACK_LARV=TRUE
 			CORR=TRUE
 			STATS=TRUE
+			ACT=TRUE
 			shift 1 ;;
 		-d|-display)
 			displayPlots=TRUE
@@ -287,10 +299,12 @@ fi
 deployNb=$(expand_range "$deployNb")
 status $? "Could not interpret deployment number"
 # if deployNb is not specified, process all available deployments
-if [[ $deployNb == "" ]]; then
+if [[ $deployNb == "" && $ACT == "TRUE" ]]; then
 	warning "No deployment number specified.\nIterating command(s) on all available deployments"
 	deployNb=$(ls $work | sort -n)
 fi
+
+if [[ $ACT == "TRUE"  ]]; then
 
 for id in $deployNb; do
 
@@ -735,6 +749,7 @@ EOF
 
 done
 
+fi
 
 echo -e "\nDone. Bye"
 
