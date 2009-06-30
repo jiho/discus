@@ -85,13 +85,13 @@ VIDEO=FALSE
 # stabilize images
 STAB=FALSE
 # perform calibration?
-TRACK_CALIB=FALSE
+CALIB=FALSE
 # track compass?
 TRACK_COMP=FALSE
 # track larva(e)?
 TRACK_LARV=FALSE
 # correct tracks?
-TRACK_CORR=FALSE
+CORR=FALSE
 # perform statistical analysis of current track?
 STATS=FALSE
 # get data from the storage directory
@@ -144,7 +144,7 @@ until [[ -z "$1" ]]; do
 			STAB=TRUE
 			shift 1 ;;
 		cal|calib)
-			TRACK_CALIB=TRUE
+			CALIB=TRUE
 			shift 1 ;;
 		com|compass)
 			TRACK_COMP=TRUE
@@ -153,7 +153,7 @@ until [[ -z "$1" ]]; do
 			TRACK_LARV=TRUE
 			shift 1 ;;
 		c|correct)
-			TRACK_CORR=TRUE
+			CORR=TRUE
 			shift 1 ;;
 		s|stats)
 			STATS=TRUE
@@ -165,10 +165,10 @@ until [[ -z "$1" ]]; do
 			STORE=TRUE
 			shift 1 ;;
 		all)
-			TRACK_CALIB=TRUE
+			CALIB=TRUE
 			TRACK_COMP=TRUE
 			TRACK_LARV=TRUE
-			TRACK_CORR=TRUE
+			CORR=TRUE
 			STATS=TRUE
 			shift 1 ;;
 		-d|-display)
@@ -320,7 +320,7 @@ for id in $deployNb; do
 	if [[ $VIDEO == "TRUE" && ! -e $videoFile ]]; then
 		error "Cannot find video file:\n  $pics"
 		exit 1
-	elif [[ ( $STAB == "TRUE" || $TRACK_CALIB == "TRUE" || $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ) && ! -d $pics ]]; then
+	elif [[ ( $STAB == "TRUE" || $CALIB == "TRUE" || $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ) && ! -d $pics ]]; then
 		error "Cannot find pictures directory:\n  $pics"
 		exit 1
 	fi
@@ -424,7 +424,7 @@ EOF
 	fi
 
 	# Calibration
-	if [[ $TRACK_CALIB == "TRUE" ]]
+	if [[ $CALIB == "TRUE" ]]
 	then
 		echoBlue "\nCALIBRATION"
 
@@ -565,7 +565,7 @@ EOF
 	fi
 
 	# Correction
-	if [[ $TRACK_CORR == "TRUE" ]]
+	if [[ $CORR == "TRUE" ]]
 	then
 		echoBlue "\nCORRECTION OF TRACKS"
 
