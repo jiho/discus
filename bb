@@ -467,8 +467,17 @@ EOF
 		commit_changes "coord_aquarium.txt"
 	fi
 
-	# Tracking
-	if [[ $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ]]; then
+	# Tracking function
+	# Has to be local because it currently references many global variables
+	function manual_track ()
+	#
+	# Track objects manually
+	#
+	{
+		# Save all files given on the command line
+		outputFiles=$@
+		# The result of the tracking is saved in the first one
+		resultFileName=$1
 
 		# Detect the time lapse between images
 		# we use an inline R script given how easy it is to deal with time in R
@@ -506,40 +515,6 @@ EOF
 			virtualStack="use"
 		fi
 
-		if [[ $TRACK_LARV == "TRUE" ]]; then
-			echoBlue "\nTRACKING LARVAE"
-			resultFileName="larvae_track.txt"
-			outputFiles=$resultFileName
-		elif [[ $TRACK_COMP == "TRUE" ]]; then
-			echoBlue "\nTRACKING COMPASS"
-			resultFileName="compass_track.txt"
-
-			# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
-			echo "Open first image for calibration"
-			# Use an ImageJ macro to run everything. The macro proceeds this way
-			# - use Image Sequence to open only the first image
-			# - select the point selection tool
-			# - use waitForUser to let the time for the user to click the compass
-			# - measure centroid coordinates in pixels
-			# - save that to an appropriate file
-			# - quit
-			$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
-			run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=${subImages} scale=100 file=[] or=[] sort'); \
-			setTool(7);                                         \
-			waitForUser('Compass calibration',                  \
-				'Please click the center of the compass you intend to track.\n      \
-				\nPress OK when you are done');                 \
-			run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
-			run('Measure');                                     \
-			saveAs('Measurements', '${tmp}/coord_compass.txt'); \
-			run('Quit');"  > /dev/null 2>&1
-
-			status $? "ImageJ exited abnormally"
-
-			echo "Save compass coordinates"
-			outputFiles="$resultFileName coord_compass.txt"
-		fi
-
 		echo "Open stack"
 		# Use an ImageJ macro to run everything. The macro proceeds this way
 		# - use Image Sequence to open the stack
@@ -562,6 +537,42 @@ EOF
 		echo "Save track"
 
 		commit_changes $outputFiles
+	}
+
+	# Track compass
+	if [[ $TRACK_COMP == "TRUE" ]]; then
+		echoBlue "\nTRACKING COMPASS"
+
+		# When manually tracking the compass, we need to have the coordinates of the center of the compass to compute the direction of rotation
+		echo "Open first image for calibration"
+		# Use an ImageJ macro to run everything. The macro proceeds this way
+		# - use Image Sequence to open only the first image
+		# - select the point selection tool
+		# - use waitForUser to let the time for the user to click the compass
+		# - measure centroid coordinates in pixels
+		# - save that to an appropriate file
+		# - quit
+		$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
+		run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
+		setTool(7);                                         \
+		waitForUser('Compass calibration',                  \
+			'Please click the center of the compass you intend to track.\n      \
+			\nPress OK when you are done');                 \
+		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
+		run('Measure');                                     \
+		saveAs('Measurements', '${tmp}/coord_compass.txt'); \
+		run('Quit');"  > /dev/null 2>&1
+
+		status $? "ImageJ exited abnormally"
+
+		echo "Save compass coordinates"
+		manual_track compass_track.txt coord_compass.txt
+	fi
+
+	# Track larvae
+	if [[ $TRACK_LARV == "TRUE" ]]; then
+		echoBlue "\nTRACKING LARVAE"
+		manual_track larvae_track.txt
 	fi
 
 	# Correction
