@@ -540,7 +540,7 @@ EOF
 		-ijpath ${ijPath}/plugins/ -eval "                \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
-		waitForUser('Track finised?',                     \
+		waitForUser('Track finished?',                     \
 			'Press OK when done tracking');               \
 		selectWindow('Tracks');                           \
 		saveAs('Text', '${tmp}/${resultFileName}');       \
