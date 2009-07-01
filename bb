@@ -247,9 +247,6 @@ status $? "mplayer not found. Please install it."
 sed=$(which sed)
 status $? "sed not found. Check your PATH."
 
-mktemp=$(which mktemp)
-status $? "mktemp not found. Check your PATH."
-
 rsync=$(which rsync)
 status $? "rsync not found. Check your PATH."
 

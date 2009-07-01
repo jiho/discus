@@ -370,7 +370,7 @@ write_pref() {
 
 	if [[ $? == "0"  ]]; then
 		# if there is a match, update the preference in the config file
-		tmpConf=$(mktemp /tmp/bbconf.XXXXX)
+		tmpConf=configFile.new
 		newPref=$(eval echo \$$pref)
 		# espace slashes in the value of the preference
 		newPref=$(echo $newPref | sed -e 's/\//\\\//g')
