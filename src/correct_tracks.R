@@ -48,6 +48,14 @@ trackLarva = trackLarva[,-1]
 tracks = split(trackLarva, trackLarva$trackNb)
 nbTracks = length(tracks)
 
+# Suppress duplicates
+# There should not be any but this can happen with the manual tracking plugin not working properly
+tracks = llply(tracks, function(t){
+	# When there are duplicates, we keep the last position
+	t = t[!duplicated(t$imgNb, fromLast=T),]
+	return(t)
+})
+
 # Add time stamps to the tracks
 tracks = llply(tracks, function(t){
 	# get the number of the images where the larva is detected
@@ -99,6 +107,9 @@ if (file.exists("compass_log.csv")) {
 	trackCompass = read.table("compass_track.txt", header=TRUE, sep="\t", as.is=TRUE)
 	trackCompass = trackCompass[,-1]
 	compassSource = "manual"
+
+	# remove possible duplicates
+	trackCompass = trackCompass[!duplicated(t$imgNb, fromLast=T),]
 
 	# compute the time associated with each image
 	# this can be different from those in the tracks since we can subsample the compass and the track at a different interval
