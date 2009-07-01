@@ -241,9 +241,6 @@ fi
 R=$(which R)
 status $? "R not found. Please install it,\ntogether with packages ggplot2 and circular."
 
-mplayer=$(which mplayer)
-status $? "mplayer not found. Please install it."
-
 sed=$(which sed)
 status $? "sed not found. Check your PATH."
 
@@ -351,6 +348,10 @@ for id in $deployNb; do
 	if [[ $VIDEO == "TRUE" ]]
 	then
 		echoBlue "\nVIDEO PROCESSING"
+
+		# tests for the existence of MPlayer
+		mplayer=$(which mplayer)
+		status $? "mplayer not found. Please install it."
 
 		# get the frame rate of the video
 		videoFPS=$($mplayer 2>/dev/null -vo null -nosound -frames 1 $videoFile | awk '/VIDEO/ {print $5}')
