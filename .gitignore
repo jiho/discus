@@ -3,7 +3,7 @@
 *~
 # Java files
 src/imagej/ij.jar
-# Documentation, for now
-doc/
+# PDF of the documentation (we only keep the Markdown source)
+doc/*.pdf
 # Draft files
 scratchpad*
