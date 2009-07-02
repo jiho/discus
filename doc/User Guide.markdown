@@ -275,13 +275,22 @@ Because the instrument rotates, we have to correct for the rotation to access th
 
 	./bb correct 12
 
-when using the numerical compass, you need to specify the angle between the top of the picture and the direction in which the numerical compass points. To know more about the subject and to know how to compute this angle, please read the "Angles and corrections" document. The angle is then supplied with the parameter `angle`
+When using the numerical compass, you need to specify the angle between the top of the picture and the direction in which the numerical compass points. To know more about the subject and to know how to compute this angle, please read the "Angles and corrections" document. The angle is then supplied with the parameter `angle`
 
 	./bb -angle 88.3 correct 12
 	
 and since it is a parameter, it only has to be specified once unless the camera or the numerical compass are moved relative to each other.
 
-Furthermore, DISCUS uses the coordinates of the aquarium recorded in the calibration step to convert pixels to real-world coordinates. So you need to supply the real-world diameter of the aquarium, in cm, with the parameter `diam`
+When using a manual compass track, the `angle` parameter is just discarded. Furthermore, without the roll information from the numerical compass, it is impossible to determine whether the camera was above or below the aquarium. Yet, this has consequences in terms of the direction in which the compass appears to be pointing (see the "Angles and corrections" document for details). Therefore, DISCUS asks about that
+
+	Which was the configuration of the instrument:
+	1) the camera was ABOVE the arena
+	2) the camera was BELOW the arena
+	? 
+	
+and you should type 1 or 2 (anything else causes DISCUS to keep asking).
+
+In addition, DISCUS uses the coordinates of the aquarium recorded in the calibration step to convert pixels to real-world coordinates. So you need to supply the real-world diameter of the aquarium, in cm, with the parameter `diam`
 
 	./bb -diam 40.3 correct 12
 
