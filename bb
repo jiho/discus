@@ -258,12 +258,12 @@ status $? "exiftool not found. Please install it\nhttp://www.sno.phy.queensu.ca/
 
 # Compatibility of arguments
 if [[ ( $GET == "TRUE" || $STORE == "TRUE" ) && $storage == "" ]]; then
-	error "Exchange of data with storage requested\n  but no storage directory specified"
+	error "Exchange of data with storage requested\n  but no storage directory specified\n  please use the -storage parameter"
 	exit 1
 fi
 
 if [[ $STATUS == "TRUE" && $storageStatus == "TRUE" && $storage == "" ]]; then
-	error "Status of the storage directory requested but no storage directory specified"
+	error "Status of the storage directory requested but no storage directory specified\n  please use the -storage parameter"
 	exit 1
 fi
 
