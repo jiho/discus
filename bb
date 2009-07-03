@@ -40,14 +40,16 @@ typeset -fx warning
 typeset -fx error
 typeset -fx status
 typeset -fx dereference
-typeset -fx read_config
-typeset -fx write_pref
+typeset -fx expand_range
+typeset -fx yes
 
 source $RES/lib_discus.sh
 typeset -fx help
 typeset -fx commit_changes
 typeset -fx data_status
 typeset -fx sync_data
+typeset -fx read_config
+typeset -fx write_pref
 
 
 # Help message (should be done early)

@@ -196,8 +196,7 @@ data_status() {
 #	sync_data [data_directory] [storage_directory] [deployment_id]
 # Synchronize data between data and storage directories/drives
 #
-sync_data()
-{
+sync_data() {
 	work=$1
 	storage=$2
 	action=$3
