@@ -241,7 +241,14 @@ and then clicking the larva on the images. The position of each click is recorde
 
 ![Track Table](images/track_table.png)
 
-It records the current track number, the current slice in the stack, the name of the associated image and the (x,y) coordinates of the click, in pixels from the bottom left corner of the window. After each click, the stack moves to the next slice, waiting for another click.
+It records:
+
+* **trackNb** : the current track number
+* **sliceNb** : the current slice in the stack
+* **imgNb** : the name of the associated image
+* **x,y** : and the coordinates of the click, in pixels from the bottom left corner of the window. 
+
+After each click, the stack moves to the next slice, waiting for another click.
 
 If the click was not exactly where you wanted it, you can delete it with the "Delete last point" button. It removes the data from the table and moves back to the previous slice, ready for a more correct click.
 
@@ -378,6 +385,90 @@ Finally, the frequency distribution of swimming speeds, in cm s<sup>-1</sup>, is
 
 **NOTA BENE** When positions are subsampled, the trajectory, swimming directions, and speeds cannot be computed and the associated graphs are not produced.
 
+
+
+## Data structure and results
+
+Most actions read data and save their result in files within the deployment directory. Those files are mostly ASCII text files, that can be opened with any text editor on any system.
+
+### Input files
+
+#### Pictures or video
+
+The video file is called `video_hifi.mov` and can be any Quicktime file encoded with a codec readable by MPlayer (that is, almost any file). The H.264 codec has become standard for high quality yet high compression rate video.
+
+The pictures are JPEG files extracted from the video or coming straight of the camera. They have or are assigned [EXIF data](http://en.wikipedia.org/wiki/Exchangeable_image_file_format "Exchangeable image file format - Wikipedia, the free encyclopedia") to store their time stamp.
+
+#### Compass
+
+The numerical compass log is a Comma Separated Value file: `compass_log.csv`. The compass can be configured to log many different variables. In our configuration it contains the columns:
+
+* **timestamp** : time in seconds since the compass was plugged in
+* **heading** : in degrees
+* **pitch** : in degrees
+* **roll** : in degrees
+* **x/y/zmag** : components of the magnetic field
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+
+The date has to be computed while splitting the daily log into deployment level ones since the compass itself only outputs a timestamp. Other than that, the data is identical to the daily log.
+
+#### CTD
+
+The CTD logs data in a CSV file: `ctd_log.csv`, with columns
+
+* **record** : sequential record number
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+* **temperature** : in degrees C
+* **depth** : in m
+* **salinity** : in psu
+
+The original daily CTD logs has the same columns but a different layout and is in a file called `ctd_log.dat`.
+ 
+#### GPS
+
+The GPS logs data in a CSV file: `gps_log.csv`, with columns
+
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+* **lat/lon** : in decimal degrees
+* **signal** : signal strength
+
+The original daily GPS log has many more columns, most of which are useless here, hence discarded when splitting the data into the deployment level logs.
+
+## Output files
+
+#### Aquarium coordinates
+
+The `cal` action produces the file `coord_aquarium.txt` which contains the coordinates of the centroid (X, Y) and the perimeter (Perim) of the circle that is fitted to the aquarium.
+
+#### Manual compass track and coordinates
+
+The `compass` action produces:
+
+* `coord_compass.txt` which contains the mean value (Mean) and coordinates (X,Y) of the pixel that is clicked on the image as well as the slice number (Slice, =1). Mean and Slice are discarded.
+
+* `compass_track.txt` which contains the result table of the tracking routine, already described above (trackNb, sliceNb, imgNb, x, and y)
+
+#### Larva track (raw and corrected)
+
+The raw larva track in `larvae_track.txt` produced by the action `larva` is exactly identical to the compass track described above.
+
+After correction by `correct`, the corrected track is saved in `tracks.csv`. It contains
+
+* **trackNb/sliceNb/imgNb** : same as before
+* **exactDate** : local date and time with fractional second in the format YYYY-MM-DD HH:MM:SS.S
+* **date** : local date and time in the format YYYY-MM-DD HH:MM:SS
+* **x,y** : cartesian position, in cm from the center of the aquarium
+* **theta,rho** : polar position, in degrees (from the north and clockwise) and cm from the center of the aquarium
+* **compass** : interpolated compass reading in degrees (from the north and clockwise)
+* **correction** : boolean specifying whether this is the original track (correction = FALSE) or corrected (correction = TRUE)
+* **heading** : swimming direction in degrees (from the north and clockwise)
+* **speed** : swimming speed in cm s<sup>-1</sup>
+
+Unavailable values are marked as NA.
+ 
+#### Statistics and plots
+
+The action `stats` stores the statistic table in `stats.csv` and the plots in `plots.pdf`. The content and purpose of both were already described above.
 
 
 
