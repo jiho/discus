@@ -1,19 +1,23 @@
 #!/bin/bash
 #
-# 	BlueBidule
+#  DISCUS
 #
-#	BlueBidule (BB) is a video analysis application which allows
-#	to study the orientation of swimming of coral reef fish larvae
-#	enclosed in a swimming chamber.
-#	For more information refer to:
-#		http://rsmas.miami.edu/personal/cparis/ownfor/doc/bluebidule.html
+#  Drifting In-Situ Chamber User Software
 #
-#		Parses options and launches components of the video analysis
+#  DISCUS is a set of scripts which allow the extraction and
+#  analysis of data collected with the DISC to study the
+#  orientation of marine larvae in situ.
 #
+#  For more information about the research, search for papers by
+#  Claire Paris, Cedric Guigand and Jean-Olivier Irisson
+#  For more information about the software, please see the 'doc'
+#  directory directly next to this file.
 #
-#	(c) Jean-Olivier Irisson 2005-2009
-#	Released under GNU General Public Licence
-#	Read the file 'src/GNU_GPL.txt' for more information
+#  This file parses options and launches the different components
+#
+#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 

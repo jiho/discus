@@ -1,12 +1,9 @@
 #
-#		BlueBidule
+#  Library of functions useful to handle circular data
 #
-#		Library of functions usefull to handle circular data
-#			Conversion functions, statistical tests, plots
-#
-# (c) Jean-Olivier Irisson 2005-2009
-# Released under GNU General Public Licence
-# Read the file 'src/GNU_GPL.txt' for more information
+#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 

@@ -1,11 +1,11 @@
 #
-# 	BlueBidule
+#  Correct tracks from their coordinates in the reference of
+#  the instrument to an absolute cardinal reference.
+#  Compute also swimming speed and direction.
 #
-#		Correct tracks to cardinal coordinates
-#
-#	(c) Jean-Olivier Irisson 2005-2009
-#	Released under GNU General Public Licence
-#	Read the file 'src/GNU_GPL.txt' for more information
+#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 

@@ -1,13 +1,14 @@
 #!/bin/bash
 #
-# 	Usefull shell functions
+#  Library of useful shell functions
 #
-# (c) 2009 Jean-Olivier Irisson <irisson@normalesup.org>.
-# GNU General Public License http://www.gnu.org/copyleft/gpl.html
+#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #------------------------------------------------------------
 
-# Quick reference
+# Quick reference if shell colors
 #   Text attributes
 #    0    default
 #    1    bold
@@ -47,12 +48,12 @@ echoBlue() {
 }
 
 
-# write a warning on stantard out
+# write a warning on standard out
 warning() {
 	echo -e "\e[0;31m\e[1mWARNING:\e[0m $1\e[0m"
 }
 
-# write an error on stantard out
+# write an error on standard out
 error() {
 	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
 }
@@ -84,6 +85,7 @@ dereference() {
 	done
 	echo $foo
 }
+
 
 #
 # USAGE
@@ -130,6 +132,7 @@ expand_range() {
 		echo "${ids[$i]}"
 	done | sort -n
 }
+
 
 #
 # USAGE

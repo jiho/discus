@@ -7,6 +7,8 @@
     Authors:  Kang Li (kangli AT cs.cmu.edu)
               Steven Kang (sskang AT andrew.cmu.edu)
 
+              Modifications by Jean-Olivier Irisson, for DISCUS -- 2009
+
     Requires: ImageJ 1.38q or later
               JRE 5.0 or later
 
@@ -59,6 +61,7 @@ WARRANTY.  IN PARTICULAR,  THE AUTHOR  DOES NOT  MAKE ANY  REPRESENTATION OR
 WARRANTY OF ANY KIND CONCERNING  THE MERCHANTABILITY OF THIS SOFTWARE  OR ITS
 FITNESS FOR ANY PARTICULAR PURPOSE.
 */
+
 
 import java.lang.*;
 import java.io.File;

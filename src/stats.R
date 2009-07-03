@@ -1,12 +1,9 @@
 #
-# 	BlueBidule
+#  Reformat data, perform statistical analysis and plots
 #
-#		Reformats data and performs statistical analysis
-#
-#
-#	(c) Jean-Olivier Irisson 2005-2007
-#	Released under GNU General Public Licence
-#	Read the file 'src/GNU_GPL.txt' for more information
+#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 

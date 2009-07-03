@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-#	Functions useful at several stages of the analysis with DISCUS
-#	- open images as a stack
-#	- commit changes from the temporary directory to the data directory
+#   Library of shell functions used repeatedly in DISCUS
 #
-#	(c) Copyright 2009 Jean-Olivier Irisson. GNU General Public License
+#  (c) Copyright 2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #------------------------------------------------------------------------------
 

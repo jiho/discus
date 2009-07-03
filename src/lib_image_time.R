@@ -1,7 +1,9 @@
 #
-#	Functions to read and compute image time from exif data
+#   Library of R functions to read and compute image time from EXIF data
 #
-#	(c) Copyright 2009 Jean-Olivier Irisson. GNU General Public License
+#  (c) Copyright 2009 Jean-Olivier Irisson.
+#  GNU General Public License
+#  Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------------
 

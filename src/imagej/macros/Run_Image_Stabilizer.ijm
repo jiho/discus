@@ -1,9 +1,11 @@
-// 
-// Run Image stabilization
-// 
-// This is done in a macro to be able to call it as a batch job
-// 
-// (c) Copyright 2009 Jean-Olivier Irisson. GNU General Public License
+//
+//  Run Image stabilization
+//
+//  This is done in a macro to be able to call it as a batch job
+//
+//  (c) Copyright 2009 Jean-Olivier Irisson.
+//  GNU General Public License
+//  Read the file 'src/GNU_GPL.txt' for more information
 //
 //------------------------------------------------------------
 

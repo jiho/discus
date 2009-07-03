@@ -1,3 +1,8 @@
+#
+#	Tests features of the 'circular' package for R
+#
+
+
 a = -10:10
 # ac = circular(a,units="degrees",template="none")
 ac = circular(a,units="degrees",template="geographic")
@@ -12,8 +17,6 @@ x <- conversion.circular(ac, units = "radians", zero = 0, rotation = "counter", 
 r = range.circular(x)
 
 conversion.circular(r,units="degrees",type="angles",modulo="asis",template="geographics",zero=0,rotation="clock")
-
-
 
 # plots
 plot.circular(c(0,1,2))

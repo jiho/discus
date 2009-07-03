@@ -1,9 +1,11 @@
 /*-----------------------------------------------------------------------
 
-    Manual tracking v2.0, 15/06/05
+    Manual tracking
 
-    Original plugin by Fabrice P Cordelières, fabrice.cordelieres at curie.u-psud.fr
-    Simplification by Jean-Olivier Irisson
+    Original plugin by
+        Fabrice P Cordelières, fabrice.cordelieres at curie.u-psud.fr
+
+    Modifications by Jean-Olivier Irisson, for DISCUS -- 2009
 
 -----------------------------------------------------------------------*/
 
