@@ -1,3 +1,11 @@
+Title: Angles and corrections
+CSS: doc_style.css
+Author: Jean-Olivier Irisson
+
+# Dealing with angles and circular corrections in DISCUS
+
+	(c) Copyright 2009 Jean-Olivier Irisson. GNU Free Documentation License
+
 ## Measure of angles
 
 The angles are measures either by the numerical compass or by converting positions from cardinal to polar coordinates using `car2pol` in `lib_circular_stat.R`. `car2pol` gives results from the horizontal in counter clockwise direction (i.e. trigonometric convention) but these can easily be converted to bearings using `conversion.circular` in the `circular` package for R.
@@ -67,7 +75,3 @@ The steps involved in getting the positons of the larva in cardinal coordinates 
 	* from above: do nothing, everything is good already
 
 	* from below: invert direction of measurement of angles _and_ compass
-	
-
-
-

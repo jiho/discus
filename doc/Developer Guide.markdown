@@ -1,4 +1,10 @@
+Title: Developer Guide
+CSS: doc_style.css
+Author: Jean-Olivier Irisson
+
 # Developer guide for DISCUS
+
+	(c) Copyright 2009 Jean-Olivier Irisson. GNU Free Documentation License
 
 The code is mostly
 
@@ -67,11 +73,3 @@ in another language, you usually see
 	llpy(data, function(x) { do something to x } )
 	
 in R. Plyr also has a good [introductory guide](http://had.co.nz/plyr/plyr-intro-090510.pdf "") written by its author.
-
-<br/>
-<br/>
-<br/>
-
-*Jean-Olivier Irisson* — 2009-07-02 15:22:54 
-
-`irisson@normalesup.org`

@@ -1,4 +1,10 @@
+Title: User Guide
+CSS: doc_style.css
+Author: Jean-Olivier Irisson
+
 # User documentation for DISCUS
+
+	(c) Copyright 2009 Jean-Olivier Irisson. GNU Free Documentation License
 
 DISCUS stands for DISC User Software, where DISC is Drifting In Situ Chamber. It is a set of scripts used to extract and analyse the data obtained with the DISC. It runs in a terminal, by writing down commands and executing them.
 
@@ -504,13 +510,3 @@ In addition, when bb calls other programs (ImageJ, R, etc.), most of their outpu
 * For R, search for `-slave` and replace it by `-vanilla`
 
 Hopefully, having to do that should not happen very often.
-
-<br/>
-<br/>
-<br/>
-  
-*Jean-Olivier Irisson* — 2009-07-02 15:22:54 
-
-`irisson@normalesup.org`
-
-
