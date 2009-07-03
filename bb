@@ -230,9 +230,12 @@ done
 #------------------------------------------------------------
 
 # Existence of commands
+
+# java is necessary for ImageJ
 javaCmd=$(which java)
 status $? "Java not found. Please install a Java JRE"
 
+# test if ImageJ is installed
 ijPath=$RES/imagej/
 if [[ ! -e $ijPath/ij.jar ]]; then
 	error "ImageJ not found"
@@ -240,15 +243,15 @@ if [[ ! -e $ijPath/ij.jar ]]; then
 	exit 1
 fi
 
+# R is used for the correction and statistics
 R=$(which R)
 status $? "R not found. Please install it,\ntogether with packages ggplot2 and circular."
 
-sed=$(which sed)
-status $? "sed not found. Check your PATH."
-
+# rsync is used to move data back and forth between working and storage directories
 rsync=$(which rsync)
 status $? "rsync not found. Check your PATH."
 
+# exiftool is used to read the metadata (time, exposure, etc...) in pictures
 exiftool=$(which exiftool)
 status $? "exiftool not found. Please install it\nhttp://www.sno.phy.queensu.ca/~phil/exiftool/"
 
