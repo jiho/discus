@@ -62,7 +62,7 @@ error() {
 #	status [return_code] [message_on_failure]
 # Check the exit status
 status() {
-	if (( ${1})) ; then
+	if (( ${1} )) ; then
 		#NB: (( ... )) tests whether ... is different from zero
 
 		# print an error message
