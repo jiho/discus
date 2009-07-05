@@ -109,7 +109,7 @@ if (file.exists("compass_log.csv")) {
 	compassSource = "manual"
 
 	# remove possible duplicates
-	trackCompass = trackCompass[!duplicated(t$imgNb, fromLast=T),]
+	trackCompass = trackCompass[!duplicated(trackCompass$imgNb, fromLast=T),]
 
 	# compute the time associated with each image
 	# this can be different from those in the tracks since we can subsample the compass and the track at a different interval
