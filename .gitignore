@@ -1,6 +1,7 @@
 # Special files
 ._*
 *~
+*.tmproj
 # Java files
 src/imagej/ij.jar
 # Result formats of the documentation (we only keep the Markdown source)
