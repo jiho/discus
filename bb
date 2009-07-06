@@ -586,7 +586,6 @@ EOF
 
 		status $? "ImageJ exited abnormally"
 
-		echo "Save compass coordinates"
 		manual_track compass_track.txt coord_compass.txt
 	fi
 
