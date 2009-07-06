@@ -48,7 +48,6 @@ tracks = read.table("tracks.csv", header=TRUE, sep=",")
 tracks$theta = circular(tracks$theta, units="degrees", template="geographics")
 tracks$compass = circular(tracks$compass, units="degrees", template="geographics")
 tracks$heading = circular(tracks$heading, units="degrees", template="geographics")
-# NB: we might need them as regular angles = in radians, measured from zero in counter clockwise direction, because bearings seem to cause issues (in particular with range.circular)
 
 # set the class of times
 options("digits.secs" = 1)
@@ -65,17 +64,23 @@ nbTracks = length(tracks)
 
 # Compute positions statistics
 p = ldply(tracks, function(t, ...){
-	pp = ldply(t, function(x, ...){circ.stats(x$theta, x$exactDate, ...)}, ...)
+	pp = ldply(t, function(x, ...){
+		# check the function circ.stats in lib_circular_stats.R for more details
+		circ.stats(x$theta, x$exactDate, ...)
+	}, ...)
+	# convert the first column into a boolean telling whether the track is corrected or not
 	names(pp)[1] = "correction"
 	pp$correction = as.logical(as.character(pp$correction))
+	# for uncorrected tracks, suppress the mean angle, which is meaningless (they are not in cardinal reference)
 	pp[ ! pp$correction, "mean"] = NA
 	return(pp)
 }, subsampleTime=subsampleTime)
 names(p)[1] = "trackNb"
+# set the kind of measurements on which we performed the stats
 p$kind = "position"
 
 # Compute direction statistics
-# compute a speed threshold under which the movement is discarded because it could be in great part du to error of measure
+# compute a speed threshold under which the movement is discarded because it could be in great part due to error of measure
 # remove speed which are potentially more than 1/4 of random noise
 minSpeed = 0.4
 # the min speed is chosen this way:
@@ -85,16 +90,18 @@ d = ldply(tracks, function(t, ...){
 	# create a filter for speeds
 	# NB: it is based on the uncorrected tracks only since the speed are only real in that case
 	idx = t["FALSE"][[1]]$speed > minSpeed
-	# compute stats only on filtered value
+	# compute stats only on filtered values
 	pp = ldply(t, function(x, idx, ...){
 		x = x[!is.na(idx) & idx, ]
-		# if there are no speeds, skip the computation of stats
 		if (nrow(x) == 0) {
+			# if there are no speeds, skip the computation of stats
 			return(c(mean=NA))
 		} else {
+			# else call circ.stats
 			return(circ.stats(x$heading, x$exactDate, ...))
 		}
 	}, idx=idx, ...)
+	# similarly to above, remove mean angle for uncorrected tracks
 	names(pp)[1] = "correction"
 	pp$correction = as.logical(as.character(pp$correction))
 	pp[ ! pp$correction, "mean"] = NA
@@ -117,16 +124,16 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 	# merge the two data.frames
 	t = do.call("rbind", t)
-	# make nicer labels for correction
+	# make nicer labels for correction (original, corrected instead of TRUE, FALSE)
 	t$correction = factor(t$correction, levels=c(FALSE,TRUE), labels=c("original","corrected"))
-	# compute time since start
+	# compute time since start, in seconds
 	t$time = as.numeric(t$date-min(t$date, na.rm=T))
 
-	# prepare a container for plots
+	# prepare a ggplot container for plots
 	ggplots = list()
 
-	# detect the number of successive images to plot appropriate plots
-	# = if there are no successive images (usually because of resampling) there is no point in plotting trajectory or computing speeds
+	# detect the number of successive positions, to plot appropriate plots
+	# = if there are no successive images (usually because of resampling) there is no point in plotting trajectories or displaying speeds
 	# we only need one of the two tracks
 	x = t[t$correction=="original", ]
 	successive = is.na(x$date) + is.na( c(NA, x$date[-nrow(x)]) )
@@ -136,16 +143,16 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 
 	# Compass readings
-	# (for one track only: the compass track is the same)
+	# (for one track only: the compass readings are the same in the original and corrected tracks)
 	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) + opts(axis.text.x=theme_blank())
 	# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
-	# the labels are suppressed because there is no actual North there: we actually track the North!
+	# the labels are suppressed because there is no actual North there: we track the North!
 	ggplots = c(ggplots, list(compass))
 
 
 	# Trajectory
+	# (plotted only if there are at least 2 successive positions)
 	if (successive > 0) {
-		# (plotted only if there are at least 2 successive positions)
 		radius = aquariumDiam/2
 		traj = ggplot(t) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + facet_grid(~correction) + opts(title="Trajectory")
 		# TODO add a circle around
@@ -209,15 +216,19 @@ cat("Plotting each track\n")
 
 # Plot to PDF file
 for (name in names(tracks)) {
-	# reduce the number of hierachy levels to ease plotting
+	# reduce the number of list levels to ease plotting
 	p = unlist(plots[name], F)
+	# determine the file name(s) for the output PDF file
 	if (nbTracks > 1) {
 		filename = paste("plots-",name,".pdf",sep="")
 	} else {
 		filename="plots.pdf"
 	}
+	# open the PDF file and print the plots in it
 	pdf(file=filename, width=7, height=5, pointsize=10)
+	# set a theme with smaller fonts and grey background
 	theme_set(theme_gray(10))
 	dummy = l_ply(p, print, .progress="text")
+	# close PDF file
 	dummy = dev.off()
 }

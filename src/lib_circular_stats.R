@@ -51,7 +51,7 @@ car2pol <- function (incar, orig=c(0,0))
 # Translates from cardinal to polar coordinates
 #	incar		matrix or data frame with columns [x,y]
 #	orig		vector with the x,y coordinates of the origin
-# Result: a matrix or data.frame with columns [theta,rho], with theta in radians
+# Result: a matrix or data.frame with columns [theta,rho], with theta in radians and rho in the same unit as the input x and y
 #
 {
 	# Makes the coordinates relative to the origin
@@ -85,7 +85,7 @@ pol2car <- function (inpol, orig=c(0,0))
 # Translates from polar to cardinal coordinates
 #	inpol		a matrix or data.frame with columns [theta,rho], with theta of class circular or in trigonometric reference
 #	orig		vector with the x,y coordinates of the origin
-# Result: a matrix or data.frame with columns [x,y]
+# Result: a matrix or data.frame with columns [x,y] in the same unit as rho
 #
 {
 	# Initiate incar
@@ -121,13 +121,14 @@ pol2car <- function (inpol, orig=c(0,0))
 approx.circular <- function(x, angles, xout, ...)
 #
 # "Linearly" interpolates angles along a circle
-#	x			coordinates/reference of the angles to be interpolated
+#	x			"coordinates" (e.g. time of measurement) of the angles to be interpolated
 #	angles	angles to be interpolated, of class circular or in trigonometric reference
-#	xout		coordinates/reference where the interpolation should take place
+#	xout		"coordinates" where the interpolation should take place
 #	...		passed to approx
 #
 {
 	# Get circular characteristics of the angles object if it is of class circular
+	# so that we can set them back on the resulting angles
 	if (is.circular(angles)) {
 		a = attributes(angles)$circularp
 	}
@@ -142,7 +143,7 @@ approx.circular <- function(x, angles, xout, ...)
 	# Convert back in polar coordinates
 	inpol = car2pol(data.frame(xInterp$y, yInterp$y))
 
-	# Convert the angles to the same circular attributes
+	# Convert the resulting angles to the same circular attributes
 	if (is.circular(angles)) {
 		inpol$theta = conversion.circular(inpol$theta, type=a$type, units=a$units, template=a$template, modulo=a$modulo, zero=a$zero, rotation=a$rotation)
 	}
@@ -160,13 +161,14 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 #
 #	angles				vector of angles, in circular format
 #	times					vector of times at which these angles are recorded
-#	subsampleTime		interval (in seconds) at which to resample data to assume the points to be independant. If the data is aleady sampled at an interval >= subsample.interval then simple statistics are computed. Otherwise, the data provided is  "bootstrapped"
+#	subsampleTime		interval (in seconds) at which to resample data to make the points independents. If the data is already sampled at an interval >= subsampleTime then mo subsampling is performed. Otherwise, the data provided is "bootstrapped"
 #
-#	Value
+#	Result
 #	a data.frame with columns
 #		n			sample size
 #		mean		mean angle
-#		variance, sd	angular variance, standard deviation
+#		resample.lag	resampling interval
+#		variance	angular variance
 #		R			Rayleigh R
 #		p.value	Rayleigh's test p-value
 #
@@ -189,10 +191,10 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 
 	# From this point we do different things depending whether we have a sample of independent data or not:
 	# - if mean time between images is long, then images were subsampled and the records are independent already
-	# - if mean time between images is short, then records are not independant and need to be subsampled
+	# - if mean time between images is short, then records are not independent and need to be subsampled
 
 	if ( mean(diff(t$exactDate)) > subsampleTime ) {
-		# we have independant records already, just perform simple tests
+		# we have independent records already, just perform simple tests
 
 		# rayleigh test
 		rayleigh = rayleigh.test(t$theta)
@@ -212,9 +214,9 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 		return(data.frame(n, mean, resample.lag=NA, variance, R, p.value=p))
 
 	} else {
-		# the samples are not independant, so we resample independant samples with intervals of subsampleTime
+		# the samples are not independent, so we resample independent samples with intervals of subsampleTime
 
-		# the the validity of the subsampling interval
+		# check the validity of the subsampling interval
 		if (n/subsampleTime < 10) {
 			warning("\n  Subsampling positions will result in less than 10 records.\n  You are advised to decrease the subsampling interval with -psub.\n", immediate.=TRUE, call.=FALSE)
 
@@ -223,8 +225,6 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 			}
 		}
 
-
-
 		# time of the last record, we can't go beyond that
 		lastRecord = t$exactDate[n]
 
@@ -232,6 +232,7 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 		stats = list()
 
 		# loop on successive lags until we reach the the first sample
+		# e.g. if the resample lag is 10, compute stats for 1, 11, 21, 31... then 2, 12, 22, 32... until 10, 20, 30, 40... and then stop (we already used 11, 21, 31, etc.)
 		i=1
 		startTime = t$exactDate[1]
 		while ( startTime < t$exactDate[1]+subsampleTime ) {
@@ -254,10 +255,10 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 			i = i+1
 		}
 
-		# compute mean statistic and p-value
+		# compute variance of the mean angle for all lags
 		variance = var.circular(stats$mean)
 
-
+		# compute mean values for the statistics (R, p.value etc.)
 		return(data.frame(n=round(mean(stats$n)), mean, resample.lag=subsampleTime, variance, R=mean(stats$R), p.value = mean(stats$p.value)))
 	}
 }

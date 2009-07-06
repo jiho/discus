@@ -24,7 +24,7 @@
 #    cyan     36          46
 #    white    37          47
 
-# echo in bold characters
+# write a message to the standard output in bold characters
 echoBold () {
 	echo -e "\e[1m$1\e[0m"
 }
@@ -32,17 +32,17 @@ echoB () {
 	echoBold "$*"
 }
 
-# echo in red
+# write a message to the standard output in red
 echoRed() {
 	echo -e "\e[0;31m$1\e[0m"
 }
 
-# echo in green
+# write a message to the standard output in green
 echoGreen() {
 	echo -e "\e[0;32m$1\e[0m"
 }
 
-# echo in blue
+# write a message to the standard output in blue
 echoBlue() {
 	echo -e "\e[0;34m$1\e[0m"
 }
