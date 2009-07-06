@@ -183,7 +183,6 @@ until [[ -z "$1" ]]; do
 			shift 1 ;;
 		all)
 			CALIB=TRUE
-			TRACK_COMP=TRUE
 			TRACK_LARV=TRUE
 			CORR=TRUE
 			STATS=TRUE
