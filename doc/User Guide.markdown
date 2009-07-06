@@ -52,22 +52,69 @@ in a terminal and if no warnings are issued then you should be all set. Otherwis
 
 
 
-## Data organisation
+## Data access and storage
 
-The data collected with the DISC should be in one "working directory" containing only *numbered* folders, one per deployment, i.e. a folder `work` in your home directory containing folders `1`, `2`, `3` etc.
+### Input files
 
-In each deployment folder, DISCUS should find a source of data, either:
+The data collected with the DISC should be in one "working directory" containing only *numbered* folders, one per deployment, i.e. a folder `work` in your home directory containing folders `1`, `2`, `3` etc. Actions read data from and save their result to files within each deployment directory.
 
-* a video file, called `video_hifi.mov`
-* a set of pictures in jpeg format, named in sequence (e.g. 234.jpg, 235.jpg, 236.jpg, etc.) inside a directory called `pics`
+The DISC produces daily recordings of data. They comprise a source of visual information, which can be
+
+* a video recording, on a tape
+* a set of pictures in jpeg format, named in sequence according to the settings of the camera. Usually that means split in folders of 1000 images with the a hierarchy such as `DCIM/100ND70S/DSC_0001.JPG`, `DCIM/100ND70S/DSC_0002.JPG`, ... , `DCIM/101ND70S/DSC_0001.JPG`, etc.
 
 and then possibly
 
 * a log of the numerical compass called `compass_log.csv`
-* a gps log called `gps_log.txt`
-* a log of the Starr-Oddi mini-CTD called `ctd_log.csv`
+* a GPS log in binary format in `gps_log.tsf` and in ASCII format in `gps_log.csv`
+* a log of the Starr-Oddi mini-CTD, in binary format in the folder `ctd` and in ASCII format in `ctd_log.dat`
 
-An R script is provided outside of DISCUS to automatically split the daily recordings into this configuration. Otherwise, pictures can be moved manually into the correct folder and logs created by copying and pasting from the complete daily log.
+The format of those files should be mostly self explanatory and is detailed in the instructions for each instrument so it is not explained here.
+
+Those daily logs should be split per deployment, in deployments folders. In each folder, DISCUS needs to find at least a source of data (video or pictures) and possibly some compass, GPS, and CTD information. The format of those files is described hereafter. An R script is provided outside of DISCUS to automatically split the daily recordings into deployment folders. Otherwise, pictures/video can be moved manually into the correct folder and logs created by copying and pasting from the complete daily log.
+
+#### Video or pictures
+
+The video file is called `video_hifi.mov` and can be any Quicktime file encoded with a codec readable by MPlayer (that is, almost any file). The H.264 codec has become standard for high quality yet high compression rate video.
+
+The pictures are JPEG files extracted from the video or coming straight of the camera. They are assigned (by the camera or by the video extraction process) [EXIF data](http://en.wikipedia.org/wiki/Exchangeable_image_file_format "Exchangeable image file format - Wikipedia, the free encyclopedia") to store their time stamp. The should be stored in a folder called `pics` and numbered sequentially (`1.jpg`, `2.jpg`,`3.jpg`, etc.) not necessarily starting at 1 (`323.jpg` is a valid first picture, as long as the second is `324.jpg`).
+
+#### Compass
+
+The numerical compass log is a Comma Separated Value file: `compass_log.csv`. The compass can be configured to log many different variables. In our configuration it contains the columns:
+
+* **timestamp** : time in seconds since the compass was plugged in
+* **heading** : in degrees
+* **pitch** : in degrees
+* **roll** : in degrees
+* **x/y/zmag** : components of the magnetic field
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+
+The date has to be computed when splitting the daily log into deployment level ones since the compass itself only outputs a timestamp. To do that, the date is recomputed by adding the timstamp (number of seconds since startup) to the start date and time for the day.
+
+#### CTD
+
+The CTD logs data in a CSV file: `ctd_log.csv`, with columns
+
+* **record** : sequential record number
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+* **temperature** : in degrees C
+* **depth** : in m
+* **salinity** : in psu
+
+The original daily CTD logs has the same columns but a different layout and header.
+
+#### GPS
+
+The GPS logs data in a CSV file: `gps_log.csv`, with columns
+
+* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
+* **lat/lon** : in decimal degrees
+* **signal** : signal strength
+
+The original daily GPS log has many more columns, most of which are useless here and can be discarded when splitting the data into the deployment level logs.
+
+### Storage
 
 Optionally, the data can be mirrored between this working directory and a storage directory. For example, the storage directory can be on a large, backed-up drive, and contain all deployments while the working directory is on a small, fast drive on which just a few deployments are copied (this is our own setup). The storage directory can also be used as a backup, a source of data for which the analysis is finished and confirmed etc. Its only requirement is to be mounted on the machine and be accessible from the command line. So NFS/Samba/FUSE shares are OK, but must be explicitly mounted somewhere, e.g. in `/media` or `/mnt`.
 
@@ -391,54 +438,6 @@ Finally, the frequency distribution of swimming speeds, in cm s<sup>-1</sup>, is
 
 **NOTA BENE** When positions are subsampled, the trajectory, swimming directions, and speeds cannot be computed and the associated graphs are not produced.
 
-
-
-## Data structure and results
-
-Most actions read data and save their result in files within the deployment directory. Those files are mostly ASCII text files, that can be opened with any text editor on any system.
-
-### Input files
-
-#### Pictures or video
-
-The video file is called `video_hifi.mov` and can be any Quicktime file encoded with a codec readable by MPlayer (that is, almost any file). The H.264 codec has become standard for high quality yet high compression rate video.
-
-The pictures are JPEG files extracted from the video or coming straight of the camera. They have or are assigned [EXIF data](http://en.wikipedia.org/wiki/Exchangeable_image_file_format "Exchangeable image file format - Wikipedia, the free encyclopedia") to store their time stamp.
-
-#### Compass
-
-The numerical compass log is a Comma Separated Value file: `compass_log.csv`. The compass can be configured to log many different variables. In our configuration it contains the columns:
-
-* **timestamp** : time in seconds since the compass was plugged in
-* **heading** : in degrees
-* **pitch** : in degrees
-* **roll** : in degrees
-* **x/y/zmag** : components of the magnetic field
-* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
-
-The date has to be computed while splitting the daily log into deployment level ones since the compass itself only outputs a timestamp. Other than that, the data is identical to the daily log.
-
-#### CTD
-
-The CTD logs data in a CSV file: `ctd_log.csv`, with columns
-
-* **record** : sequential record number
-* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
-* **temperature** : in degrees C
-* **depth** : in m
-* **salinity** : in psu
-
-The original daily CTD logs has the same columns but a different layout and is in a file called `ctd_log.dat`.
- 
-#### GPS
-
-The GPS logs data in a CSV file: `gps_log.csv`, with columns
-
-* **date** : local date and time with the format YYYY-MM-DD HH:MM:SS
-* **lat/lon** : in decimal degrees
-* **signal** : signal strength
-
-The original daily GPS log has many more columns, most of which are useless here, hence discarded when splitting the data into the deployment level logs.
 
 ### Output files
 
