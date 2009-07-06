@@ -327,6 +327,8 @@ However, we need to know around which point the needle turns to compute bearings
 
 ![Compass Dialog](images/compass_dialog.png)
 
+The tip of the needle at the North and the center of the compass are both small targets and it is necessary to click them very precisely. Indeed the positions will then be converted to angles (headings) and the angular error can be large because the tip of the needle is relatively close to the center of rotation. Therefore, it is a good idea to *zoom in* on the image before clicking the center of the compass or tracking the North. Either use the menu item `Image > Zoom > In`, or the corresponding keyboard shortcut (Ctrl-+ on Linux, ⌘+ on Mac).
+
 ### Correcting tracks for rotation
 
 The trajectory of the larva is recorded in the reference of the instrument itself, in pixel coordinates. However we are not interest in whether the larva goes to the left of the right of the image by 20 pixels, but rather whether is goes West or East and at which speed in cm s<sup>-1</sup>.
