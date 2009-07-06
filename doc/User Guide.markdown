@@ -34,7 +34,7 @@ DISCUS requires the following software to run
 
 	* [ggplot2](http://had.co.nz/ggplot2/ "ggplot. had.co.nz")
 	* circular
-	
+
 They should be installed with the commands `install.packages("ggplot2")` and `install.packages("circular")` from within R.
 
 * a PDF reader (evince or xpdf on Linux, Preview on Mac OS X) to preview the plots
@@ -46,7 +46,7 @@ They should be installed with the commands `install.packages("ggplot2")` and `in
 DISCUS itself is self contained. So once the dependencies are installed it should work. DISCUS will check for the existence of the jar file of ImageJ and the commands in your <a href="http://en.wikipedia.org/wiki/Path_(variable)" title="PATH (variable) - Wikipedia, the free encyclopedia">PATH</a>. Just type
 
 	./bb
-	
+
 in a terminal and if no warnings are issued then you should be all set. Otherwise the error message should be informative enough.
 
 
@@ -130,7 +130,7 @@ DISCUS should be run from its root directory. The user should write `./bb` (whic
 The deployments can be specified as single numbers but also ranges and lists (hence the need for deployment folder names to be numeric only). So for example
 
 	./bb foo -joe 4.5 bar 3,5-8,1,32
-	
+
 would apply actions "foo" and "bar" with option "joe" set to 4.5 to deployments 1, 3, 5, 6, 7, 8, and 32.
 
 **Actions** cause DISCUS to do something: output a message, manipulate the data, copy or store data etc. They will be reviewed in sequence in the following sections.
@@ -161,11 +161,11 @@ Answering "yes" (or one of y, Y, YES, Yes) confirms the commit but, for each fil
 Perhaps the most important action of all: to reach DISCUS' built-in help, you should use the command
 
 	./bb help
-	
+
 or
 
 	./bb h
-	
+
 for short. It outputs something similar to:
 
 ![Help Message](images/help_message.png)
@@ -175,7 +175,7 @@ When the help action is specified anywhere on the command line, the rest is disc
 	./bb foo -joe 4.5 help bar 12
 	./bb -joe 4.5 foo bar 12 h
 	./bb h foo bar 12 -joe 4.5
-	
+
 are equivalent and would only show the help message and not set option "joe", nor execute actions "foo" and "bar".
 
 ### Setting up the workspace
@@ -218,13 +218,13 @@ Alternatively, you can see the status of the deployments in the storage director
 If you decided to use a storage directory, DISCUS includes two actions to move data back and forth between the working directory and the storage. For example
 
 	./bb get 12
-	
+
 Copies deployment 12 *from* the storage *to* the working directory. When the deployment already exists in the working directory, only the files that are different between storage and working directories are transfered. A list of such files is presented, asking for confirmation before doing the transfer. When some files that are newer in the working directory their equivalent in the storage directory are not considered for transfer to avoid overwriting new result files with old ones.
 
 Conversely
 
 	./bb store 12
-	
+
 copies deployment 12 *from* the working directory *to* the storage. The same behaviour occurs when the deployment already exists in the storage. In addition, it gives a warning when files exists only or are newer in the storage. This is a common scenario if several people share the storage directory and one has analysed and stored deployment 12 before you did.
 
 ### Extracting images from a video file
@@ -232,7 +232,7 @@ copies deployment 12 *from* the working directory *to* the storage. The same beh
 DISCUS works with still images. When the source of data is a video file, it extracts frames from it at a given interval. For example to extract one frame every two seconds from the video of deployment 12
 
 	./bb video -sub 2 12
-	
+
 The `video` action can be abbreviated `v`. The `sub` options sets the subsample rate (1 frame per second by default). The video file has a given number of frames per second and the subsample rate is recomputed to coincide with an integer number of frames. DISCUS informs you of the result which is usually pretty close to what you requested.
 
 ### Stabilizing images
@@ -240,15 +240,15 @@ The `video` action can be abbreviated `v`. The `sub` options sets the subsample 
 In videos in particular, the images can be shaky. The aquarium needs to be at the exact same location on every image for larvae positions to be accurate. The command
 
 	./bb stab 12
-	
+
 opens all the images of deployment 12, computes the movement relative to the first frame and translates all images so that they are aligned with the first frame.
 
 ### Getting calibration data
 
 Measuring things on the images gives coordinates in terms of pixels while we are interested in real world positions within the aquarium. So we need to detect the aquarium on the images. The command
-	
+
 	./bb cal 12
-	
+
 opens the first frame of deployment 12 in ImageJ and draws a circle on it.
 
 ![Calib Frame Before](images/calib_frame_before.png)
@@ -271,7 +271,7 @@ causes ImageJ to take some measurements, save them, and close itself.
 The detection of the larva on each frame is manual. The interface is provided by ImageJ and the command
 
 	./bb larva -sub 10 12
-	
+
 opens a stack (a sequence) of slices (images, frames) for deployment 12, ready for tracking. The option `sub` subsamples one image every 10 seconds instead of opening all of them. Positions at one or two seconds interval are not statistically independent and need to be subsampled at the time of their statistical analysis anyway. So when you are interested in positions only, it makes sense to subsample them directly from here, hence reducing the number of clicks necessary to track the larva. Note that it will prevent the computation of swimming speeds and directions.
 
 You can navigate through the stack using the arrows and the slider at the bottom of the window as well as the keys `<` (previous slice) and `>` (next slice).
@@ -299,7 +299,7 @@ It records:
 * **trackNb** : the current track number
 * **sliceNb** : the current slice in the stack
 * **imgNb** : the name of the associated image
-* **x,y** : and the coordinates of the click, in pixels from the bottom left corner of the window. 
+* **x,y** : and the coordinates of the click, in pixels from the bottom left corner of the window.
 
 After each click, the stack moves to the next slice, waiting for another click.
 
@@ -338,7 +338,7 @@ Because the instrument rotates, we have to correct for the rotation to access th
 When using the numerical compass, you need to specify the angle between the top of the picture and the direction in which the numerical compass points. To know more about the subject and to know how to compute this angle, please read the "Angles and corrections" document. The angle is then supplied with the parameter `angle`
 
 	./bb -angle 88.3 correct 12
-	
+
 and since it is a parameter, it only has to be specified once unless the camera or the numerical compass are moved relative to each other.
 
 When using a manual compass track, the `angle` parameter is just discarded. Furthermore, without the roll information from the numerical compass, it is impossible to determine whether the camera was above or below the aquarium. Yet, this has consequences in terms of the direction in which the compass appears to be pointing (see the "Angles and corrections" document for details). Therefore, DISCUS asks about that
@@ -346,8 +346,8 @@ When using a manual compass track, the `angle` parameter is just discarded. Furt
 	Which was the configuration of the instrument:
 	1) the camera was ABOVE the arena
 	2) the camera was BELOW the arena
-	? 
-	
+	?
+
 and you should type 1 or 2 (anything else causes DISCUS to keep asking).
 
 In addition, DISCUS uses the coordinates of the aquarium recorded in the calibration step to convert pixels to real-world coordinates. So you need to supply the real-world diameter of the aquarium, in cm, with the parameter `diam`
@@ -470,7 +470,7 @@ After correction by `correct`, the corrected track is saved in `tracks.csv`. It 
 * **speed** : swimming speed in cm s<sup>-1</sup>
 
 Unavailable values are marked as NA.
- 
+
 #### Statistics and plots
 
 The action `stats` stores the statistic table in `stats.csv` and the plots in `plots.pdf`. The content and purpose of both were already described above.
@@ -501,7 +501,7 @@ This prints "This is a debugging message" (without the quotes) in the terminal w
 In addition, when bb calls other programs (ImageJ, R, etc.), most of their output is masked for cleanness. You can modify the code to show it:
 
 * For ImageJ, search for constructs such as
-	
+
 		> /dev/null 2>&1
 
 	and suppress them.

@@ -27,7 +27,7 @@ Most of the code was written while consulting the [Advanced Bash Scripting Guide
 Within the Bash code there are calls to Unix utilities that have their own syntax such as `awk`, `grep`, `sed`, etc. All of them are thoroughly documented in their respective man pages. So one should type
 
 	man awk
-	
+
 to open the manual page for `awk`. The man pages are displayed by `less` and the navigation follows its conventions. In particular arrows move up and down, space moves one page down, and search is activated by `/`. So you should type `/foo` to search for "foo" and highlight it in the man page, then press `n` to go the next match and `N` to go to the previous one. See
 
 	man less
@@ -37,11 +37,11 @@ for details.
 Of particular interest and complexity are regular expressions which allow to match virtually any combination of characters in any file and which are used here and there in the code. A good starting reference is in the [dedicated chapter](http://tldp.org/LDP/Bash-Beginners-Guide/html/chap_04.html "") of the Bash Guide for Beginners, or the appropriate section of the man page for `grep`
 
 	man grep
-	
+
 which also refers to
 
 	man re_format
-	
+
 for a more in depth description of the format.
 
 ### Java
@@ -57,7 +57,7 @@ The most complex parts of DISCUS are probably in the R code, merely reflecting t
 There is no point, however, in spending time on the usual statistical methods since all the statistics used here are non-standard circular statistics. For those consult the help of the R package "[circular](http://cran.r-project.org/web/packages/circular/index.html "CRAN - Package circular")" which is used to compute the circular statistics here, by issuing the command
 
 	help(package="circular")
-	
+
 within R. In particular it references the book "[Topics in circular Statistics](http://www.amazon.com/Topics-Circular-Statistics-Rao-Jammalamadaka/dp/9810237782 "Amazon.com: Topics in Circular Statistics: S. Rao Jammalamadaka, A. Sengupta: Books")" (2001) S. Rao Jammalamadaka and A. SenGupta, World Scientific.
 
 Similarly, none of the base plotting methods of R are used and all plotting is done through the much more powerful package "[ggplot2](http://had.co.nz/ggplot2/ "ggplot. had.co.nz")". The help on the website is really well done and a [book](http://www.amazon.com/gp/product/0387981403?ie=UTF8&amp;tag=hadlwick-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=0387981403 "Amazon.com: ggplot2: Elegant Graphics for Data Analysis (Use R): Hadley Wickham: Books") by the author of the package is in production.
@@ -68,8 +68,8 @@ Finally, an important characteristic of R is that it is more of a functional lan
 		do something to data[i]
 	}
 
-in another language, you usually see 
+in another language, you usually see
 
 	llpy(data, function(x) { do something to x } )
-	
+
 in R. Plyr also has a good [introductory guide](http://had.co.nz/plyr/plyr-intro-090510.pdf "") written by its author.
