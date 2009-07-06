@@ -73,13 +73,13 @@ fi
 
 # Parameters: stick from one deployment to the next
 # ImageJ memory, in mb (should not be more than 2/3 of available physical RAM)
-ijMem=1000
+mem=1000
 # aquarium boundary coordinates
 aquariumBounds="10,10,300,300"
 # angle between the top of the picture and the forward direction of the compass
-cameraCompassAngle=90
+angle=90
 # diameter of the aquarium, in cm
-aquariumDiam=40
+diam=40
 # root directory containing directories for all deployments (workspace)
 work=$HERE
 # storage directory containing directories for all deployments (photo source and backup)
@@ -117,9 +117,9 @@ sub=1
 # subsample positions each 'psub' seconds for the statistical analysis, to allow independence of data
 psub=5
 # whether to display plots or not after the statistical analysis
-displayPlots=FALSE
+display=FALSE
 # use the storage directory status rather than the data directory
-storageStatus=FALSE
+s=FALSE
 # whether the camera is looking up at the arena
 lookingUp=FALSE
 
@@ -143,7 +143,7 @@ until [[ -z "$1" ]]; do
 			STATUS=TRUE
 			shift 1 ;;
 		-s)
-			storageStatus=TRUE
+			s=TRUE
 			shift 1 ;;
 		v|video)
 			VIDEO=TRUE
@@ -189,7 +189,7 @@ until [[ -z "$1" ]]; do
 			ACT=TRUE
 			shift 1 ;;
 		-d|-display)
-			displayPlots=TRUE
+			display=TRUE
 			shift 1 ;;
 		-sub)
 			sub="$2"
@@ -198,16 +198,16 @@ until [[ -z "$1" ]]; do
 			psub="$2"
 			shift 2 ;;
 		-diam)
-			aquariumDiam="$2"
-			write_pref $configFile aquariumDiam
+			diam="$2"
+			write_pref $configFile diam
 			shift 2 ;;
 		-a|-angle)
-			cameraCompassAngle="$2"
-			write_pref $configFile cameraCompassAngle
+			angle="$2"
+			write_pref $configFile angle
 			shift 2 ;;
 		-m|-mem)
-			ijMem="$2"
-			write_pref $configFile ijMem
+			mem="$2"
+			write_pref $configFile mem
 			shift 2 ;;
 		-storage)
 			storage="$2"
@@ -265,12 +265,12 @@ if [[ ( $GET == "TRUE" || $STORE == "TRUE" ) && $storage == "" ]]; then
 	exit 1
 fi
 
-if [[ $STATUS == "TRUE" && $storageStatus == "TRUE" && $storage == "" ]]; then
+if [[ $STATUS == "TRUE" && $s == "TRUE" && $storage == "" ]]; then
 	error "Status of the storage directory requested but no storage directory specified\n  please use the -storage parameter"
 	exit 1
 fi
 
-if [[ ( ( $GET == "TRUE" || $STORE == "TRUE" ) || ( $STATUS == "TRUE" && $storageStatus == "TRUE" ) ) && ! -d $storage ]]; then
+if [[ ( ( $GET == "TRUE" || $STORE == "TRUE" ) || ( $STATUS == "TRUE" && $s == "TRUE" ) ) && ! -d $storage ]]; then
 	error "Storage directory\n  $storage\n  does not exist"
 	exit 1
 fi
@@ -282,7 +282,7 @@ fi
 # If status is requested, print first and exit
 if [[ $STATUS == "TRUE" ]]; then
 	echoBlue "DATA SUMMARY"
-	if [[ $storageStatus == "TRUE" ]]; then
+	if [[ $s == "TRUE" ]]; then
 		echo "for $storage"
 		data_status $storage
 	else
@@ -542,7 +542,7 @@ EOF
 		# - use waitForUser to let the time for the user to track larvae
 		# - save the tracks to an appropriate file
 		# - quit
-		$javaCmd -Xmx${ijMem}m -jar ${ijPath}/ij.jar      \
+		$javaCmd -Xmx${mem}m -jar ${ijPath}/ij.jar      \
 		-ijpath ${ijPath}/plugins/ -eval "                \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
@@ -680,7 +680,7 @@ EOF
 
 		# correct larvae tracks and write output in tracks.csv
 		echo "Correcting..."
-		( cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${cameraCompassAngle} ${lookingUp} < correct_tracks.R )
+		( cd $RES && R -q --slave --args ${tmp} ${diam} ${angle} ${lookingUp} < correct_tracks.R )
 
 		status $? "R exited abnormally"
 
@@ -704,12 +704,12 @@ EOF
 			exit 1
 		fi
 
-		(cd $RES && R -q --slave --args ${tmp} ${aquariumDiam} ${psub} < stats.R)
+		(cd $RES && R -q --slave --args ${tmp} ${diam} ${psub} < stats.R)
 
 		status $? "R exited abnormally"
 
 		# Display the plots in a PDF reader
-		if [[ $displayPlots == "TRUE" ]]; then
+		if [[ $display == "TRUE" ]]; then
 			pdfReader=""
 			if [[ $(uname) == "Darwin" ]]; then
 				# on Mac OS X use "open" to open wih the default app associated with PDFs
