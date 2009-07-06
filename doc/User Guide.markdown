@@ -440,7 +440,7 @@ The GPS logs data in a CSV file: `gps_log.csv`, with columns
 
 The original daily GPS log has many more columns, most of which are useless here, hence discarded when splitting the data into the deployment level logs.
 
-## Output files
+### Output files
 
 #### Aquarium coordinates
 
