@@ -193,7 +193,7 @@ data_status() {
 
 #
 # USAGE
-#	sync_data [data_directory] [storage_directory] [deployment_id]
+#	sync_data [data_directory] [storage_directory] action [deployment_id]
 # Synchronize data between data and storage directories/drives
 #
 sync_data() {

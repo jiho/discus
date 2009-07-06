@@ -36,7 +36,7 @@ lookingUp = args[4]
 setwd(prefix)
 
 
-## Read and reformat larve tracks
+## Read and reformat larvae tracks
 #------------------------------------------------------------
 
 # larvae tracks are recorded from ImageJ "Manual tracking"
@@ -62,6 +62,7 @@ tracks = llply(tracks, function(t){
 	images = t$imgNb
 
 	# for each read the exact time with split seconds with exiftool
+	# the 'system' allows to access the shell, hence access exiftool
 	picTimes = system(paste("exiftool -T -p '$CreateDate.$SubsecTime' ", paste("../pics/",images,".jpg", sep="", collapse=" "), sep=""), intern=TRUE)
 	options("digits.secs" = 2)
 	picTimes = as.POSIXct(strptime(picTimes, format="%Y:%m:%d %H:%M:%OS"))
@@ -205,6 +206,7 @@ for (l in 1:nbTracks) {
 	colNames = c("trackNb", "sliceNb", "imgNb", "exactDate", "date", "x", "y", "theta", "rho", "compass")
 	t = t[,colNames]
 	tCor = tCor[,colNames]
+	# add a column that tells whether the track is corrected or not
 	t$correction=FALSE
 	tCor$correction=TRUE
 

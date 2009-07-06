@@ -231,7 +231,7 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 		# storage for test results
 		stats = list()
 
-		# loop on succesive lags until we reach the the first sample
+		# loop on successive lags until we reach the the first sample
 		i=1
 		startTime = t$exactDate[1]
 		while ( startTime < t$exactDate[1]+subsampleTime ) {
