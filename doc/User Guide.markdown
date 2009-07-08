@@ -159,7 +159,7 @@ The columns are
 * **ctd**: presence of the CTD log, marked by a `*`
 * **cal**: calibration step executed, marked by a `*`
 * **trk**: status of the larval tracks, can be empty (no tracks), `raw` (tracking step executed by track not yet corrected), or `*` (larvae tracked and tracks corrected)
-* **sub**: subsample interval in number of images
+* **lag**: time difference between two positions on the track, in seconds
 * **sta**: statistics computed, marked by a `*`
 
 Alternatively, you can see the status of the deployments in the storage directory by adding the option `-s`

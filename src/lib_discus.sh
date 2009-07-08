@@ -129,7 +129,7 @@ commit_changes() {
 data_status() {
 	work=$1
 
-	echo -e "\n\e[1mdepl img   com gps ctd   cal trk sub sta\e[0m"
+	echo -e "\n\e[1mdepl img   com gps ctd   cal trk lag sta\e[0m"
 
 	for i in `ls -1 $work/ | sort -n`; do
 
@@ -177,23 +177,39 @@ data_status() {
 		else
 			echo -n "    "
 		fi
-		# get the subsample rate
-		if [[ -e $work/$i/larvae_track.txt ]]; then
-			# read the first few lines, remove the header and select 4th column 
-			# = the image number
-			imgNbs=$(head -n 5 $work/$i/larvae_track.txt | sed \1d | awk -F "\t" {'print $4'})
-			# make a list of images
-			images=$(echo $imgNbs | awk {'OFS=""; print "\"",$1,".jpg\",\"",$2,".jpg\",\"",$3,".jpg\",\"",$4,".jpg\""'})
-			interval=$(R -q --slave << EOF
-				# get the time functions
-				source("src/lib_image_time.R")
-				# go to the directory where the images are
-				setwd("${work}/${i}/pics")
-				# compute time lapse and send it to standard output
-				cat(time.lapse.interval(c(${images})))
+		# get the lag between images in seconds
+
+		# when the corrected track is available, use the times there
+		if [[ -e $work/$i/tracks.csv ]]; then
+			# with R read the corrected tracks and compute average time difference
+			R -q --slave << EOF
+				# read only the beginning of the file to speed things up
+				t = read.table("${work}/${i}/tracks.csv", header=T, sep=",", as.is=T, nrows=100)
+				# set the correct time class and remove missing values
+				imgTimes = as.POSIXct(na.omit(t\$date))
+				# compute the average time difference
+				cat(sprintf("%4i",round(mean(diff(imgTimes)))))
 EOF
-)
-			echo -n $interval
+
+		# otherwise fall back on the uncorrected track
+		# but in this case times have to be extracted from the image files
+		elif [[ -e $work/$i/larvae_track.txt ]]; then
+			# read the track, get the numbers of the images on which a larva was detected
+			# select the first 3 lines, remove the header, and select 4th column
+			imgNbs=$(head -n 3 $work/$i/larvae_track.txt | sed \1d | awk -F "\t" {'print $4'})
+			# this selects only the first 2 images but using more slows things down when exiftool reads the creation date
+
+			# re-construct the full paths to images
+			images=$(echo $imgNbs | awk '{OFS=""; print pics,$1,".jpg ",pics,$2,".jpg"}' pics="${work}/${i}/pics/")
+
+			# compute the time difference in R
+			R -q --slave << EOF
+				# get images capture times with exiftool
+				imgTimes = system("exiftool -T -CreateDate ${images}", intern=T)
+				# compute the time difference
+				imgTimes = as.POSIXct(imgTimes,format="%Y:%m:%d %H:%M:%S")
+				cat(sprintf("%4i",as.numeric(diff(imgTimes))))
+EOF
 		else
 			echo -n "    "
 		fi
