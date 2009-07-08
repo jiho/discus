@@ -37,7 +37,7 @@ DISCUS requires the following software to run
 
 They should be installed with the commands `install.packages("ggplot2")` and `install.packages("circular")` from within R.
 
-* a PDF reader (evince or xpdf on Linux, Preview on Mac OS X) to preview the plots
+* a PDF reader to preview the plots. DISCUS uses evince or xpdf on Linux, and which ever is the default application to open PDFs on Mac OS X.
 
 * [MPlayer](http://www.mplayerhq.hu/ "Entering MPlayer homepage") when video files are used instead of images
 
