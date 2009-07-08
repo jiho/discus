@@ -24,7 +24,7 @@ DISCUS requires the following software to run
 
 * the BASH shell environment, which is installed by default on Linux and OS X.
 
-* [ImageJ](http://rsbweb.nih.gov/ij/ "ImageJ"), for most of the image analysis. You need the jar file only. The latest stable version can be downloaded from [http://rsb.info.nih.gov/ij/upgrade/ij.jar](http://rsb.info.nih.gov/ij/upgrade/ij.jar ""); the latest "daily build" is at [http://rsb.info.nih.gov/ij/ij.jar](http://rsb.info.nih.gov/ij/ij.jar ""). Save one of those as `ij.jar` in `src/imagej`.
+* [ImageJ](http://rsbweb.nih.gov/ij/ "ImageJ"), for most of the image analysis. DISCUS downloads the latest version on its first run. Then it can be upgraded using the `Help > Upgrade ImageJ...` each time ImageJ is run (at the calibration and tracking actions, see below).
 
 * a Java Virtual Machine, for ImageJ. DISCUS has been tested with Sun's JVM but the open source one from [OpenJDK](http://openjdk.java.net/ "OpenJDK") should also work. Java is already installed on Mac OS X. Searching for "java" in a package manager on Linux should install the right thing.
 

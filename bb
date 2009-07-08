@@ -247,9 +247,9 @@ status $? "Java not found. Please install a Java JRE"
 # test if ImageJ is installed
 ijPath=$RES/imagej/
 if [[ ! -e $ijPath/ij.jar ]]; then
-	error "ImageJ not found"
-	echo -e "Download the platform independent file from\n  http://rsbweb.nih.gov/ij/download.html\nand place ij.jar in $ijPath"
-	exit 1
+	warning "ImageJ not found, trying to download it"
+	curl http://rsb.info.nih.gov/ij/upgrade/ij.jar > $ijPath/ij.jar
+	status $? "Cannot download ImageJ.\nPlease manually download the platform independent file from\n  http://rsbweb.nih.gov/ij/download.html\nand place ij.jar in $ijPath"
 fi
 
 # R is used for the correction and statistics
@@ -447,7 +447,7 @@ EOF
 		# - stabilize the stack with the Image Stabilizer plugin
 		# - export back the slices as JPEG images
 		# We do all that in batch mode, without user interaction so the macro code needs to be in a separate file: Run_Image_Stabilizer.ijm
-		$javaCmd -jar $ijPath/ij.jar -ijpath $ijPath/plugins/ -batch $ijPath/macros/Run_Image_Stabilizer.ijm $data > /dev/null 2>&1
+		$javaCmd -jar $ijPath/ij.jar -ijpath $ijPath -batch $ijPath/macros/Run_Image_Stabilizer.ijm $data > /dev/null 2>&1
 
 		status $? "ImageJ exited abnormally"
 
@@ -481,12 +481,13 @@ EOF
 		# - measure centroid and perimeter in pixels
 		# - save that to an appropriate file
 		# - quit
-		$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
+		$javaCmd -Xmx200m -jar $ijPath/ij.jar               \
+		-ijpath $ijPath -eval "                             \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 		makeOval(${aquariumBounds});                        \
 		waitForUser('Aquarium selection',                   \
 			'If necessary, alter the selection to fit the aquarium better.\n               \
-			\nPress OK when you are done');                 \
+			\nPress OK when you are done');                  \
 		run('Set Measurements...', '  centroid perimeter invert redirect=None decimal=3'); \
 		run('Measure');                                     \
 		saveAs('Measurements', '${tmp}/coord_aquarium.txt');\
@@ -571,7 +572,7 @@ EOF
 		# - save the tracks to an appropriate file
 		# - quit
 		$javaCmd -Xmx${mem}m -jar ${ijPath}/ij.jar        \
-		-ijpath ${ijPath}/plugins/ -eval "                \
+		 -ijpath $ijPath -eval "                          \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=0 starting=1 increment=${subImages} scale=100 file=[] or=[] sort ${virtualStack}'); \
 		run('Manual Tracking');                           \
 		waitForUser('Track finished?',                    \
@@ -600,12 +601,13 @@ EOF
 		# - measure centroid coordinates in pixels
 		# - save that to an appropriate file
 		# - quit
-		$javaCmd -Xmx200m -jar $ijPath/ij.jar -eval "       \
+		$javaCmd -Xmx200m -jar $ijPath/ij.jar               \
+		-ijpath $ijPath -eval "                             \
 		run('Image Sequence...', 'open=${pics}/*.jpg number=1 starting=1 increment=1 scale=100 file=[] or=[] sort'); \
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of the compass you intend to track.\n      \
-			\nPress OK when you are done');                 \
+			\nPress OK when you are done');                  \
 		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
 		run('Measure');                                     \
 		saveAs('Measurements', '${tmp}/coord_compass.txt'); \
