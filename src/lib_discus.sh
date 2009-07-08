@@ -179,10 +179,21 @@ data_status() {
 		fi
 		# get the subsample rate
 		if [[ -e $work/$i/larvae_track.txt ]]; then
-			# read the first 3 lines, remove the header and select 4th column
-			imgNbs=$(head -n 3 $work/$i/larvae_track.txt | sed \1d | awk -F "\t" {'print $4'})
-			# subtract second image number to first
-			echo $imgNbs | awk {'printf("%4s",$2-$1)'}
+			# read the first few lines, remove the header and select 4th column 
+			# = the image number
+			imgNbs=$(head -n 5 $work/$i/larvae_track.txt | sed \1d | awk -F "\t" {'print $4'})
+			# make a list of images
+			images=$(echo $imgNbs | awk {'OFS=""; print "\"",$1,".jpg\",\"",$2,".jpg\",\"",$3,".jpg\",\"",$4,".jpg\""'})
+			interval=$(R -q --slave << EOF
+				# get the time functions
+				source("src/lib_image_time.R")
+				# go to the directory where the images are
+				setwd("${work}/${i}/pics")
+				# compute time lapse and send it to standard output
+				cat(time.lapse.interval(c(${images})))
+EOF
+)
+			echo -n $interval
 		else
 			echo -n "    "
 		fi
