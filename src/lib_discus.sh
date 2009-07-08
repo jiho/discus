@@ -289,7 +289,7 @@ sync_data() {
 			# The deployment does not exist in the workspace
 			# = we want to copy data from the storage to the working dir
 			echo -e "\e[1mWorking directory <- Storage\e[0m : copy deployment $id"
-			cp -R --preserve=timestamps $storage/$id $work
+			rsync -a $storage/$id $work
 			# NB : preserve modification time etc.
 		fi
 
@@ -347,8 +347,8 @@ sync_data() {
 				echo "Create new storage for deployment $id"
 				# Create parent directory
 				mkdir -p $storage
-				# Copy data
-				cp -R --preserve=timestamps $work/$id $storage
+				# Copy data, preserving time stamps etc.
+				rsync -a $work/$id $storage
 			else
 				echo "Skipping transfer"
 			fi
