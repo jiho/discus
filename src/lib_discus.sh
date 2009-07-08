@@ -63,8 +63,8 @@ echo -e "
 #
 # USAGE
 #	commit_changes [files_to_commit]
-# Ask to commit changes and copy specified files from $TEMP to $DATA
-# The environment variables $TEMP and $DATA must be already defined
+# Ask to commit changes and copy specified files from $tmp to $data
+# The environment variables $tmp and $data must be already defined
 #
 commit_changes() {
 	if [[ $tmp == "" ]]; then
@@ -135,7 +135,7 @@ data_status() {
 
 		# display deploy number
 		echo "$i" | awk {'printf("%-5s",$1)'}
-		# use awk for nice formatted output
+		# use awk for nicely formatted output
 
 		# count images
 		nbImages=$(ls 2>/dev/null $work/$i/pics/*.jpg | wc -l)
@@ -229,7 +229,7 @@ EOF
 
 #
 # USAGE
-#	sync_data [data_directory] [storage_directory] [deployment_id]
+#	sync_data [data_directory] [storage_directory] [action] [deployment_id]
 # Synchronize data between data and storage directories/drives
 #
 sync_data() {
@@ -241,7 +241,7 @@ sync_data() {
 	# RSync options to test for differences
 	# for small files we use checksum and time comparison
 	rsoptsSmall="--recursive --checksum --update --exclude=.* --exclude=*tmp/ --exclude=*pics/ --exclude=*.mov"
-	# for large files we use size only comparison
+	# for large files we use size only comparison (which is faster)
 	rsoptsLarge="--recursive --size-only --exclude=*tmp/ --include=*/ --include=*.jpg --include=*.mov --exclude=*"
 
 
@@ -283,7 +283,7 @@ sync_data() {
 			# = we want to copy data from the storage to the working dir
 			echo -e "\e[1mWorking directory <- Storage\e[0m : copy deployment $id"
 			cp -R --preserve=timestamps $storage/$id $work
-			# NB : preserve attributes, timestamps, users etc.
+			# NB : preserve modification time etc.
 		fi
 
 	fi
@@ -365,20 +365,21 @@ read_config() {
 	echoBold "Options picked up from the configuration file"
 
 	cat $configFile | while read line; do
+		# Ignore comments and print other lines
 		case $line in
 			\#*)
 				;;
 			'')
 				;;
 			*)
-				# Parse the line and give information
+				# Parse the line and give information on stdout
 				echo "$line" | awk -F "=" {'print "  "$1" = "$2'}
 				;;
 		esac
 	done
 	echo ""
 
-	# Actually source the file
+	# Actually source the file (i.e. set the options, don't just display them)
 	source $configFile
 
 	return 0
@@ -407,7 +408,7 @@ write_pref() {
 		# if there is a match, update the preference in the config file
 		tmpConf=configFile.new
 		newPref=$(eval echo \$$pref)
-		# espace slashes in the value of the preference
+		# escape slashes in the value of the preference
 		newPref=$(echo $newPref | sed -e 's/\//\\\//g')
 		sed -e 's/^\s*'$pref'=.*/'$pref'="'$newPref'"/' $configFile > $tmpConf
 		cp -f $tmpConf $configFile
