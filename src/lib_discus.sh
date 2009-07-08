@@ -129,13 +129,20 @@ commit_changes() {
 data_status() {
 	work=$1
 
-	echo -e "\n\e[1mdepl img   com gps ctd   cal trk lag sta\e[0m"
+	echo -e "\n\e[1mdepl   vid img   com gps ctd   cal trk lag sta\e[0m"
 
 	for i in `ls -1 $work/ | sort -n`; do
 
 		# display deploy number
 		echo "$i" | awk {'printf("%-5s",$1)'}
 		# use awk for nicely formatted output
+
+		# test the existence of video
+		if [[ -e $work/$i/video_hifi.mov ]]; then
+			echo -n "   *  "
+		else
+			echo -n "      "
+		fi
 
 		# count images
 		nbImages=$(ls 2>/dev/null $work/$i/pics/*.jpg | wc -l)
