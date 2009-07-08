@@ -129,7 +129,7 @@ commit_changes() {
 data_status() {
 	work=$1
 
-	echo -e "\n\e[1mdepl img   com gps ctd   cal trk sta\e[0m"
+	echo -e "\n\e[1mdepl img   com gps ctd   cal trk sub sta\e[0m"
 
 	for i in `ls -1 $work/ | sort -n`; do
 
@@ -174,6 +174,15 @@ data_status() {
 			echo -n "  * "
 		elif [[ -e $work/$i/larvae_track.txt ]]; then
 			echo -n " raw"
+		else
+			echo -n "    "
+		fi
+		# get the subsample rate
+		if [[ -e $work/$i/larvae_track.txt ]]; then
+			# read the first 3 lines, remove the header and select 4th column
+			imgNbs=$(head -n 3 $work/$i/larvae_track.txt | sed \1d | awk -F "\t" {'print $4'})
+			# subtract second image number to first
+			echo $imgNbs | awk {'printf("%4s",$2-$1)'}
 		else
 			echo -n "    "
 		fi
