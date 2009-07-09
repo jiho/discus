@@ -393,8 +393,8 @@ It provides descriptive circular statistics for positions and swimming direction
 * **n**: sample size
 * **mean**: bearing of the mean vector, in degrees, from the North, clockwise; this is NA for uncorrected track because all points are not in the same cardinal reference so it is meaningless to compute a mean bearing.
 * **resample.lag**: for positions, the resampling period as specified by `psub`
-* **variance**: angular variance, in radians
-* **R**: Rayleigh number; this number characterizes the directionality of the sample: the closed it is to one, the more directional the sample
+* **variance**: angular variance, in radians. When the data is not resampled when computing statistics (i.e. `resample.lag` is NA), this is the angular variance of the data and is equal to 1 - `R` (see below for `R`). When `resample.lag` is not NA, let say 5, the statistics are computed for samples starting at 1, 2, 3, 4, and 5 seconds. The variance is then the angular variance of the mean vectors computed for each resample. The equivalent to the case when the data is not resampled can be easily recomputed as 1 - `R`.
+* **R**: Rayleigh number; this number characterizes the directionality of the sample: the closer it is to one, the more directional the sample
 * **p.value**: *p*-value of the Rayleigh test which compares the observed Rayleigh R to what would be obtained by chance with the same sample size; when the *p*-value is < 0.05, the sample is significantly directional
 * **kind**: whether these are position or direction statistics
 
