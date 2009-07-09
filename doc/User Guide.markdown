@@ -511,4 +511,4 @@ In addition, when bb calls other programs (ImageJ, R, etc.), most of their outpu
 
 * For R, search for `-slave` and replace it by `-vanilla`
 
-Hopefully, having to do that should not happen very often.
+Hopefully, you should not have to do that very often.
