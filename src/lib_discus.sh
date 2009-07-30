@@ -200,7 +200,7 @@ data_status() {
 			# with R read the corrected tracks and compute average time difference
 			R -q --slave << EOF
 				# read only the beginning of the file to speed things up
-				t = read.table("${work}/${i}/tracks.csv", header=T, sep=",", as.is=T, nrows=100)
+				t = read.table("${work}/${i}/tracks.csv", header=T, sep=",", as.is=T, nrows=400)
 				# set the correct time class and remove missing values
 				imgTimes = as.POSIXct(na.omit(t\$date))
 				# compute the average time difference
