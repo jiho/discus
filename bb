@@ -123,6 +123,8 @@ display=FALSE
 s=FALSE
 # whether the camera is looking up at the arena
 lookingUp=FALSE
+# assume yes at every question (move data, overwrite data etc.)
+yes=FALSE
 
 
 # Get options from the config file (overriding defaults)
@@ -198,6 +200,9 @@ until [[ -z "$1" ]]; do
 		-psub)
 			psub="$2"
 			shift 2 ;;
+		-yes)
+			yes=TRUE
+			shift 1;;
 		-diam)
 			diam="$2"
 			write_pref $configFile diam

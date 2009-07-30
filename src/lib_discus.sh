@@ -64,7 +64,7 @@ echo -e "
 # USAGE
 #	commit_changes [files_to_commit]
 # Ask to commit changes and copy specified files from $tmp to $data
-# The environment variables $tmp and $data must be already defined
+# The environment variables $tmp, $data, and $yes must be already defined
 #
 commit_changes() {
 	if [[ $tmp == "" ]]; then
@@ -76,7 +76,12 @@ commit_changes() {
 		exit 1
 	fi
 	echoB "Committing changes"
-	read -p "Do you want to commit changes? (y/n [n]) : " commit
+	if [[ $yes == "TRUE" ]]; then
+		# when $yes is true, we don't ask and assume we want to commit
+		commit="yes"
+	else
+		read -p "Do you want to commit changes? (y/n [n]) : " commit
+	fi
 	if yes $commit;	then
 		echo "Moving data..."
 		# perform shell expansion on the parameters passed to commit_changes
@@ -84,24 +89,28 @@ commit_changes() {
 		allItems=$(cd $tmp; echo $@)
 
 		# move the files interactively to the DATA directory
-		# i.e. we want to explicitly ask for overwrites
+		# i.e. we want to explicitly ask for overwrites except when "yes" is true
 		for item in $allItems; do
 			# check for existence
 			if [[ -e $tmp/$item ]]; then
 				# directories do not work well with mv -i
 				# so we cook our own interactive directory overwrite
-				# if the directory exists in both locations, ask whether to overwrite
-				if [[ -d $tmp/$item && -d $data/$item ]]; then
-					read -p "mv: overwrite \`${data}/$item'? " overwrite
-					if yes $overwrite; then
-						rm -f $data/$item/*
-						rmdir $data/$item
-						mv $tmp/$item $data
-					fi
-					# NB: if we do not want to overwrite then we just loop to the next item
+				if [[ $yes == "TRUE" ]]; then
+					mv -f $tmp/$item $data
 				else
-					# for files or non-existing directories, we simply use mv -i
-					mv -i $tmp/$item $data
+					# if the directory exists in both locations, ask whether to overwrite
+					if [[ -d $tmp/$item && -d $data/$item ]]; then
+						read -p "mv: overwrite \`${data}/$item'? " overwrite
+						if yes $overwrite; then
+							rm -f $data/$item/*
+							rmdir $data/$item
+							mv $tmp/$item $data
+						fi
+						# NB: if we do not want to overwrite then we just loop to the next item
+					else
+						# for files or non-existing directories, we simply use mv -i
+						mv -i $tmp/$item $data
+					fi
 				fi
 			else
 				warning "$item does not exist"
