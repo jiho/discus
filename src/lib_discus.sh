@@ -138,7 +138,7 @@ commit_changes() {
 data_status() {
 	work=$1
 
-	echo -e "\n\e[1mdepl   vid img   com gps ctd   cal trk lag sta\e[0m"
+	echo -e "\n\e[1mdepl   vid img   com gps ctd   cal trk lag sta sub\e[0m"
 
 	for i in `ls -1 $work/ | sort -n`; do
 
@@ -231,6 +231,22 @@ EOF
 		fi
 		if [[ -e $work/$i/stats.csv ]]; then
 			echo -n "  * "
+		else
+			echo -n "    "
+		fi
+		
+		# display subsample interval
+		if [[ -e $work/$i/stats.csv ]]; then
+			R -q --slave << EOF
+			# read the stats
+			s = read.table("${work}/${i}/stats.csv", header=T, sep=",", as.is=T, nrows=1)
+			if (is.na(s[1,"resample.lag"])) {
+				cat("  - ")
+			} else {
+				cat(sprintf("%4i",s[1,"resample.lag"]))
+			}
+EOF
+			echo -n ""
 		else
 			echo -n "    "
 		fi
