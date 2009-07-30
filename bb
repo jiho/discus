@@ -658,7 +658,7 @@ EOF
 				error "Manual compass track missing. Use:\n\t $0 compass $id"
 				OK="FALSE"
 			else
-				echo "Compass track ..........OK"
+				echo "Compass track ...........OK"
 				cp $data/compass_track.txt $tmp
 				compass="manual"
 			fi
