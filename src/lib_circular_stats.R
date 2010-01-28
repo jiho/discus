@@ -169,7 +169,7 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 #		mean		mean angle
 #		resample.lag	resampling interval
 #		variance	angular variance
-#		R			Rayleigh R
+#		r			Rayleigh r
 #		p.value	Rayleigh's test p-value
 #
 {
@@ -198,20 +198,20 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 
 		# rayleigh test
 		rayleigh = rayleigh.test(t$theta)
-		R = rayleigh$statistic
+		r = rayleigh$statistic
 		p = rayleigh$p.value
 
 		# angular variance ~ variance
 		#  = (1-r)
 		# NB: Batschelet, 1981. Circular Statistics in Biology. p. 34 adds a multiplication by 2 compared to this formula
-		variance = 1 - R
+		variance = 1 - r
 		# variance = var.circular(angles)
 
 		# # angular deviation ~ standard deviation
 		# # = sqrt( (1-r) )
 		# sd = sqrt(variance)
 
-		return(data.frame(n, mean, resample.lag=NA, variance, R, p.value=p))
+		return(data.frame(n, mean, resample.lag=NA, variance, r, p.value=p))
 
 	} else {
 		# the samples are not independent, so we resample independent samples with intervals of subsampleTime
@@ -249,7 +249,7 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 			# perform rayleigh test on it
 			rayleigh = rayleigh.test(angles)
 			# and store results
-			stats = rbind(stats, data.frame(n=length(angles), R=rayleigh$statistic, p.value=rayleigh$p.value, mean=mean.circular(angles)))
+			stats = rbind(stats, data.frame(n=length(angles), r=rayleigh$statistic, p.value=rayleigh$p.value, mean=mean.circular(angles)))
 
 			# increment lag
 			i = i+1
@@ -258,8 +258,8 @@ circ.stats <- function(angles, times, subsampleTime, ...)
 		# compute variance of the mean angle for all lags
 		variance = var.circular(stats$mean)
 
-		# compute mean values for the statistics (R, p.value etc.)
-		return(data.frame(n=round(mean(stats$n)), mean, resample.lag=subsampleTime, variance, R=mean(stats$R), p.value = mean(stats$p.value)))
+		# compute mean values for the statistics (r, p.value etc.)
+		return(data.frame(n=round(mean(stats$n)), mean, resample.lag=subsampleTime, variance, r=mean(stats$r), p.value = mean(stats$p.value)))
 	}
 }
 
