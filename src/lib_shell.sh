@@ -26,7 +26,7 @@
 
 # write a message to the standard output in bold characters
 echoBold () {
-	echo -e "\e[1m$1\e[0m"
+	echo -e "\033[1m$1\033[0m"
 }
 echoB () {
 	echoBold "$*"
@@ -34,28 +34,28 @@ echoB () {
 
 # write a message to the standard output in red
 echoRed() {
-	echo -e "\e[0;31m$1\e[0m"
+	echo -e "\033[0;31m$1\033[0m"
 }
 
 # write a message to the standard output in green
 echoGreen() {
-	echo -e "\e[0;32m$1\e[0m"
+	echo -e "\033[0;32m$1\033[0m"
 }
 
 # write a message to the standard output in blue
 echoBlue() {
-	echo -e "\e[0;34m$1\e[0m"
+	echo -e "\033[0;34m$1\033[0m"
 }
 
 
 # write a warning on standard out
 warning() {
-	echo -e "\e[0;31m\e[1mWARNING:\e[0m $1\e[0m"
+	echo -e "\033[0;31m\033[1mWARNING:\033[0m $1\033[0m"
 }
 
 # write an error on standard out
 error() {
-	echo -e "\e[0;31m\e[1mERROR:\e[0m $1\e[0m"
+	echo -e "\033[0;31m\033[1mERROR:\033[0m $1\033[0m"
 }
 
 

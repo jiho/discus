@@ -138,7 +138,7 @@ commit_changes() {
 data_status() {
 	work=$1
 
-	echo -e "\n\e[1mdepl   vid img   com gps ctd   cal trk lag sta sub\e[0m"
+	echo -e "\n\033[1mdepl   vid img   com gps ctd   cal trk lag sta sub\033[0m"
 
 	for i in `ls -1 $work/ | sort -n`; do
 
@@ -313,7 +313,7 @@ sync_data() {
 		else
 			# The deployment does not exist in the workspace
 			# = we want to copy data from the storage to the working dir
-			echo -e "\e[1mWorking directory <- Storage\e[0m : copy deployment $id"
+			echo -e "\033[1mWorking directory <- Storage\033[0m : copy deployment $id"
 			rsync -a $storage/$id $work
 			# NB : preserve modification time etc.
 		fi
@@ -366,7 +366,7 @@ sync_data() {
 			# = there is possibly a problem in the storage path
 			#   or we want to initialize a new backup directory
 			warning "$storage/$id does not exist"
-			echo -en "Do you \e[1mreally\e[0m want to create a new storage directory?"
+			echo -en "Do you \033[1mreally\033[0m want to create a new storage directory?"
 			read -p " (y/n [n]) " proceed
 			if yes $proceed; then
 				echo "Create new storage for deployment $id"
