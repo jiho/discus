@@ -365,7 +365,7 @@ Finally, once the tracks are recorded and corrected, basic statistics can be com
 
 	./bb stats 12
 
-As mentioned above, the positions of the larva at 1 or 2 seconds intervals are usually very close to each other. So they are not statistically independent because they cannot be considered like two pieces of information. They are rather the same information, just repeated. Therefore, int he statistical analysis, the positions are subsampled at an interval that makes two successive positions independent from each other. This is done with the options `psub` followed by a number of seconds
+As mentioned above, the positions of the larva at 1 or 2 seconds intervals are usually very close to each other. So they are not statistically independent because they cannot be considered like two pieces of information. They are rather the same information, just repeated. Therefore, in the statistical analysis, the positions are subsampled at an interval that makes two successive positions independent from each other. This is done with the option `psub` followed by a number of seconds
 
 	./bb stats -psub 10 12
 
