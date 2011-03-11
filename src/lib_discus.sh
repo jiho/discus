@@ -43,6 +43,7 @@ echo -e "
   \033[1m-sub\033[0m      v,l,com  1  image subsample interval, in seconds
   \033[1m-psub\033[0m       stats  5  subsample positions every 'psub' seconds
                         (has no effect when < to -sub)
+  \033[1m-bin\033[0m        stats  0  angle over which to bin angles, in degrees
   \033[1m-d|-display\033[0m stats     display the plots after stats
 
 \033[1mPARAMETERS\033[0m

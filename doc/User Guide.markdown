@@ -373,6 +373,12 @@ As mentioned above, the positions of the larva at 1 or 2 seconds intervals are u
 
 When the larva is followed on every frame (i.e. when `sub` is not used with the action `larva`), the trajectory, swimming directions, and swimming seeds are computed. Swimming directions can radically change from one second to the next so they are independent and do not require subsampling.
 
+In addition, to erase small scale variability and compensate somehow for errors/uncertainety while tracking the larvae or in the measurements of the compass, angles (of both position and direction) can be binned on a certain interval. This is done using the `bin` option, followed by the angle (in degrees) over which the data should be binned
+
+	./bb stats -bin 5 12
+
+`bin` equals 0 by default, which results in no binning.
+
 The result of the statistical analysis is a table such as this one
 
 	  trackNb correction   n      mean resample.lag     variance          R
@@ -380,11 +386,11 @@ The result of the statistical analysis is a table such as this one
 	2       1       TRUE  92 224.73278           10 5.312841e-05 0.74940596
 	3       1      FALSE 356        NA           NA 9.516079e-01 0.04839209
 	4       1       TRUE 356 -46.49965           NA 8.524097e-01 0.14759029
-	       p.value      kind
-	1 1.838480e-01  position
-	2 3.993594e-23  position
-	3 4.344482e-01 direction
-	4 4.287183e-04 direction
+	       p.value      kind bin
+	1 1.838480e-01  position   0
+	2 3.993594e-23  position   0
+	3 4.344482e-01 direction   0
+	4 4.287183e-04 direction   0
 
 It provides descriptive circular statistics for positions and swimming directions and allows to compare uncorrected tracks (in the reference of the instrument) and corrected ones (in cardinal reference). The columns are
 
@@ -397,6 +403,7 @@ It provides descriptive circular statistics for positions and swimming direction
 * **r**: Rayleigh number; this number characterizes the directionality of the sample: the closer it is to one, the more directional the sample
 * **p.value**: *p*-value of the Rayleigh test which compares the observed Rayleigh R to what would be obtained by chance with the same sample size; when the *p*-value is < 0.05, the sample is significantly directional
 * **kind**: whether these are position or direction statistics
+* **bin**: size of the binning interval for angles, in degrees (0 means no binning)
 
 So the *p*-value gives us the directionality of the sample. But this can still be an artifactual concentration of positions around a particular feature of the aquarium for example. The comparison between corrected and uncorrected statistics can help telling artifacts apart from true orientation. When the positions/directions are more concentrated after the rotation than before, it means that the larva actively corrected against the rotation of the aquarium to stay coser to a given bearing. This is true orientation and is marked by a smaller variance, a larger R, and a smaller p.value after correction.
 

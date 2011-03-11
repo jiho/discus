@@ -22,16 +22,18 @@ source("lib_circular_stats.R")
 
 # Parse command line arguments
 args = commandArgs(trailingOnly=TRUE)
-if (length(args) != 3) {
+if (length(args) !=4) {
 	stop("Not enough arguments")
 }
 prefix = args[1]
 aquariumDiam = as.numeric(args[2])
 subsampleTime = as.numeric(args[3])
+binningAngle = as.numeric(args[4])
 # In case we need to call it without the shell script
 # prefix="/home/jiho/current_data/1/tmp/"
 # aquariumDiam = 40
 # subsampleTime = 15
+# binningAngle = 5
 
 
 setwd(prefix)
@@ -42,6 +44,12 @@ setwd(prefix)
 
 # read corrected tracks
 tracks = read.table("tracks.csv", header=TRUE, sep=",")
+
+# round angles to a given precision (equivalent of binning)
+if (binningAngle != 0) {
+	tracks$theta = round_any(tracks$theta, binningAngle)
+	tracks$heading = round_any(tracks$heading, binningAngle)
+}
 
 # set the correct circular class for the positions bearings
 # = measured from the north, in degrees, in clockwise direction
@@ -113,6 +121,9 @@ d$kind = "direction"
 # Display statistical results and write them to file
 # TODO improve the display
 stats = rbind.fill(p, d)
+# add mention of rounding
+stats$bin = binningAngle
+
 cat("Statistics:\n")
 print(stats)
 write.table(stats, file="stats.csv", row.names=FALSE, sep=",")

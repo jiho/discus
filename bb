@@ -117,6 +117,8 @@ deployNb=""
 sub=1
 # subsample positions every 'psub' seconds for the statistical analysis, to make positions independent
 psub=5
+# rounding (=binning) for measured angles, in degrees
+binangle=0
 # whether to display plots or not after the statistical analysis
 display=FALSE
 # display the storage directory status rather than the data directory status for the STATUS action
@@ -199,6 +201,9 @@ until [[ -z "$1" ]]; do
 			shift 2 ;;
 		-psub)
 			psub="$2"
+			shift 2 ;;
+		-bin)
+			binangle="$2"
 			shift 2 ;;
 		-yes)
 			yes=TRUE
@@ -563,7 +568,7 @@ EOF
 		nbFrames=$(($allImages / $subImages))
 		# when there are less than 100 frames to open, loading them is fast and not too memory hungry
 		# in that case, use a regular stack, other wise use a virtual stack
-		if [[ $nbFrames -le 100 ]]; then
+		if [[ $nbFrames -le 30 ]]; then
 			virtualStack=""
 		else
 			virtualStack="use"
@@ -742,7 +747,7 @@ EOF
 		fi
 
 		# Compute position and direction statistics and store the result in stats.csv
-		(cd $RES && R -q --slave --args ${tmp} ${diam} ${psub} < stats.R)
+		(cd $RES && R -q --slave --args ${tmp} ${diam} ${psub} ${binangle} < stats.R)
 
 		status $? "R exited abnormally"
 
