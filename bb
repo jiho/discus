@@ -352,7 +352,7 @@ for id in $deployNb; do
 	# otherwise test its existence
 	if [[ ! -d $data ]]; then
 		error "Deployment directory does not exist:\n  $data"
-		exit 1
+		continue
 	fi
 
 	# Define the source of images (pictures or video)
@@ -361,12 +361,12 @@ for id in $deployNb; do
 	# If the VIDEO action is specified, test for the existence of the video file
 	if [[ $VIDEO == "TRUE" && ! -e $videoFile ]]; then
 		error "Cannot find video file:\n  $pics"
-		exit 1
+		continue
 
 	# Else, if any action requiring access to the pictures is specified, test for their presence
 	elif [[ ( $STAB == "TRUE" || $CALIB == "TRUE" || $TRACK_LARV == "TRUE" || $TRACK_COMP == "TRUE" ) && ! -d $pics ]]; then
 		error "Cannot find pictures directory:\n  $pics"
-		exit 1
+		continue
 	fi
 
 	# Define and create temporary directory, where all operations are done
@@ -698,7 +698,7 @@ EOF
 		# Something is missing, just exit
 			echo "Exiting..."
 			rm -f $tmp/*
-			exit 1
+			continue
 		fi
 
 		# When the manual compass is used, we do not have roll information to detect whether the camera is above or below the aquarium and we need to collect input from the user
@@ -743,7 +743,7 @@ EOF
 			cp $data/tracks.csv $tmp/
 		else
 			error "Corrected larvae tracks missing. Use:\n\t $0 correct $id"
-			exit 1
+			continue
 		fi
 
 		# Compute position and direction statistics and store the result in stats.csv
