@@ -62,7 +62,7 @@ typeset -fx write_pref
 echo $* | grep -E -e "\b(h|help)\b" > /dev/null
 if [[ $? -eq 0 ]]; then
 	help
-	exit 0
+	exit $?
 fi
 
 
