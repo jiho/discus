@@ -53,7 +53,7 @@ echo -e "
   \033[1m-storage\033[0m   none  image and data storage directory
   \033[1m-diam\033[0m      40    aquarium diameter, in cm
   \033[1m-a|-angle\033[0m  90    angle between camera and compass, in degrees
-  \033[1m-m|-mem\033[0m    1000  memory for Image, in MB
+  \033[1m-m|-mem\033[0m    1000  memory for ImageJ, in MB
                    (should be at most a 2/3 of the physical memory)
    "
 
