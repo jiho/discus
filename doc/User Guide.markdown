@@ -4,7 +4,7 @@ Author: Jean-Olivier Irisson
 
 # User documentation for DISCUS
 
-	(c) Copyright 2009 Jean-Olivier Irisson. GNU Free Documentation License
+	(c) Copyright 2009 J-O Irisson, C Paris. GNU Free Documentation License
 
 DISCUS stands for DISC User Software, where DISC is Drifting In Situ Chamber. It is a set of scripts used to extract and analyse the data obtained with the DISC. It runs in a terminal, by writing down commands and executing them.
 

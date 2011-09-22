@@ -4,7 +4,7 @@ Author: Jean-Olivier Irisson
 
 # Dealing with angles and circular corrections in DISCUS
 
-	(c) Copyright 2009 Jean-Olivier Irisson. GNU Free Documentation License
+	(c) Copyright 2009 J-O Irisson, C Paris. GNU Free Documentation License
 
 ## Measure of angles
 

@@ -15,7 +15,7 @@
 #
 #  This file parses options and launches the different components
 #
-#  (c) Copyright 2005-2009 Jean-Olivier Irisson.
+#  (c) Copyright 2005-2011 J-O Irisson, C Paris
 #  GNU General Public License
 #  Read the file 'src/GNU_GPL.txt' for more information
 #
