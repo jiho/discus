@@ -4,6 +4,7 @@
 *.tmproj
 # Java files
 src/imagej/ij.jar
+*.class
 # Result formats of the documentation (we only keep the Markdown source)
 doc/*.pdf
 doc/*.html
