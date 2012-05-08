@@ -14,12 +14,11 @@
 # Displays a help message
 #
 help() {
-echo -e "
-\033[1mUSAGE\033[0m
+echo -e "\033[1mUSAGE\033[0m
   \033[1m$0 [options] [parameters]\033[0m action[s] deployment
   Data extraction and analysis script for the DISC.
   Actions perform a data analysis step and are whole or abbreviated words.
-  Options modify the behaviour of the script and are prepended a \"-\" sign.
+  Options and parameters modify the behaviour of the script.
   Deployment numbers can be specified as ranges: 1,3-5,8
 
 \033[1mACTIONS\033[0m
@@ -37,10 +36,10 @@ echo -e "
   \033[1mall\033[0m              calibrate, track larva, correct and compute stats
 
 \033[1mOPTIONS\033[0m
-  Each lines give the options, the action it is applicable to,
+  Each line gives the option, the action(s) it is applicable to,
   and its default when it requires a value.
   \033[1m-s\033[0m         status     get status of the storage directory instead
-  \033[1m-sub\033[0m      v,l,com  1  image subsample interval, in seconds
+  \033[1m-sub\033[0m      v,l,com  1  image subsampling interval, in seconds
   \033[1m-psub\033[0m       stats  5  subsample positions every 'psub' seconds
                         (has no effect when < to -sub)
   \033[1m-bin\033[0m        stats  0  angle over which to bin angles, in degrees
@@ -54,8 +53,7 @@ echo -e "
   \033[1m-diam\033[0m      40    aquarium diameter, in cm
   \033[1m-a|-angle\033[0m  90    angle between camera and compass, in degrees
   \033[1m-m|-mem\033[0m    1000  memory for ImageJ, in MB
-                   (should be at most a 2/3 of the physical memory)
-   "
+                   (should be at most a 2/3 of the physical memory)"
 
 	return 0
 }
