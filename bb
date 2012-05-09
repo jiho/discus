@@ -433,7 +433,7 @@ for id in $deployNb; do
 			options("digits.secs" = 2)
 			dates = seq(initialDate, length.out=length(pics), by=${exactSub})
 			# assign a date to each image using exiftool
-			for (i in seq(along=pics)) {
+			for ( i in seq(along=pics)) {
 				date = format(dates[i], "%Y:%m:%d %H:%M:%S")
 				subsec = substr(format(dates[i], "%OS"),4,5)
 				system(paste("exiftool -overwrite_original -CreateDate='",date,"' -SubsecTime='",subsec,"' ${tmp}/pics/",pics[i],sep=""))
