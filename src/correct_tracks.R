@@ -3,9 +3,9 @@
 #  the instrument to an absolute cardinal reference.
 #  Compute also swimming speed and direction.
 #
-#  (c) Copyright 2005-2011 J-O Irisson, C Paris
-#  GNU General Public License
-#  Read the file 'src/GNU_GPL.txt' for more information
+#  (c) Copyright 2005-2012 J-O Irisson, C Paris
+#      GNU General Public License
+#      Read the file 'src/GNU_GPL.txt' for more information
 #
 #-----------------------------------------------------------------------
 
@@ -134,6 +134,13 @@ if (file.exists("compass_log.csv")) {
 	# convert the bearing to the appropriate circular class
 	trackCompass$heading = trig2geo(trackCompass$theta)
 
+} else {
+
+    # We do not have a compass track, we just assume constant bearing from start to finish
+    # detect start and finish of each track
+    dateRange <- ldply(tracks, function(x) range(x$exactDate))
+    # use a zero angle for all those dates
+    trackCompass = data.frame(date=c(dateRange[,2], dateRange[,3]), heading=0)
 }
 
 # Interpolate compass headings at every point in time in the tracks

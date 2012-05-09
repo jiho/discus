@@ -657,24 +657,15 @@ EOF
 
 		if [[ ! -e $data/compass_log.csv ]]; then
 
-			warning "Numeric compass track missing.\n  Falling back on manual compass track."
+			warning "Numeric compass track missing.\n\t Trying to fetch manual compass track."
 
-			if [[ ! -e $data/compass_track.txt ]]; then
-				error "Manual compass track missing. Use:\n\t $0 compass $id"
-				OK="FALSE"
+			if [[ ! -e $data/compass_track.txt || ! -e $data/coord_compass.txt ]]; then
+				warning "Manual compass track or compass coordinates missing.\n\t No correction applied.\n\t Use: \`$0 compass $id\` to track the compass if need be."
 			else
 				echo "Compass track ...........OK"
 				cp $data/compass_track.txt $tmp
-				compass="manual"
-			fi
-
-			if [[ ! -e $data/coord_compass.txt ]]
-			then
-				error "Compass coordinates missing. Use:\n\t $0 compass $id"
-				OK="FALSE"
-			else
-				echo "Compass coordinates .....OK"
 				cp $data/coord_compass.txt $tmp
+				compass="manual"
 			fi
 
 		else
