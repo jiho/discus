@@ -185,16 +185,18 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 		d = density.circular(x$theta, na.rm=T, bw=100)
 		data.frame(angle=d$x, density=d$y)
 	})
+	# scale density to a max of 1
+	dens$density = dens$density / max(dens$density, na.rm=T)
 	# make all angles positive for ggplot
 	dens$angle = (dens$angle+360) %% 360
 	# we will plot the density originating from a circle of radius "offset", otherwise it looks funny when it goes down to zero
 	offset = 0.5
 	dens$offset = offset
 	# since the whole y scale will be shifted, we recompute breaks and labels
-	labels = pretty(dens$density, 4)
+	labels = c(0,0.5,1)
 	breaks = labels + offset
 	# construct the layer and y scale
-	pDens = ggplot(dens) + geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) + scale_y_continuous("density", limits=c(0, max(dens$density+offset)), breaks=breaks, labels=labels) + polar() + opts(title="Density distribution of positions") + facet_grid(~correction)
+	pDens = ggplot(dens) + geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) + scale_y_continuous(name="scaled density", breaks=breaks, labels=labels, limits=c(0,1.5)) + polar() + opts(title="Density distribution of positions") + facet_grid(~correction)
 
 	ggplots = c(ggplots, list(positions, pHist, pDens))
 
