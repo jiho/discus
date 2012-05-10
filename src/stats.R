@@ -158,7 +158,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) + opts(axis.text.x=theme_blank())
 	# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
 	# the labels are suppressed because there is no actual North there: we track the North!
-	ggplots = c(ggplots, list(compass))
+	ggplots = c(ggplots, compass=list(compass))
 
 
 	# Trajectory
@@ -167,7 +167,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 		radius = aquariumDiam/2
 		traj = ggplot(t) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + facet_grid(~correction) + opts(title="Trajectory")
 		# TODO add a circle around
-		ggplots = c(ggplots, list(traj))
+		ggplots = c(ggplots, trajectory=list(traj))
 	}
 
 
@@ -198,7 +198,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	# construct the layer and y scale
 	pDens = ggplot(dens) + geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) + scale_y_continuous(name="scaled density", breaks=breaks, labels=labels, limits=c(0,1.5)) + polar() + opts(title="Density distribution of positions") + facet_grid(~correction)
 
-	ggplots = c(ggplots, list(positions, pHist, pDens))
+	ggplots = c(ggplots, list(positions=positions, position.histogram=pHist, position.density=pDens))
 
 
 	if (successive > 0) {
