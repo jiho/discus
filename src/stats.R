@@ -215,10 +215,11 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 		p = ggplot(x, aes(x=speed)) + scale_x
 		# add geoms
 		sHist = p + geom_histogram(binwidth=0.5) + opts(title="Histogram of swimming speeds (original track)")
-		sDens = p + geom_density(fill="grey20", colour=NA) + opts(title="Density distribution of swimming speeds (original track)")
-
-
-		ggplots = c(ggplots, list(dHist, sHist, sDens))
+		ggplots = c(ggplots, list(direction.histogram=dHist, speed.histogram=sHist))
+		if (length(na.omit(x$speed)) > 2) {
+			sDens = p + geom_density(fill="grey20", colour=NA) + opts(title="Density distribution of swimming speeds (original track)")
+			ggplots = c(ggplots, list(speed.density=sDens))
+		}
 	}
 
 	return(ggplots)
