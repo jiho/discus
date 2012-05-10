@@ -155,28 +155,41 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 	# Compass readings
 	# (for one track only: the compass readings are the same in the original and corrected tracks)
-	compass = ggplot(x) + geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) + polar() + opts(title="Compass rotation") + scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) + opts(axis.text.x=theme_blank())
-	# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
-	# the labels are suppressed because there is no actual North there: we track the North!
-	ggplots = c(ggplots, compass=list(compass))
+	p = ggplot(x) + polar() + opts(title="Compass rotation") +
+			geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) +
+			scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) +
+			# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
+			opts(axis.text.x=theme_blank())
+			# the labels are suppressed because there is no actual North there: we track the North!
+	ggplots = c(ggplots, list(compass=p))
 
 
 	# Trajectory
 	# (plotted only if there are at least 2 successive positions)
 	if (successive > 0) {
 		radius = aquariumDiam/2
-		traj = ggplot(t) + geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) + xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() + facet_grid(~correction) + opts(title="Trajectory")
+		p = ggplot(t) + opts(title="Trajectory") +
+			geom_path(aes(x=x, y=y, colour=time), arrow=arrow(length=unit(0.01,"native")) ) +
+			xlim(-radius,radius) + ylim(-radius,radius) + coord_equal() +
+			facet_grid(~correction)
+		ggplots = c(ggplots, list(trajectory=p))
 		# TODO add a circle around
-		ggplots = c(ggplots, trajectory=list(traj))
 	}
 
 
 	# Point positions
-	positions = ggplot(t) + geom_point(aes(x=theta, y=1), alpha=0.1, size=4) + scale_y_continuous("", limits=c(0,1.05), breaks=NA) + polar() + opts(title="Positions") + facet_grid(~correction)
+	p = ggplot(t) + polar() + opts(title="Positions") +
+		geom_point(aes(x=theta, y=1), alpha=0.1, size=4) +
+		scale_y_continuous("", limits=c(0,1.05), breaks=NA) +
+		facet_grid(~correction)
+	ggplots = c(ggplots, list(positions = p))
 
 
 	# Rose positions
-	pHist = ggplot(t) + geom_bar(aes(x=theta), binwidth=45/4) + polar() + opts(title="Histogram of positions") + facet_grid(~correction)
+	p = ggplot(t) + polar() + opts(title="Histogram of positions") +
+		geom_histogram(aes(x=theta), binwidth=45/4) +
+		facet_grid(~correction)
+	ggplots = c(ggplots, list(position.histogram=p))
 	# TODO Add mean vector
 
 
@@ -196,14 +209,19 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	labels = c(0,0.5,1)
 	breaks = labels + offset
 	# construct the layer and y scale
-	pDens = ggplot(dens) + geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) + scale_y_continuous(name="scaled density", breaks=breaks, labels=labels, limits=c(0,1.5)) + polar() + opts(title="Density distribution of positions") + facet_grid(~correction)
-
-	ggplots = c(ggplots, list(positions=positions, position.histogram=pHist, position.density=pDens))
+	p = ggplot(dens) + polar() + opts(title="Density distribution of positions") +
+		geom_ribbon(mapping=aes(x=as.numeric(angle), ymin=offset, ymax=density+offset)) +
+		scale_y_continuous(name="scaled density", breaks=breaks, labels=labels, limits=c(0,1.5)) +
+		facet_grid(~correction)
+	ggplots = c(ggplots, list(position.density=p))
 
 
 	if (successive > 0) {
 		# Rose directions
-		dHist = ggplot(t) + geom_bar(aes(x=heading), binwidth=45/4) + polar() + opts(title="Histogram of swimming directions") + facet_grid(~correction)
+		p = ggplot(t) + polar() + opts(title="Histogram of swimming directions") +
+			geom_histogram(aes(x=heading), binwidth=45/4) +
+			facet_grid(~correction)
+		ggplots = c(ggplots, list(direction.histogram=p))
 
 
 		# Speed distribution
@@ -211,14 +229,17 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 		x = t[t$correction=="original", ]
 		# prepare the scale and the base plot
 		maxSpeed = 5
-		scale_x = scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
-		p = ggplot(x, aes(x=speed)) + scale_x
+		pBase = ggplot(x, aes(x=speed)) +
+			scale_x_continuous("Speed (cm/s)", limits=c(0,max(max(x$speed, na.rm=T),maxSpeed)))
 		# add geoms
-		sHist = p + geom_histogram(binwidth=0.5) + opts(title="Histogram of swimming speeds (original track)")
-		ggplots = c(ggplots, list(direction.histogram=dHist, speed.histogram=sHist))
+		p = pBase + opts(title="Histogram of swimming speeds (original track)") +
+			geom_histogram(binwidth=0.5)
+		ggplots = c(ggplots, list(speed.histogram=p))
+
 		if (length(na.omit(x$speed)) > 2) {
-			sDens = p + geom_density(fill="grey20", colour=NA) + opts(title="Density distribution of swimming speeds (original track)")
-			ggplots = c(ggplots, list(speed.density=sDens))
+			p = pBase + opts(title="Density distribution of swimming speeds (original track)") +
+				geom_density(fill="grey20", colour=NA)
+			ggplots = c(ggplots, list(speed.density=p))
 		}
 	}
 
