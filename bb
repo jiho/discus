@@ -127,6 +127,8 @@ s=FALSE
 lookingUp=FALSE
 # assume yes at every question (move data, overwrite data etc.)
 yes=FALSE
+# output debugging messages
+debug=FALSE
 
 
 # Get options from the config file (overriding defaults)
@@ -231,6 +233,10 @@ until [[ -z "$1" ]]; do
 			work="$2"
 			write_pref $configFile work
 			shift 2 ;;
+		-debug)
+			echoRed "Debug mode ON"
+			debug=1
+			shift 1;;
 		-*)
 			error "Unknown option \"$1\" "
 			help

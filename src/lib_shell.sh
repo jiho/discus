@@ -58,6 +58,13 @@ error() {
 	echo -e "\033[0;31m\033[1mERROR:\033[0m $1\033[0m"
 }
 
+# write a debug message on standard out
+debug() {
+	if (( $debug )); then
+		echo -e "\033[0;31m\033[1md>\033[0m $1\033[0m"
+	fi
+}
+
 
 # USAGE
 #	status [return_code] [message_on_failure]
