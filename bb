@@ -259,6 +259,7 @@ done
 # java is necessary for ImageJ
 javaCmd=$(which java)
 status $? "Java not found. Please install a Java JRE"
+debug "java: $javaCmd"
 
 # test if ImageJ is installed
 ijPath=$RES/imagej/
@@ -267,18 +268,22 @@ if [[ ! -e $ijPath/ij.jar ]]; then
 	curl http://rsb.info.nih.gov/ij/upgrade/ij.jar > $ijPath/ij.jar
 	status $? "Cannot download ImageJ.\nPlease manually download the platform independent file from\n  http://rsbweb.nih.gov/ij/download.html\nand place ij.jar in $ijPath"
 fi
+debug "ImageJ location: $ijPath"
 
 # R is used for the correction and statistics
 R=$(which R)
 status $? "R not found. Please install it,\ntogether with packages ggplot2 and circular."
+debug "R: $R"
 
 # rsync is used to move data back and forth between working and storage directories
 rsync=$(which rsync)
 status $? "rsync not found. Check your PATH."
+debug "rsync: $rsync"
 
 # exiftool is used to read the metadata (time, exposure, etc...) in pictures
 exiftool=$(which exiftool)
 status $? "exiftool not found. Please install it\nhttp://www.sno.phy.queensu.ca/~phil/exiftool/"
+debug "exiftool: $exiftool"
 
 
 # Compatibility of arguments
@@ -332,6 +337,7 @@ if [[ $deployNb == "" && $ACT == "TRUE" ]]; then
 	warning "No deployment number specified.\nIterating command(s) on all available deployments"
 	deployNb=$(ls $work | sort -n)
 fi
+debug "deployments: $deployNb"
 
 # Test wether we need to do anything. If not just exit
 if [[ $ACT == "TRUE"  ]]; then
@@ -346,6 +352,7 @@ for id in $deployNb; do
 
 	# Define current deployment directory
 	data="$work/$id"
+	debug "data: $data"
 
 	# If requested, first get it from the storage
 	# (we need to do that first, before trying to access the data)
@@ -363,7 +370,9 @@ for id in $deployNb; do
 
 	# Define the source of images (pictures or video)
 	pics="$data/pics"
+	debug "pictures: $pics"
 	videoFile="$data/video_hifi.mov"
+	debug "video: $videoFile"
 	# If the VIDEO action is specified, test for the existence of the video file
 	if [[ $VIDEO == "TRUE" && ! -e $videoFile ]]; then
 		error "Cannot find video file:\n  $pics"
@@ -381,7 +390,7 @@ for id in $deployNb; do
 		mkdir $tmp
 		status $? "Could not create temporary directory"
 	fi
-
+	debug "temporary working directory: $tmp"
 
 	# LAUNCH ACTIONS
 	#-----------------------------------------------------------------------
