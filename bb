@@ -254,6 +254,10 @@ done
 # CHECKS
 #------------------------------------------------------------
 
+# Convert work path from relative to absolute
+work="$(cd $work; pwd)"
+debug "work: $work"
+
 # Existence of commands
 
 # java is necessary for ImageJ
