@@ -529,6 +529,7 @@ EOF
 			# these will be used in future runs to position the circle where is was before
 			# since the aquarium does not move much from one deployment to the next, it allows to set it only one time
 			aquariumBounds=$(sed \1d ${tmp}/bounding_aquarium.txt | awk -F " " {'print $2","$3","$4","$5'})
+			debug "aquarium: $aquariumBounds"
 
 			write_pref $configFile aquariumBounds
 		else
