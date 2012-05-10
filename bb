@@ -633,7 +633,7 @@ EOF
 		setTool(7);                                         \
 		waitForUser('Compass calibration',                  \
 			'Please click the center of the compass you intend to track.\n      \
-			\nPress OK when you are done');                  \
+			\nPress OK when you are done');                 \
 		run('Set Measurements...', ' centroid invert redirect=None decimal=3'); \
 		run('Measure');                                     \
 		saveAs('Measurements', '${tmp}/coord_compass.txt'); \
