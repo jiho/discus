@@ -97,7 +97,7 @@ minSpeed = 0.4
 d = ldply(tracks, function(t, ...){
 	# create a filter for speeds
 	# NB: it is based on the uncorrected tracks only since the speed are only real in that case
-	idx = t["FALSE"][[1]]$speed > minSpeed
+	idx = t[["FALSE"]]$speed > minSpeed
 	# compute stats only on filtered values
 	pp = ldply(t, function(x, idx, ...){
 		x = x[!is.na(idx) & idx, ]
