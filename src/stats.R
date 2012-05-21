@@ -101,8 +101,8 @@ d = ldply(tracks, function(t, ...){
 	# compute stats only on filtered values
 	pp = ldply(t, function(x, idx, ...){
 		x = x[!is.na(idx) & idx, ]
-		if (nrow(x) == 0) {
-			# if there are no speeds, skip the computation of stats
+		if (nrow(x) < 2) {
+			# if there are not enough speeds, skip the computation of stats
 			return(c(mean=NA))
 		} else {
 			# else call circ.stats
