@@ -238,7 +238,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 
 		if (length(na.omit(x$speed)) > 2) {
 			p = pBase + opts(title="Density distribution of swimming speeds (original track)") +
-				geom_density(fill="grey20", colour=NA)
+				geom_density(fill="grey20", colour=NA, na.rm=T)
 			ggplots = c(ggplots, list(speed.density=p))
 		}
 	}
