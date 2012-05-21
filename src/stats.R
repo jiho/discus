@@ -157,7 +157,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	# (for one track only: the compass readings are the same in the original and corrected tracks)
 	p = ggplot(x) + polar() + opts(title="Compass rotation") +
 			geom_point(aes(x=compass, y=time, colour=time), alpha=0.5, size=3) +
-			scale_y_continuous("", breaks=NA, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) +
+			scale_y_continuous("", breaks=NULL, limits=c(-max(x$time, na.rm=T), max(x$time, na.rm=T))) +
 			# NB: the y scale is so that bearings are spread on the vertical and we can see when the compass goes back and forth
 			opts(axis.text.x=theme_blank())
 			# the labels are suppressed because there is no actual North there: we track the North!
@@ -180,7 +180,7 @@ plots = llply(tracks, .fun=function(t, aquariumDiam) {
 	# Point positions
 	p = ggplot(t) + polar() + opts(title="Positions") +
 		geom_point(aes(x=theta, y=1), alpha=0.1, size=4) +
-		scale_y_continuous("", limits=c(0,1.05), breaks=NA) +
+		scale_y_continuous("", limits=c(0,1.05), breaks=NULL) +
 		facet_grid(~correction)
 	ggplots = c(ggplots, list(positions = p))
 
